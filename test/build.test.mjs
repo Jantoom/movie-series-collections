@@ -7,25 +7,20 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { build } from "../scripts/build.mjs";
 
-const rows = [
-  {
-    id: "marvel",
-    name: "Marvel",
-    collections: [
-      { id: "studios", name: "Studios", shows: [{ imdb: "tt1", name: "Loki" }, { imdb: "tt3", name: "Daredevil: Born Again" }] },
-      { id: "netflix", name: "Netflix", shows: [{ imdb: "tt2", name: "Daredevil" }, { imdb: "tt3", name: "Daredevil: Born Again" }] },
-    ],
-  },
-  {
-    id: "rewatch",
-    name: "Rewatch",
-    collections: [{ id: "watch-order", name: "Watch Order", order: "listed", shows: [{ imdb: "tt3", name: "Daredevil: Born Again" }, { imdb: "tt2", name: "Daredevil" }] }],
-  },
+const shows = {
+  loki: { imdb: "tt1", name: "Loki" },
+  daredevil: { imdb: "tt2", name: "Daredevil" },
+  "born-again": { imdb: "tt3", name: "Daredevil: Born Again" },
+};
+const collections = [
+  { name: "Timeline", order: "chronological", seasons: [["daredevil", 1], ["loki", 1], ["daredevil", 2], ["born-again", 1]] },
+  { name: "Daredevil", seasons: [["born-again"], ["daredevil"]] },
 ];
+const ep = (imdb, season, episode, released) => ({ id: `${imdb}:${season}:${episode}`, season, episode, released });
 const cinemetaData = {
-  tt1: { name: "Loki", released: "2021-06-09T00:00:00.000Z", poster: "p1", background: "b1" },
-  tt2: { name: "Daredevil", released: "2015-04-10T00:00:00.000Z", poster: "p2", background: "b2" },
-  tt3: { name: "Daredevil: Born Again", released: "2025-03-04T00:00:00.000Z", poster: "p3", background: "b3" },
+  tt1: { name: "Loki", poster: "p1", videos: [ep("tt1", 1, 1, "2021-06-09")] },
+  tt2: { name: "Daredevil", poster: "p2", videos: [ep("tt2", 1, 1, "2015-04-10"), ep("tt2", 2, 1, "2016-03-18")] },
+  tt3: { name: "Daredevil: Born Again", poster: "p3", videos: [ep("tt3", 1, 1, "2025-03-04"), ep("tt3", 2, 1, "2099-03-24")] },
 };
 
 const fakeFetch = (data = cinemetaData) => {
@@ -39,47 +34,41 @@ const fakeFetch = (data = cinemetaData) => {
 };
 
 const read = async (dir, rel) => JSON.parse(await readFile(join(dir, rel), "utf8"));
-const opts = (outDir, fetchImpl, r = rows) => ({ fetchImpl, rows: r, cinemeta: "https://fake.test", outDir, log: () => {} });
+const opts = (outDir, fetchImpl, c = collections) => ({ fetchImpl, shows, collections: c, now: "2026-11-08T00:00:00.000Z", cinemeta: "https://fake.test", outDir, log: () => {} });
+const ids = (metas) => metas.map((m) => m.behaviorHints.defaultVideoId);
 
-test("builds a catalog per row, a meta per collection and a stream per show", async () => {
+test("builds one catalog with a genre per collection, in each collection's order", async () => {
   const outDir = await mkdtemp(join(tmpdir(), "series-collections-"));
   const { fetchImpl, seen } = fakeFetch();
   const report = await build(opts(outDir, fetchImpl));
-  assert.equal(report.series, 3);
-  assert.equal(seen.length, 3, "a show in several collections is looked up once");
+  assert.equal(seen.length, 3, "each show is looked up once");
 
-  const marvel = await read(outDir, "catalog/series/marvel.json");
-  assert.deepEqual(marvel.metas.map((m) => [m.id, m.poster]), [["sercol-studios", "p1"], ["sercol-netflix", "p2"]]);
-  const rewatch = await read(outDir, "catalog/series/rewatch.json");
-  assert.deepEqual(rewatch.metas.map((m) => m.id), ["sercol-watch-order"]);
+  const timeline = await read(outDir, "catalog/series/collections/genre=Timeline (Chronological).json");
+  assert.deepEqual(ids(timeline.metas), ["tt2:1:1", "tt1:1:1", "tt2:2:1", "tt3:1:1"]);
+  assert.deepEqual(await read(outDir, "catalog/series/collections.json"), timeline, "the first collection is the default");
 
-  const netflix = (await read(outDir, "meta/series/sercol-netflix.json")).meta;
-  assert.deepEqual(netflix.videos.map((v) => [v.id, v.season]), [["sercol-tt2", 2015], ["sercol-tt3", 2025]]);
-  const order = (await read(outDir, "meta/series/sercol-watch-order.json")).meta;
-  assert.deepEqual(order.videos.map((v) => [v.id, v.season, v.episode]), [["sercol-tt3", 1, 1], ["sercol-tt2", 1, 2]]);
+  const daredevil = await read(outDir, "catalog/series/collections/genre=Daredevil.json");
+  assert.deepEqual(ids(daredevil.metas), ["tt2:1:1", "tt2:2:1", "tt3:1:1"], "release order, unaired season held back");
+  assert.deepEqual(report.upcoming, { Daredevil: ["Daredevil: Born Again season 2"] });
 
-  const stream = await read(outDir, "stream/series/sercol-tt3.json");
-  assert.equal(stream.streams[0].externalUrl, "stremio:///detail/series/tt3");
-
-  assert.deepEqual((await read(outDir, "manifest.json")).catalogs.map((c) => c.id), ["marvel", "rewatch"]);
-  assert.deepEqual(report.rows.Rewatch, { "Watch Order": 2 });
+  const manifest = await read(outDir, "manifest.json");
+  assert.deepEqual(manifest.catalogs[0].extra[0].options, ["Timeline (Chronological)", "Daredevil"]);
   assert.ok(existsSync(join(outDir, "index.html")));
 });
 
-test("refuses to publish when an id is missing or points at another show", async () => {
+test("refuses to publish when an id points at another show or a season is missing", async () => {
   const outDir = await mkdtemp(join(tmpdir(), "series-collections-"));
-  const { fetchImpl } = fakeFetch({ tt1: { name: "Box 21", released: "2020-01-01" }, tt2: cinemetaData.tt2 });
-  await assert.rejects(build(opts(outDir, fetchImpl)), (err) => {
-    assert.match(err.message, /tt1 is "Box 21" on Cinemeta, not "Loki"/);
-    assert.match(err.message, /tt3 \("Daredevil: Born Again"\) isn't on Cinemeta/);
-    return true;
-  });
+  const { fetchImpl } = fakeFetch({ ...cinemetaData, tt1: { name: "Box 21", videos: [] } });
+  await assert.rejects(build(opts(outDir, fetchImpl)), /loki: tt1 is "Box 21" on Cinemeta, not "Loki"/);
+
+  const { fetchImpl: ok } = fakeFetch();
+  const missing = [{ name: "Timeline", seasons: [["daredevil", 9]] }];
+  await assert.rejects(build(opts(outDir, ok, missing)), /Timeline: Daredevil has no season 9 on Cinemeta/);
 });
 
 test("refuses a broken config before fetching anything", async () => {
   const outDir = await mkdtemp(join(tmpdir(), "series-collections-"));
   const { fetchImpl, seen } = fakeFetch();
-  const dupe = [rows[0], { ...rows[1], collections: [{ ...rows[1].collections[0], id: "studios" }] }];
-  await assert.rejects(build(opts(outDir, fetchImpl, dupe)), /collection id "studios" is used twice/);
+  await assert.rejects(build(opts(outDir, fetchImpl, [{ name: "X", seasons: [["thor"]] }])), /no show called "thor"/);
   assert.equal(seen.length, 0);
 });

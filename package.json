@@ -1,6 +1,6 @@
 {
   "name": "series-collections",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Static Stremio addon of TV series collections, navigated by poster, built from Cinemeta.",
   "type": "module",
