@@ -1,57 +1,55 @@
 # Series Collections
 
-A Stremio addon of TV series collections: watch orders, season by season, for stories that weave between shows (the Marvel Cinematic Universe, the Arrowverse, Star Trek), and lists of every show in a franchise (Marvel, DC). It's hosted as static files on GitHub Pages and rebuilt weekly by GitHub Actions, so there's no server to run.
+A Stremio addon of movie and TV collections: watch orders for stories told across many films and shows (the Marvel Cinematic Universe, Star Wars, the Arrowverse, Star Trek), and lists of every title in a franchise (Marvel, DC). It's hosted as static files on GitHub Pages and rebuilt weekly by GitHub Actions, so there's no server to run.
 
 The collections in `collections.config.mjs` are examples: replace or add to them.
 
 ## How it works in Stremio
 
-1. The addon adds one catalog, **Collections**, under Discover → Series. Its genre filter picks a **group**, such as **Superheroes** or **Sci-Fi**. With no genre picked (the dropdown just reads "Genre"), it lists every collection. That full list is also the **Collections** row on the home screen.
-2. Each poster is a **collection**, with its years ("2015–" while a show in it is still running). There are two kinds:
-   - **Watch orders**, named "… (Release Order)" or "… (Chronological)". They list every season in order under **Watch order** ("Daredevil S1", "Jessica Jones S1", "Daredevil S2", …), and each one opens that show on that season's tab.
-   - **Plain lists**, named without a suffix ("Marvel", "DC"), for shows with no shared continuity. They list each show once, by premiere, under **Series**, and each one opens the show.
-3. Select a collection: its side panel in Discover, and its detail page, show its groups under **Genres** (each opening that group in Discover), its size under **Contents** ("24 Series", "36 Seasons"), then the list.
-4. Clicking a season or show opens it inside the app. Streams come from your other addons such as Torrentio, and watch progress stays on the real show.
-5. The detail page also shows the list as one long run of entries in its episode column. Entries have no streams, so clicking one shows Stremio's "no streams" message: the links on the left are what open a show (see below).
-
-### Release order and chronological order
-
-A **Release Order** collection sorts seasons by premiere date. A **Chronological** one follows the story, and its description ends with the same sentence on every such collection:
-
-> This collection follows the story's timeline instead of release order.
+1. The addon has its own Discover tab, **Collections**, next to Movies and Series. It holds one catalog, **Genre**. Its genre filter starts on **None**, which lists every collection; each genre, such as **Superheroes** or **Sci-Fi**, narrows it to a group. The full list is also the **Genre – Collections** row on the home screen.
+2. Each poster is a **collection**, with its years ("2008–" while a show in it is still running). There are three kinds:
+   - **Release order**, under its plain name ("Star Wars", "Marvel Cinematic Universe"): movies and seasons by release date.
+   - **Timeline**, named "… (Timeline)": movies and seasons in story order. Its description ends with the same sentence on every timeline collection:
+     > This collection follows the story's timeline instead of release order.
+   - **Plain lists**, named "Every Marvel Series", "Every … Movie" or "Every … Movie and Series", for franchises with no shared continuity. They list each title once, by release.
+3. Select a collection: its side panel in Discover, and its detail page, show its groups under **Genres** (each opening that group in Discover), its size under **Contents** ("41 Movies", "24 Series", "36 Seasons"), then its entries, under **Watch order** or **Titles**.
+4. Clicking an entry opens it inside the app: a season opens its show on that season's tab, and a movie opens the movie. Streams come from your other addons such as Torrentio, and watch progress stays on the real title.
+5. The detail page also lists the entries in its episode column. Selecting one shows a short blurb about it, and its one stream, **Open …**, links to the title. That stream opens inside the app on web, but Stremio 5 desktop sends it to the system browser; it's there to test on TV.
 
 ### What Stremio allows, and why it works this way
 
 - **Not one poster per season:** Stremio de-duplicates the items in a catalog by id, and every season of a show shares the show's id, so only each show's first season would show.
-- **Not a stream link per season:** Stremio 5 desktop opens stream links in the system browser, behind Stremio's warning page.
-- **Entries can't open a show:** clicking an entry always opens that entry's stream list, and the only way out of a stream list is a stream link, which desktop sends to the browser.
+- **Stream links:** Stremio 5 desktop opens them in the system browser, behind Stremio's warning page. Clicking an entry always opens its stream list, so the stream is the only way an entry can link anywhere.
 - **Link chips** (a meta's `links`, like cast and genres) are turned into in-app routes on web and desktop. `?season=N` opens a show on that season's tab, and a Discover link opens a group.
 
 ## What to check on each device
 
 On each Stremio client you care about (desktop, web, Android TV, mobile):
 
-- [ ] The **Collections** row shows on the home screen, with every collection.
-- [ ] Discover → Series → **Collections** lists every collection with no genre picked, and each group in the genre filter shows its own.
-- [ ] Selecting **Marvel Cinematic Universe (Chronological)** shows **Superheroes** under Genres, "24 Series" and "36 Seasons" under Contents, then its seasons under **Watch order**, starting with Eyes of Wakanda S1, then I Am Groot S1 and S2.
-- [ ] Clicking a season opens that show on that season's tab, inside the app.
-- [ ] Selecting **Marvel** lists its shows under **Series**, and clicking one opens the show.
-- [ ] Clicking **Superheroes** under Genres opens Collections filtered to Superheroes.
+- [ ] Discover has a **Collections** tab with one catalog, **Genre**, that starts on **None** and lists every collection.
+- [ ] Each genre (Superheroes, Sci-Fi) shows its own collections.
+- [ ] Selecting **Marvel Cinematic Universe** shows **Superheroes** under Genres, then "41 Movies", "24 Series", "36 Seasons" under Contents, then Iron Man first under **Watch order**.
+- [ ] Clicking a movie opens it, and clicking a season opens its show on that season's tab, inside the app.
+- [ ] **Star Wars (Timeline)** starts with The Acolyte S1, then The Phantom Menace.
+- [ ] On the detail page, selecting an entry shows its blurb, and its **Open …** stream opens the title (on TV especially).
+- [ ] Clicking **Superheroes** under Genres opens the catalog filtered to Superheroes.
 
 ## Where the data comes from
 
-`collections.config.mjs` has a `shows` table (a short key, IMDb id and title per show) and the `collections`, which list seasons by show key. The build looks every show up on [Cinemeta](https://v3-cinemeta.strem.io), Stremio's own metadata addon, for its poster and seasons (episode count, premiere and finale dates).
+`collections.config.mjs` has a `shows` table and a `movies` table (a short key, IMDb id and title each) and the `collections`, which list entries by key. The build looks every title up on [Cinemeta](https://v3-cinemeta.strem.io), Stremio's own metadata addon, for its poster, description, release date and seasons (episode count, premiere and finale dates).
 
 The build fails, and the last good deployment stays up, when:
 
-- a show's IMDb id is missing from Cinemeta, or its title there doesn't match the `name` in `shows`;
-- a collection asks for a season Cinemeta doesn't have, or a show key that isn't in `shows`;
+- an IMDb id is missing from Cinemeta, or its title there doesn't match the `name` in the config;
+- a collection asks for a season Cinemeta doesn't have, a key in neither table, or a season of a movie;
 - a plain list asks for a single season (plain lists take whole shows);
-- two collections end up with the same name, a collection has no group, or a name or group uses characters other than letters, digits, spaces, `'`, `&` and `-`.
+- two collections end up with the same name, a collection has no group, or a name or group uses characters it can't.
 
-Seasons that haven't aired yet are left out until a build after their premiere. `report.json` on the site lists them under `upcoming`.
+Titles that aren't out yet are left out until a build after their release. `report.json` on the site lists them under `upcoming`.
 
-The **Marvel Cinematic Universe (Chronological)** order is Disney+'s official complete MCU timeline (as of VisionQuest), series only. It includes the Netflix shows, which Marvel added in January 2024. It leaves out the ABC/Hulu/Freeform shows and Marvel Animation's own-universe shows (X-Men '97, Your Friendly Neighborhood Spider-Man), which aren't on that timeline; those are in **Marvel**.
+**Marvel Cinematic Universe** is what Marvel Studios counts: the films, the Disney+ series, and the Netflix shows it added to its official timeline in January 2024. **Marvel Cinematic Universe (Unofficial)** adds the ABC, Hulu and Freeform shows, which Marvel Studios has never counted. Marvel Animation's own-universe shows (X-Men '97, Your Friendly Neighborhood Spider-Man) are in **Every Marvel Series**.
+
+**Star Wars (Timeline)** follows the Disney+ Star Wars timeline's grouping, which keeps each show's seasons together. Maul: Shadow Lord, the Tales anthologies and The Mandalorian and Grogu are placed by their settings.
 
 The genre chips need the URL the addon is installed from, which the workflow passes in as `SITE_URL`. A local build without it leaves them out.
 
@@ -59,11 +57,12 @@ The genre chips need the URL the addon is installed from, which the workflow pas
 
 Edit `collections.config.mjs` and push; the workflow rebuilds automatically. The comment above `collections` lists every option.
 
-- **Add a show:** add it to `shows` with a short key. To find its IMDb id, search Cinemeta: `https://v3-cinemeta.strem.io/catalog/series/top/search=<title>.json`.
-- **Add a watch order:** add a collection with `order: "release"`, listing `[showKey]` for every season of a show or `[showKey, 2]` for one season. For `order: "chronological"`, list the seasons in story order. The suffix and the chronological sentence are added for you.
-- **Add a plain list:** leave `order` out and list `[showKey]` for each show.
-- **Groups:** `group` is one group or a list of them. A new group adds a genre filter option. Groups appear in the order collections first use them.
-- **Names:** spell them out ("Marvel Cinematic Universe", not "MCU"). The same name can be used for a release order, a chronological order and a plain list.
+- **Add a show or movie:** add it to `shows` or `movies` with a short key. To find its IMDb id, search Cinemeta: `https://v3-cinemeta.strem.io/catalog/series/top/search=<title>.json` (or `catalog/movie/…`).
+- **Add a release-order collection:** `order: "release"`, listing `[key]` for each movie or show (every season), or `[key, 2]` for one season.
+- **Add a timeline:** `order: "timeline"`, with entries in story order. Only worth it when the story jumps around a lot, as Star Wars does.
+- **Add a plain list:** leave `order` out. The name becomes "Every <name> Series/Movie/Movie and Series" from what it holds.
+- **Groups:** `group` is one group or a list of them. A new group adds a genre option.
+- **Descriptions:** up to three sentences on what the collection is and where its titles come from. Each entry gets its own blurb from Cinemeta automatically.
 
 ## Local testing
 
