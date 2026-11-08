@@ -1,10 +1,12 @@
 // Pure helpers: turning Cinemeta show data into collection posters and catalog files.
 //
 // There is one catalog, "Collections". Its genre filter picks a group (Superheroes,
-// Sci-Fi, …), and each poster in a group is a collection. A collection's seasons are
-// link chips, on its Discover side panel and on its detail page. Each chip is a
-// stremio:///detail/series/<imdb>?season=<n> link, which Stremio turns into an in-app
-// route that opens the real show on that season's tab, on web and desktop alike.
+// Sci-Fi, …), and with no genre it lists every collection. Each poster is a collection.
+// A collection's seasons are link chips, on its Discover side panel and on its detail
+// page. Each chip is a stremio:///detail/series/<imdb>?season=<n> link, which Stremio
+// turns into an in-app route that opens the real show on that season's tab, on web
+// and desktop alike. The detail page also lists the seasons as its "episodes", to look
+// through; those entries have no streams.
 //
 // Why not one poster per season: Stremio de-duplicates catalog items by id, and every
 // season of a show has the show's id, so only the first season would survive. Why not
@@ -16,10 +18,11 @@ export const CATALOG_ID = "collections";
 export const CATALOG_NAME = "Collections";
 export const ID_PREFIX = "sercol-";   // no ":" so the ids work as file names on Windows
 export const LINK_CATEGORY = "Watch order";
+export const GENRES_CATEGORY = "Genres";   // Stremio's own category, shown first like a show's genres
 export const PAGE_SIZE = 100;   // Stremio asks for the next page with skip=100, 200, …
 
 // The one sentence every chronological collection's description ends with.
-export const CHRONOLOGICAL_NOTE = "Chronological collections follow the story's own timeline instead of air dates, so seasons can jump between shows and out of release order.";
+export const CHRONOLOGICAL_NOTE = "This collection follows the story's timeline instead of release order.";
 
 const fold = (s) => (s ?? "").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
 
@@ -68,15 +71,17 @@ export function configProblems(shows, collections) {
 
 /**
  * Cinemeta's meta trimmed to what the addon uses. Seasons are keyed by number, with
- * the premiere date and episode count. Season 0 (specials) is left out.
+ * the premiere date and episode count. Season 0 (specials) is left out. A show is
+ * ongoing when Cinemeta says so or its years are open-ended ("2025–").
  */
 export function toShow(imdb, cm) {
   const seasons = new Map();
   for (const v of cm.videos ?? []) {
     if (!Number.isInteger(v.season) || v.season < 1) continue;
-    const s = seasons.get(v.season) ?? { number: v.season, episodes: 0, premiere: undefined };
+    const s = seasons.get(v.season) ?? { number: v.season, episodes: 0, premiere: undefined, finale: undefined };
     s.episodes++;
     if (v.released && (!s.premiere || v.released < s.premiere)) s.premiere = v.released;
+    if (v.released && (!s.finale || v.released > s.finale)) s.finale = v.released;
     seasons.set(v.season, s);
   }
   return {
@@ -84,6 +89,7 @@ export function toShow(imdb, cm) {
     name: cm.name,
     poster: cm.poster?.replace("/poster/small/", "/poster/medium/"),
     background: cm.background,
+    ongoing: cm.status === "Continuing" || /[–-]\s*$/.test(cm.releaseInfo ?? ""),
     seasons: new Map([...seasons].sort(([a], [b]) => a - b)),
   };
 }
@@ -118,13 +124,41 @@ export function arrange(entries, order = "release") {
   return [...entries].sort((a, b) => a.season.premiere.localeCompare(b.season.premiere));
 }
 
+/** "Daredevil S2", as the season's chip and entry title. */
+export const seasonTitle = ({ show, season }) => `${show.name} S${season.number}`;
+
 /** One season as a link chip that opens the show on that season's tab. */
-export function seasonLink({ show, season }) {
+export function seasonLink(entry) {
   return {
-    name: `${show.name} · Season ${season.number}`,
+    name: seasonTitle(entry),
     category: LINK_CATEGORY,
-    url: `stremio:///detail/${TYPE}/${show.imdb}?season=${season.number}`,
+    url: `stremio:///detail/${TYPE}/${entry.show.imdb}?season=${entry.season.number}`,
   };
+}
+
+/** "2015–2026", first premiere to last finale, or "2015–" while a show in it is still running. */
+export function yearSpan(entries) {
+  const year = (date) => Number.parseInt(date, 10);
+  const starts = entries.map((e) => year(e.season.premiere)).filter(Boolean);
+  const ends = entries.map((e) => year(e.season.finale)).filter(Boolean);
+  if (!starts.length) return undefined;
+  const first = Math.min(...starts), last = Math.max(...ends, ...starts);
+  if (entries.some((e) => e.show.ongoing)) return `${first}–`;
+  return first === last ? `${first}` : `${first}–${last}`;
+}
+
+/**
+ * The series and season counts as genre chips. Stremio would point real `genres` at
+ * Cinemeta's catalog, where they'd find nothing, so these are links to the collection's
+ * own page instead.
+ */
+function countLinks(collection, entries) {
+  const shows = new Set(entries.map((e) => e.show.imdb)).size;
+  const url = `stremio:///detail/${TYPE}/${collectionId(collection)}`;
+  return [
+    { name: `${shows} Series`, category: GENRES_CATEGORY, url },
+    { name: `${entries.length} Season${entries.length === 1 ? "" : "s"}`, category: GENRES_CATEGORY, url },
+  ];
 }
 
 /**
@@ -133,24 +167,35 @@ export function seasonLink({ show, season }) {
  */
 export function toCollectionPreview(collection, entries) {
   const [first] = entries;
-  const shows = new Set(entries.map((e) => e.show.imdb)).size;
   return {
     id: collectionId(collection),
     type: TYPE,
     name: displayName(collection),
     poster: collection.poster ?? first?.show.poster,
     background: collection.background ?? first?.show.background,
-    description: [
-      collectionDescription(collection),
-      `${entries.length} seasons of ${shows} series. Pick a season under "${LINK_CATEGORY}" to open that show on it.`,
-    ].filter(Boolean).join("\n\n"),
-    links: entries.map(seasonLink),
+    releaseInfo: yearSpan(entries),
+    description: collectionDescription(collection),
+    links: [...countLinks(collection, entries), ...entries.map(seasonLink)],
   };
 }
 
-/** The collection's detail page: the same poster and links, and no episodes of its own. */
+/**
+ * The collection's detail page: the same poster and links, plus the seasons as one
+ * long list of entries in its episode column. Entries have no streams; the chips are
+ * what open a show.
+ */
 export function toCollectionMeta(collection, entries) {
-  return { ...toCollectionPreview(collection, entries), videos: [] };
+  const id = collectionId(collection);
+  return {
+    ...toCollectionPreview(collection, entries),
+    videos: entries.map((entry, i) => ({
+      id: `${id}-${i + 1}`,
+      title: seasonTitle(entry),
+      season: 1,
+      episode: i + 1,
+      thumbnail: entry.show.background,
+    })),
+  };
 }
 
 /**
@@ -172,26 +217,29 @@ export function valueSpellings(value) {
 }
 
 /**
- * Every file for one group: each genre spelling, each page of 100. Stremio sends
- * extras in manifest order, so the next page of a genre is "genre=X&skip=100". The
- * first group is also the catalog's no-genre default (the home-screen row).
+ * Every file for one group, or for no genre at all (group undefined: every collection,
+ * which is also the home-screen row): each genre spelling, each page of 100. Stremio
+ * sends extras in manifest order, so the next page of a genre is "genre=X&skip=100".
  */
-export function catalogPaths(group, metas, isDefault) {
+export function catalogPaths(group, metas) {
   const dir = `catalog/${TYPE}/${CATALOG_ID}`;
   const files = [];
   for (let skip = 0; skip === 0 || skip < metas.length; skip += PAGE_SIZE) {
     const page = metas.slice(skip, skip + PAGE_SIZE);
     const skipPart = skip === 0 ? "" : `skip=${skip}`;
+    if (group === undefined) {
+      files.push({ rel: skip === 0 ? `${dir}.json` : `${dir}/${skipPart}.json`, metas: page });
+      continue;
+    }
     for (const v of valueSpellings(group)) {
       files.push({ rel: `${dir}/genre=${v}${skipPart && `&${skipPart}`}.json`, metas: page });
     }
-    if (isDefault) files.push({ rel: skip === 0 ? `${dir}.json` : `${dir}/${skipPart}.json`, metas: page });
   }
   return files;
 }
 
 // Bump when the manifest changes so installed copies refresh.
-export function buildManifest(collections, version = "0.4.0") {
+export function buildManifest(collections, version = "0.5.0") {
   const groups = groupNames(collections);
   return {
     id: "community.series-collections",
@@ -208,7 +256,8 @@ export function buildManifest(collections, version = "0.4.0") {
       type: TYPE,
       id: CATALOG_ID,
       name: CATALOG_NAME,
-      // Not required, so the catalog also gets a home-screen row (the first group).
+      // Not required, so the catalog also gets a home-screen row, and no genre lists
+      // every collection. Stremio's dropdown then just reads "Genre".
       extra: [{ name: "genre", options: groups }, { name: "skip" }],
       // Older clients (Stremio desktop v4) read these instead of `extra`.
       genres: groups,

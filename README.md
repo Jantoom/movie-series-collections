@@ -6,16 +6,17 @@ The collections in `collections.config.mjs` are examples: replace or add to them
 
 ## How it works in Stremio
 
-1. The addon adds one catalog, **Collections**, under Discover → Series. Its genre filter picks a **group**, such as **Superheroes** or **Sci-Fi**. The first group is also the **Collections** row on the home screen.
-2. Each poster in a group is a **collection**, such as **MCU**, **MCU (Chronological)** or **Arrowverse**.
-3. Select a collection: its side panel in Discover, and its detail page, list every season in order under **Watch order** ("Daredevil · Season 1", "Jessica Jones · Season 1", "Daredevil · Season 2", …).
+1. The addon adds one catalog, **Collections**, under Discover → Series. Its genre filter picks a **group**, such as **Superheroes** or **Sci-Fi**. With no genre picked (the dropdown just reads "Genre"), it lists every collection, group by group. That full list is also the **Collections** row on the home screen.
+2. Each poster in a group is a **collection**, such as **MCU**, **MCU (Chronological)** or **Arrowverse**, with its years ("2015–" while a show in it is still running).
+3. Select a collection: its side panel in Discover, and its detail page, show its size as genres ("24 Series", "36 Seasons") and every season in order under **Watch order** ("Daredevil S1", "Jessica Jones S1", "Daredevil S2", …).
 4. Click a season: Stremio opens that show, inside the app, on that season's tab. Streams come from your other addons such as Torrentio, and watch progress stays on the real show.
+5. The detail page also lists the seasons as one long run of entries in its episode column, to look through. Entries have no streams: the **Watch order** links are what open a show.
 
 ### Release order and chronological order
 
 Collections are in **release order** by default: seasons sorted by premiere date. A collection made for the story's timeline is marked **(Chronological)**, and its description ends with the same sentence on every such collection:
 
-> Chronological collections follow the story's own timeline instead of air dates, so seasons can jump between shows and out of release order.
+> This collection follows the story's timeline instead of release order.
 
 ### Why links, not posters or streams
 
@@ -27,11 +28,11 @@ Collections are in **release order** by default: seasons sorted by premiere date
 
 On each Stremio client you care about (desktop, web, Android TV, mobile):
 
-- [ ] The **Collections** row shows on the home screen, with the Superheroes collections.
-- [ ] Discover → Series → **Collections** lists the groups in the genre filter, and each group shows its collection posters.
-- [ ] Selecting **MCU (Chronological)** lists its seasons under **Watch order**, starting with Eyes of Wakanda · Season 1, then I Am Groot · Season 1 and 2.
+- [ ] The **Collections** row shows on the home screen, with every collection.
+- [ ] Discover → Series → **Collections** lists every collection with no genre picked, and each group in the genre filter shows its own.
+- [ ] Selecting **MCU (Chronological)** shows "24 Series" and "36 Seasons", then its seasons under **Watch order**, starting with Eyes of Wakanda S1, then I Am Groot S1 and S2.
 - [ ] Clicking a season opens that show on that season's tab, inside the app.
-- [ ] The collection's detail page shows the same **Watch order** links.
+- [ ] The collection's detail page shows the same links, and its seasons as entries in the episode column.
 
 ## Where the data comes from
 
@@ -54,7 +55,7 @@ Edit `collections.config.mjs` and push; the workflow rebuilds automatically. The
 - **Add a show:** add it to `shows` with a short key. To find its IMDb id, search Cinemeta: `https://v3-cinemeta.strem.io/catalog/series/top/search=<title>.json`.
 - **Add a collection:** add an entry to `collections` with a `group`. List `[showKey]` for every season of a show, or `[showKey, 2]` for one season.
 - **Chronological collection:** set `order: "chronological"` and list the seasons in story order. The " (Chronological)" suffix and the standard sentence are added for you. A release-order and a chronological collection can share a name and a season list, as the two MCU collections do.
-- **Groups:** a new `group` value adds a genre filter option. Groups appear in the order collections first use them, and the first is the home-screen row.
+- **Groups:** a new `group` value adds a genre filter option. Groups appear in the order collections first use them.
 
 ## Local testing
 

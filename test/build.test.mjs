@@ -40,7 +40,7 @@ const fakeFetch = (data = cinemetaData) => {
 
 const read = async (dir, rel) => JSON.parse(await readFile(join(dir, rel), "utf8"));
 const opts = (outDir, fetchImpl, c = collections) => ({ fetchImpl, shows, collections: c, now: "2026-11-08T00:00:00.000Z", cinemeta: "https://fake.test", outDir, log: () => {} });
-const urls = (meta) => meta.links.map((l) => l.url.replace("stremio:///detail/series/", ""));
+const urls = (meta) => meta.links.filter((l) => l.category === "Watch order").map((l) => l.url.replace("stremio:///detail/series/", ""));
 
 test("builds one catalog with a genre per group, a poster per collection", async () => {
   const outDir = await mkdtemp(join(tmpdir(), "series-collections-"));
@@ -50,8 +50,9 @@ test("builds one catalog with a genre per group, a poster per collection", async
 
   const heroes = await read(outDir, "catalog/series/collections/genre=Heroes.json");
   assert.deepEqual(heroes.metas.map((m) => m.id), ["sercol-marvel", "sercol-marvel-chronological", "sercol-daredevil"]);
-  assert.deepEqual(await read(outDir, "catalog/series/collections.json"), heroes, "the first group is the default");
   assert.deepEqual((await read(outDir, "catalog/series/collections/genre=Sci-Fi.json")).metas.map((m) => m.name), ["Trek"]);
+  const all = await read(outDir, "catalog/series/collections.json");
+  assert.deepEqual(all.metas.map((m) => m.id), [...heroes.metas.map((m) => m.id), "sercol-trek"], "no genre lists every collection, group by group");
 
   const [release, chrono, daredevil] = heroes.metas;
   assert.deepEqual(urls(release), ["tt2?season=1", "tt2?season=2", "tt1?season=1", "tt3?season=1"], "release order keeps every season");
@@ -62,6 +63,8 @@ test("builds one catalog with a genre per group, a poster per collection", async
 
   const meta = (await read(outDir, "meta/series/sercol-marvel-chronological.json")).meta;
   assert.deepEqual(urls(meta), urls(chrono), "the detail page has the same links");
+  assert.deepEqual(meta.videos.map((v) => v.title), ["Daredevil S1", "Loki S1", "Daredevil S2", "Daredevil: Born Again S1"]);
+  assert.equal(chrono.releaseInfo, "2015–2025");
 
   const manifest = await read(outDir, "manifest.json");
   assert.deepEqual(manifest.catalogs[0].extra[0].options, ["Heroes", "Sci-Fi"]);

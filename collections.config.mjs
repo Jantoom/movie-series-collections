@@ -114,15 +114,17 @@ const mcuTimeline = [
 
 // Each collection:
 //   group        the genre filter value it appears under, such as "Superheroes". Groups
-//                appear in the order collections first use them, and the first group
-//                is the home-screen row. Letters, digits, spaces, ' & and - only.
+//                appear in the order collections first use them. With no genre picked
+//                (and on the home-screen row), every collection shows, group by group.
+//                Letters, digits, spaces, ' & and - only.
 //   name         the poster's name. Same characters as group.
 //   order        "release" (default): sorted by each season's premiere date.
 //                "chronological": seasons stay in the order listed, which should follow
 //                the story's timeline. The name gets " (Chronological)" added and the
 //                description a standard sentence explaining the difference.
 //   description  optional. Shown on the collection's side panel and detail page, and
-//                on the install page.
+//                on the install page. The series and season counts and the years are
+//                added for you.
 //   poster       optional image URL; defaults to the first season's show poster.
 //   seasons      [showKey, season] for one season, or [showKey] for every season.
 // Seasons that haven't aired yet are skipped until a build after their premiere.

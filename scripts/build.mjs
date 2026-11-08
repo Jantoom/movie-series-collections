@@ -76,10 +76,12 @@ export async function build({
     const { entries } = lists.find((l) => l.c === c);
     await writeJson(`meta/${TYPE}/${collectionId(c)}.json`, { meta: toCollectionMeta(c, entries) });
   }
-  for (const [i, group] of groupNames(collections).entries()) {
+  const everything = [];
+  for (const group of groupNames(collections)) {
     const members = lists.filter(({ c }) => c.group === group);
     const metas = members.map(({ c, entries }) => toCollectionPreview(c, entries));
-    for (const { rel, metas: page } of catalogPaths(group, metas, i === 0)) {
+    everything.push(...metas);
+    for (const { rel, metas: page } of catalogPaths(group, metas)) {
       await writeJson(rel, { metas: page });
     }
     report.groups[group] = Object.fromEntries(members.map(({ c, entries }) => [displayName(c), entries.length]));
@@ -87,6 +89,10 @@ export async function build({
       const name = displayName(c);
       log(`${group} / ${name}: ${entries.length} seasons${upcoming[name] ? ` (not aired yet: ${upcoming[name].join(", ")})` : ""}`);
     }
+  }
+  // No genre: every collection, group by group. This is also the home-screen row.
+  for (const { rel, metas: page } of catalogPaths(undefined, everything)) {
+    await writeJson(rel, { metas: page });
   }
 
   await writeJson("manifest.json", buildManifest(collections));
