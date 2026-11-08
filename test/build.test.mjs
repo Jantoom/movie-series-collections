@@ -28,15 +28,15 @@ const collections = [
 const ep = (imdb, season, episode, released) => ({ id: `${imdb}:${season}:${episode}`, season, episode, released });
 const cinemetaData = {
   series: {
-    tt1: { name: "Loki", poster: "p1", videos: [ep("tt1", 1, 1, "2021-06-09")] },
-    tt2: { name: "Daredevil", poster: "p2", videos: [ep("tt2", 1, 1, "2015-04-10"), ep("tt2", 2, 1, "2016-03-18")] },
-    tt3: { name: "Daredevil: Born Again", poster: "p3", videos: [ep("tt3", 1, 1, "2025-03-04"), ep("tt3", 2, 1, "2099-03-24")] },
-    tt4: { name: "Star Trek", poster: "p4", videos: [ep("tt4", 1, 1, "1966-09-08")] },
+    tt1: { name: "Loki", poster: "p1", videos: [ep("tt1", 1, 1, "2021-06-09")], popularities: { moviedb: 10 } },
+    tt2: { name: "Daredevil", poster: "p2", videos: [ep("tt2", 1, 1, "2015-04-10"), ep("tt2", 2, 1, "2016-03-18")], popularities: { moviedb: 5 } },
+    tt3: { name: "Daredevil: Born Again", poster: "p3", videos: [ep("tt3", 1, 1, "2025-03-04"), ep("tt3", 2, 1, "2099-03-24")], popularities: { moviedb: 1 } },
+    tt4: { name: "Star Trek", poster: "p4", videos: [ep("tt4", 1, 1, "1966-09-08")], popularities: { moviedb: 90 } },
   },
   movie: {
-    tt5: { name: "Iron Man", poster: "p5", released: "2008-05-02" },
+    tt5: { name: "Iron Man", poster: "p5", released: "2008-05-02", popularities: { moviedb: 3 } },
     tt6: { name: "Avengers: Doomsday", released: "2099-12-18" },
-    tt7: { name: "The Animatrix" },
+    tt7: { name: "The Animatrix", released: "1950-01-01", popularities: { moviedb: 9 } },
   },
 };
 
@@ -64,7 +64,7 @@ test("builds Connected Storyline and Other, each with a genre filter", async () 
   assert.equal(seen.length, 7, "each title is looked up once");
 
   const connected = await read(outDir, "catalog/collections/connected.json");
-  assert.deepEqual(connected.metas.map((m) => m.id), ["mscol-marvel", "mscol-marvel-timeline", "mscol-trek"], "None lists the catalog's collections");
+  assert.deepEqual(connected.metas.map((m) => m.id), ["mscol-trek", "mscol-marvel", "mscol-marvel-timeline"], "None lists the catalog's collections, most popular first");
   const other = await read(outDir, "catalog/collections/other.json");
   assert.deepEqual(other.metas.map((m) => m.name), ["Every Daredevil Series"]);
   assert.deepEqual((await read(outDir, "catalog/collections/connected/genre=Superhero.json")).metas.map((m) => m.id), ["mscol-marvel", "mscol-marvel-timeline"]);
@@ -72,12 +72,12 @@ test("builds Connected Storyline and Other, each with a genre filter", async () 
   assert.deepEqual((await read(outDir, "catalog/collections/other/genre=Crime.json")).metas.map((m) => m.id), ["mscol-every-daredevil-series"]);
   assert.ok(!existsSync(join(outDir, "catalog/collections/other/genre=Sci-Fi.json")), "a catalog only gets the genres it uses");
 
-  const [release, timeline, trek] = connected.metas;
+  const [trek, release, timeline] = connected.metas;
   assert.deepEqual(urls(release), ["movie/tt5", "series/tt2?season=1", "series/tt2?season=2", "series/tt1?season=1", "series/tt3?season=1"]);
   assert.deepEqual(urls(timeline), ["movie/tt5", "series/tt2?season=1", "series/tt1?season=1", "series/tt2?season=2", "series/tt3?season=1"]);
   assert.equal(timeline.name, "Marvel (Timeline)");
   assert.deepEqual(release.links.filter((l) => l.category === "Contents").map((l) => l.name), ["1 Movie", "3 Series", "4 Seasons"]);
-  assert.deepEqual(urls(trek), ["series/tt4?season=1", "movie/tt7"], "the config's date fills in for The Animatrix");
+  assert.deepEqual(urls(trek), ["series/tt4?season=1", "movie/tt7"], "the config's date wins over Cinemeta's for The Animatrix");
   assert.deepEqual(urls(other.metas[0], "Titles"), ["series/tt2", "series/tt3"]);
   assert.deepEqual(report.upcoming.Marvel, ["Avengers: Doomsday"]);
   assert.deepEqual(report.upcoming["Every Daredevil Series"], ["Daredevil: Born Again season 2"]);

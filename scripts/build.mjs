@@ -8,8 +8,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { shows as defaultShows, movies as defaultMovies, collections as defaultCollections } from "../collections.config.mjs";
 import {
-  CATALOGS, TYPE, arrange, buildManifest, catalogOf, catalogPaths, collectionId, configProblems, displayName,
-  entryStreams, expandEntries, genreNames, genresOf, sameTitle, toCollectionMeta, toCollectionPreview, toMovie, toShow,
+  CATALOGS, TYPE, arrange, buildManifest, catalogOf, catalogPaths, collectionId, collectionPopularity, configProblems, displayName,
+  entryStreams, expandEntries, genreNames, genresOf, popularityRanks, sameTitle, toCollectionMeta, toCollectionPreview, toMovie, toShow,
 } from "../src/lib.mjs";
 import { installPage } from "../src/install-page.mjs";
 
@@ -51,8 +51,9 @@ export async function build({
     const isMovie = Boolean(moviesConfig[key]);
     const { imdb, name, released } = isMovie ? moviesConfig[key] : showsConfig[key];
     const found = (await getJson(`${cinemeta}/meta/${isMovie ? "movie" : "series"}/${imdb}.json`)).meta;
-    // The config's `released` fills in for titles Cinemeta has no date for.
-    const cm = found && { ...found, released: found.released ?? released };
+    // The config's `released` wins: Cinemeta has no date for some titles, and dates others
+    // by a later release (a US or anniversary release of a Japanese film).
+    const cm = found && { ...found, released: released ?? found.released };
     if (!cm?.name) problems.push(`${key}: ${imdb} ("${name}") isn't on Cinemeta as a ${isMovie ? "movie" : "series"}`);
     else if (!sameTitle(name, cm.name)) problems.push(`${key}: ${imdb} is "${cm.name}" on Cinemeta, not "${name}"`);
     else if (isMovie) movies.set(key, toMovie(imdb, cm));
@@ -67,7 +68,8 @@ export async function build({
   // Failing stops the workflow from replacing the last good deployment.
   if (problems.length) throw fix(problems);
 
-  // ---- 2. Put each collection's entries in order ---------------------------
+  // ---- 2. Put each collection's entries in order, and the most popular first -
+  const ranks = popularityRanks([shows.values(), movies.values()]);
   const lists = [];
   const upcoming = {};
   for (const c of collections) {
@@ -75,8 +77,11 @@ export async function build({
     const expanded = expandEntries(c, shows, movies, now);
     problems.push(...expanded.problems);
     if (expanded.upcoming.length) upcoming[name] = expanded.upcoming;
-    lists.push({ c, name, entries: arrange(expanded.entries, c.order) });
+    const entries = arrange(expanded.entries, c.order, c.first);
+    lists.push({ c, name, entries, popularity: collectionPopularity(entries, ranks) });
   }
+  // Sorting keeps the config's order between equals, so a release order stays ahead of its timeline.
+  lists.sort((a, b) => b.popularity - a.popularity);
   if (problems.length) throw fix(problems);
 
   // ---- 3. Write the static addon --------------------------------------------
@@ -111,7 +116,7 @@ export async function build({
         await writeJson(rel, { metas });
       }
     }
-    report.catalogs[catalog.name] = Object.fromEntries(members.map(({ name, entries }) => [name, entries.length]));
+    report.catalogs[catalog.name] = Object.fromEntries(members.map(({ name, entries, popularity }) => [name, { entries: entries.length, popularity: Number(popularity.toFixed(3)) }]));
     for (const { name, entries } of members) {
       log(`${catalog.name} / ${name}: ${entries.length} entries${upcoming[name] ? ` (not out yet: ${upcoming[name].join(", ")})` : ""}`);
     }

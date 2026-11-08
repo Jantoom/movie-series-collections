@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  CATALOGS, TIMELINE_NOTE, arrange, buildManifest, catalogOf, catalogPaths, collectionDescription, collectionId, configProblems, displayName,
-  entryStreams, expandEntries, firstSentence, genreLink, genreNames, listItems, sameTitle, toCollectionMeta, toCollectionPreview,
+  CATALOGS, TIMELINE_NOTE, arrange, buildManifest, catalogOf, catalogPaths, collectionDescription, collectionId, collectionPopularity, configProblems,
+  displayName, entryStreams, expandEntries, firstSentence, genreLink, genreNames, listItems, popularityRanks, sameTitle, toCollectionMeta, toCollectionPreview,
   toMovie, toShow, valueSpellings, yearSpan,
 } from "../src/lib.mjs";
 
@@ -39,6 +39,8 @@ test("sameTitle tolerates punctuation but not a different title", () => {
   assert.ok(sameTitle("Thunderbolts", "Thunderbolts*"));
   assert.ok(!sameTitle("Star Trek", "Star Trek: The Next Generation"));
   assert.ok(!sameTitle("Loki", undefined));
+  assert.ok(sameTitle("Pokémon Horizons", "Pokemon Horizons"));
+  assert.ok(sameTitle("МастерШеф", "МастерШеф"), "titles in other scripts");
 });
 
 test("toShow groups episodes into seasons, without specials; toMovie keeps the release date", () => {
@@ -50,6 +52,8 @@ test("toShow groups episodes into seasons, without specials; toMovie keeps the r
   assert.equal(toShow("tt1", { name: "X", releaseInfo: "2025–" }).ongoing, true);
   assert.equal(toShow("tt1", { name: "X", status: "Continuing", releaseInfo: "2025" }).ongoing, true);
   assert.equal(ironMan.released, "2008-05-02T00:00:00.000Z");
+  const zero = toShow("tt2", { name: "Z", releaseInfo: "2021–", videos: [ep("tt2", 1, 1, "1970-01-01T00:00:00.000Z"), ep("tt2", 1, 2, "2021-05-01T00:00:00.000Z")] });
+  assert.equal(zero.seasons.get(1).premiere, "2021-05-01T00:00:00.000Z", "Cinemeta's zero timestamp means no date");
 });
 
 test("watch orders go in Connected Storyline, everything else in Other", () => {
@@ -81,12 +85,13 @@ test("configProblems catches unknown titles, bad seasons, names, genres and orde
   assert.deepEqual(configProblems(s, m, [
     { genres: ["Action"], name: "Fine (Unofficial)", order: "release", entries: [["loki"], ["loki", 2], ["iron-man"]] },
     { genres: ["Action", "Sci-Fi"], name: "Fine (Unofficial)", order: "timeline", entries: [["loki"]] },
-    { genres: ["Reality-TV"], name: "Pokémon", entries: [["loki"], ["iron-man"]] },
+    { genres: ["Reality-TV"], name: "Pokémon", first: ["iron-man"], entries: [["loki"], ["iron-man"]] },
   ]), []);
   assert.deepEqual(configProblems({ ...s, "iron-man": {} }, m, [
     { genres: ["G"], name: "A", order: "release", entries: [["loki"]] },
     { genres: ["G"], name: "A", order: "random", entries: [["thor"], ["loki", 0], ["iron-man", 1]] },
-    { genres: ["G"], name: "List", entries: [["loki", 2]] },
+    { genres: ["G"], name: "List", first: ["thor"], entries: [["loki", 2]] },
+    { genres: ["G"], name: "T", order: "timeline", first: ["loki"], entries: [["loki"]] },
     { genres: ["Bad/Genre"], name: "Bad/Name", entries: [] },
     { name: "Lost", entries: [["loki"]] },
   ]), [
@@ -96,8 +101,10 @@ test("configProblems catches unknown titles, bad seasons, names, genres and orde
     'A: no show or movie called "thor"',
     'A: "loki" season must be a whole number from 1, not 0',
     'A: "iron-man" is a movie, so it takes no season',
+    "List: \"first\" names \"thor\", which isn't one of its entries",
     'List: a collection without an order takes whole shows, so ["loki"], not ["loki", 2]',
-    "collection name \"Bad/Name\" can only use letters, digits, spaces and ' & : ( ) . , ! -",
+    'T: a timeline is already in the order listed, so it takes no "first"',
+    "collection name \"Bad/Name\" can only use letters, digits, spaces and ' & : ; ( ) . , ! ? -",
     'Bad/Name: genre "Bad/Genre" can only use letters, digits, spaces, \' & and -',
     "Bad/Name has no entries",
     "Lost has no genres",
@@ -134,6 +141,23 @@ test("release order sorts movies and seasons by date; timeline keeps the config'
   const { entries } = expandEntries({ name: "C", entries: [["loki", 2], ["wandavision", 1], ["iron-man"], ["loki", 1]] }, shows, movies, NOW);
   assert.deepEqual(arrange(entries, "release").map(label), ["Iron Man", "WandaVision 1", "Loki 1", "Loki 2"]);
   assert.deepEqual(arrange(entries, "timeline").map(label), ["Loki 2", "WandaVision 1", "Iron Man", "Loki 1"]);
+  assert.deepEqual(arrange(entries, undefined, ["loki"]).map(label), ["Loki 1", "Loki 2", "Iron Man", "WandaVision 1"], "first goes ahead of the dates");
+});
+
+test("popularity ranks titles against their own kind and averages a collection's top titles", () => {
+  const t = (imdb, popularity) => ({ imdb, popularity });
+  const ranks = popularityRanks([
+    [t("s1", { moviedb: 900, trakt: 10, SCM: 5 }), t("s2", { moviedb: 50, trakt: 30 }), t("s3", { moviedb: 1, trakt: 20 }), t("s4", {})],
+    [t("m1", { moviedb: 5 }), t("m2", { moviedb: 1 })],
+  ]);
+  assert.deepEqual(Object.fromEntries(ranks), { s1: 0.5, s2: 0.75, s3: 0.25, s4: 0.5, m1: 1, m2: 0 },
+    "ranks, so 900 is no better than first place; internal signals are ignored and no data counts as middling");
+  const entries = [{ kind: "movie", movie: { imdb: "m1" } }, { kind: "season", show: { imdb: "s3" } }, { kind: "season", show: { imdb: "s3" } }];
+  assert.equal(collectionPopularity(entries, ranks), 0.625, "each title counts once");
+  assert.equal(collectionPopularity([], ranks), 0);
+  const many = new Map([["a", 1], ["b", 1], ["c", 1], ["d", 1], ["e", 1], ["f", 0], ["g", 0]]);
+  const big = [..."abcdefg"].map((imdb) => ({ kind: "movie", movie: { imdb } }));
+  assert.equal(collectionPopularity(big, many), 1, "a long tail doesn't drag down its five biggest titles");
 });
 
 test("firstSentence keeps an entry's blurb short", () => {
@@ -165,6 +189,21 @@ test("an Other collection lists each show and movie once, by release, opening th
   ]);
   assert.equal(items[3].overview, "Loki (2021–2023, 3 seasons). The god of mischief steps out of his brother's shadow.");
   assert.equal(items[0].overview, "No Episodes (1999–2004).");
+});
+
+test("titles that clash get their country, or just their year when they come from one or two countries", () => {
+  const island = (imdb, country, year) => toShow(imdb, { name: "Love Island", country, releaseInfo: year, videos: [ep(imdb, 1, 1, `${year}-06-01T00:00:00.000Z`)] });
+  const s = new Map([["uk", island("tt1", "United Kingdom", "2015")], ["fr", island("tt2", "France", "2020")], ["uk2", island("tt3", "United Kingdom", "2005")], ["loki", loki]]);
+  const c = { name: "C", entries: [["uk"], ["fr"], ["uk2"], ["loki"]] };
+  const items = listItems(c, arrange(expandEntries(c, s, movies, NOW).entries));
+  assert.deepEqual(items.map((i) => i.title), ["Love Island (2005)", "Love Island (2015)", "Love Island (2020)", "Loki"]);
+  const uk = listItems({ name: "C", entries: [["uk"], ["fr"]] }, arrange(expandEntries({ name: "C", entries: [["uk"], ["fr"]] }, s, movies, NOW).entries));
+  assert.deepEqual(uk.map((i) => i.title), ["Love Island (UK)", "Love Island (France)"]);
+  const de = island("tt4", "Germany", "2017"), fr2 = island("tt5", "France", "2021");
+  const s3 = new Map([...s, ["de", de], ["fr2", fr2]]);
+  const c3 = { name: "C", entries: [["uk"], ["fr"], ["de"], ["fr2"]] };
+  assert.deepEqual(listItems(c3, arrange(expandEntries(c3, s3, movies, NOW).entries)).map((i) => i.title),
+    ["Love Island (UK)", "Love Island (Germany)", "Love Island (France 2020)", "Love Island (France 2021)"], "three or more countries: countries, with years where one repeats");
 });
 
 test("yearSpan runs from the first release to the last finale, open while a show runs", () => {

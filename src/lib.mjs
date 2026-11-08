@@ -41,7 +41,8 @@ export const LIST_CATEGORY = "Titles";         // an Other collection's entries
 export const TIMELINE_NOTE = "This collection follows the story's timeline instead of release order.";
 export const ORDERS = ["release", "timeline"];
 
-const fold = (s) => (s ?? "").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
+// Letters and digits in any script, without accents ("Pokémon" = "pokemon", "МастерШеф" kept).
+const fold = (s) => (s ?? "").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^\p{L}\p{N}]/gu, "");
 
 /** Whether Cinemeta's title is the one the config meant ("She Hulk" = "She-Hulk"). */
 export function sameTitle(expected, actual) {
@@ -69,7 +70,7 @@ export const genreNames = (collections, catalogId) =>
 
 // Genres are filter values and part of file names, so keep them plain.
 const PLAIN = /^[A-Za-z0-9][A-Za-z0-9 '&-]*$/;
-const NAME = /^[\p{L}\p{N}][\p{L}\p{N} '&:().,!-]*$/u;
+const NAME = /^[\p{L}\p{N}][\p{L}\p{N} '&:;().,!?-]*$/u;
 
 /** Config mistakes the build should stop on, before fetching anything. */
 export function configProblems(shows, movies, collections) {
@@ -78,13 +79,15 @@ export function configProblems(shows, movies, collections) {
   const names = new Set();
   for (const c of collections) {
     const label = c.name ?? "(unnamed)";
-    if (!NAME.test(c.name ?? "")) problems.push(`collection name "${c.name}" can only use letters, digits, spaces and ' & : ( ) . , ! -`);
+    if (!NAME.test(c.name ?? "")) problems.push(`collection name "${c.name}" can only use letters, digits, spaces and ' & : ; ( ) . , ! ? -`);
     if (names.has(collectionId(displayName(c)))) problems.push(`collection "${displayName(c)}" is used twice`);
     names.add(collectionId(displayName(c)));
     if (!genresOf(c).length) problems.push(`${label} has no genres`);
     for (const g of genresOf(c)) if (!PLAIN.test(g)) problems.push(`${label}: genre "${g}" can only use letters, digits, spaces, ' & and -`);
     if (c.order !== undefined && !ORDERS.includes(c.order)) problems.push(`${label}: order must be "release", "timeline" or left out, not "${c.order}"`);
     if (!c.entries?.length) { problems.push(`${label} has no entries`); continue; }
+    if (c.first !== undefined && c.order === "timeline") problems.push(`${label}: a timeline is already in the order listed, so it takes no "first"`);
+    for (const key of c.first ?? []) if (!c.entries.some(([k]) => k === key)) problems.push(`${label}: "first" names "${key}", which isn't one of its entries`);
     for (const [key, season] of c.entries) {
       if (!shows[key] && !movies[key]) problems.push(`${label}: no show or movie called "${key}"`);
       if (season === undefined) continue;
@@ -102,7 +105,11 @@ export function firstSentence(text) {
   return s || undefined;
 }
 
+// Cinemeta stands in 1970-01-01 (a zero timestamp) for dates it doesn't have.
+const dated = (date) => (date && !date.startsWith("1970-01-01") ? date : undefined);
 const poster = (cm) => cm.poster?.replace("/poster/small/", "/poster/medium/");
+// Cinemeta's popularity signals, by source ("moviedb", "stremio", "trakt").
+const popularity = (cm) => cm.popularities ?? (cm.popularity === undefined ? {} : { stremio: cm.popularity });
 
 /**
  * A show from Cinemeta, trimmed to what the addon uses. Seasons are keyed by number,
@@ -116,8 +123,9 @@ export function toShow(imdb, cm) {
     if (!Number.isInteger(v.season) || v.season < 1) continue;
     const s = seasons.get(v.season) ?? { number: v.season, episodes: 0, premiere: undefined, finale: undefined };
     s.episodes++;
-    if (v.released && (!s.premiere || v.released < s.premiere)) s.premiere = v.released;
-    if (v.released && (!s.finale || v.released > s.finale)) s.finale = v.released;
+    const released = dated(v.released);
+    if (released && (!s.premiere || released < s.premiere)) s.premiere = released;
+    if (released && (!s.finale || released > s.finale)) s.finale = released;
     seasons.set(v.season, s);
   }
   const startYear = Number.parseInt(cm.releaseInfo ?? cm.year, 10);
@@ -128,22 +136,27 @@ export function toShow(imdb, cm) {
     background: cm.background,
     description: cm.description,
     releaseInfo: cm.releaseInfo ?? cm.year,
-    released: cm.released ?? (startYear ? `${startYear}-01-01T00:00:00.000Z` : undefined),
+    released: dated(cm.released) ?? (startYear ? `${startYear}-01-01T00:00:00.000Z` : undefined),
     ongoing: cm.status === "Continuing" || /[–-]\s*$/.test(cm.releaseInfo ?? ""),
     seasons: new Map([...seasons].sort(([a], [b]) => a - b)),
+    country: cm.country,
+    popularity: popularity(cm),
   };
 }
 
 /** A movie from Cinemeta, trimmed to what the addon uses. */
 export function toMovie(imdb, cm) {
-  return { imdb, name: cm.name, poster: poster(cm), background: cm.background, description: cm.description, released: cm.released };
+  return {
+    imdb, name: cm.name, poster: poster(cm), background: cm.background, description: cm.description, released: dated(cm.released),
+    country: cm.country, popularity: popularity(cm),
+  };
 }
 
 const isOut = (date, now) => Boolean(date) && date <= now;
 
 /**
- * A collection's entries, as { kind: "season", show, season, date },
- * { kind: "movie", movie, date }, or { kind: "show", show, date } for a show Cinemeta
+ * A collection's entries, as { kind: "season", key, show, season, date },
+ * { kind: "movie", key, movie, date }, or { kind: "show", key, show, date } for a show Cinemeta
  * lists no episodes for. ["loki"] means every season that has aired; ["loki", 2] one
  * season; ["iron-man"] a movie. Titles that aren't out yet are skipped (and listed), so
  * they appear by themselves once a weekly build catches them.
@@ -153,13 +166,13 @@ export function expandEntries(collection, shows, movies, now = new Date().toISOS
   for (const [key, number] of collection.entries) {
     const movie = movies.get(key);
     if (movie) {
-      if (isOut(movie.released, now)) entries.push({ kind: "movie", movie, date: movie.released });
+      if (isOut(movie.released, now)) entries.push({ kind: "movie", key, movie, date: movie.released });
       else upcoming.push(movie.name);
       continue;
     }
     const show = shows.get(key);
     if (number === undefined && show.seasons.size === 0) {
-      if (isOut(show.released, now)) entries.push({ kind: "show", show, date: show.released });
+      if (isOut(show.released, now)) entries.push({ kind: "show", key, show, date: show.released });
       else upcoming.push(show.name);
       continue;
     }
@@ -172,17 +185,60 @@ export function expandEntries(collection, shows, movies, now = new Date().toISOS
       // Old or web-only shows can have seasons without episode dates. If the show has
       // ended, those seasons have aired; date them by the show's premiere.
       const date = season.premiere ?? (show.ongoing ? undefined : show.released);
-      if (isOut(date, now)) entries.push({ kind: "season", show, season, date });
+      if (isOut(date, now)) entries.push({ kind: "season", key, show, season, date });
       else upcoming.push(`${show.name} season ${season.number}`);
     }
   }
   return { entries, problems, upcoming };
 }
 
-/** "timeline" keeps the config's order; release order and Other sort by date. */
-export function arrange(entries, order) {
+/**
+ * "timeline" keeps the config's order; release order and Other sort by date. `first`
+ * lists keys to put ahead of the rest, in that order (a collection's poster is its first
+ * title's, so this can pick one that has a poster).
+ */
+export function arrange(entries, order, first = []) {
   if (order === "timeline") return entries;
-  return [...entries].sort((a, b) => a.date.localeCompare(b.date));
+  const pinned = (e) => (first.includes(e.key) ? first.indexOf(e.key) : first.length);
+  return [...entries].sort((a, b) => pinned(a) - pinned(b) || a.date.localeCompare(b.date));
+}
+
+// Cinemeta's public popularity signals; it also passes along internal ones.
+const POPULARITY_SOURCES = ["moviedb", "stremio", "trakt"];
+
+/**
+ * Each title's popularity from 0 to 1: its rank among the given titles of the same kind
+ * (pass movies and series as separate groups, since Cinemeta's scales differ), averaged
+ * over the signals it has. Ranks rather than raw numbers, so one hit can't outweigh the
+ * rest of a collection. A title with no signals counts as middling, not unpopular.
+ */
+export function popularityRanks(groups) {
+  const ranks = new Map();
+  for (const group of groups) {
+    const list = [...group];
+    const scores = new Map(list.map((t) => [t.imdb, []]));
+    for (const source of POPULARITY_SOURCES) {
+      const rated = list.filter((t) => typeof t.popularity?.[source] === "number");
+      if (rated.length < 2) continue;
+      const sorted = rated.map((t) => t.popularity[source]).sort((a, b) => a - b);
+      for (const t of rated) scores.get(t.imdb).push(sorted.indexOf(t.popularity[source]) / (rated.length - 1));
+    }
+    for (const [imdb, s] of scores) ranks.set(imdb, s.length ? s.reduce((a, b) => a + b, 0) / s.length : 0.5);
+  }
+  return ranks;
+}
+
+export const HEADLINERS = 5;
+
+/**
+ * A collection's popularity: the average rank of its few most popular titles, each title
+ * counted once. A franchise is known by its biggest titles, so a long tail of lesser
+ * spin-offs shouldn't sink it below a collection of two.
+ */
+export function collectionPopularity(entries, ranks) {
+  const ids = [...new Set(entries.map((e) => (e.kind === "movie" ? e.movie.imdb : e.show.imdb)))];
+  const top = ids.map((id) => ranks.get(id) ?? 0).sort((a, b) => b - a).slice(0, HEADLINERS);
+  return top.length ? top.reduce((sum, r) => sum + r, 0) / top.length : 0;
 }
 
 const year = (date) => Number.parseInt(date, 10) || undefined;
@@ -223,16 +279,39 @@ const seasonItem = ({ show, season, date }) => ({
  * says more than the collection's own description. `entries` must already be arranged.
  */
 export function listItems(collection, entries) {
-  if (collection.order) {
-    return entries.map((e) => (e.kind === "movie" ? movieItem(e) : e.kind === "show" ? showItem(e) : seasonItem(e)));
-  }
   const seen = new Set();
-  return entries
-    .filter((e) => {
-      const id = e.kind === "movie" ? e.movie.imdb : e.show.imdb;
-      return !seen.has(id) && seen.add(id);
-    })
-    .map((e) => (e.kind === "movie" ? movieItem(e) : showItem(e)));
+  const listed = collection.order ? entries : entries.filter((e) => {
+    const id = e.kind === "movie" ? e.movie.imdb : e.show.imdb;
+    return !seen.has(id) && seen.add(id);
+  });
+  const item = (e) => (e.kind === "movie" ? movieItem(e) : e.kind === "season" && collection.order ? seasonItem(e) : showItem(e));
+  return disambiguate(listed.map(item), listed);
+}
+
+const SHORT_COUNTRY = { "United Kingdom": "UK", "United States": "US", USA: "US" };
+const countryOf = (e) => {
+  const c = (e.kind === "movie" ? e.movie : e.show).country?.split(",")[0].trim();
+  return SHORT_COUNTRY[c] ?? c;
+};
+
+/**
+ * Regional versions often share a title ("Love Island" from the UK and from France), so
+ * titles that clash get their country, plus the year where a country repeats ("Big
+ * Brother (Portugal 2000)"). Remakes from one or two countries get just the year
+ * ("Spider-Man (1967)", "Spider-Man (1981)").
+ */
+function disambiguate(items, entries) {
+  return items.map((item, i) => {
+    const group = items.map((it, j) => j).filter((j) => items[j].title === item.title);
+    if (group.length < 2) return item;
+    const countries = group.map((j) => countryOf(entries[j]));
+    const distinct = new Set(countries.filter(Boolean)).size;
+    const byCountry = distinct >= 3 || (countries.every(Boolean) && distinct === group.length);
+    const country = countryOf(entries[i]), when = year(entries[i].date);
+    const repeated = countries.filter((c) => c === country).length > 1;
+    const tag = !byCountry || !country ? when : repeated ? `${country} ${when}` : country;
+    return { ...item, title: `${item.title} (${tag})` };
+  });
 }
 
 /** "2008–2026", first release to last, or "2008–" while a show in it is still running. */
@@ -371,7 +450,7 @@ export function catalogPaths(catalogId, genre, metas) {
 }
 
 // Bump when the manifest changes so installed copies refresh.
-export function buildManifest(collections, version = "0.9.0") {
+export function buildManifest(collections, version = "0.10.0") {
   return {
     id: "community.movie-series-collections",
     version,
