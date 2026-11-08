@@ -449,14 +449,14 @@ export function toCollectionMeta(collection, entries, manifestUrl) {
 /**
  * Each episode's one stream: its link, named for what it opens ("Link to Movie", "Link to
  * Series", "Link to Season"). Web follows it inside the app; Stremio 5 desktop opens it in
- * the system browser behind Stremio's warning page. Stremio 5 shows `description`;
- * older clients show `title`.
+ * the system browser behind Stremio's warning page. The note goes in `title` only: Stremio
+ * reads it as `description` too, and a stream with both is a duplicate field it drops.
  */
 export const STREAM_NOTE = "Tap to watch";
 export function entryStreams(collection, entries) {
   return collectionVideos(collection, entries).map(({ id, link, url }) => ({
     id,
-    streams: [{ name: `Link to ${link}`, title: STREAM_NOTE, description: STREAM_NOTE, externalUrl: url }],
+    streams: [{ name: `Link to ${link}`, title: STREAM_NOTE, externalUrl: url }],
   }));
 }
 

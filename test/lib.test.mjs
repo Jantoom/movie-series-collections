@@ -294,7 +294,8 @@ test("the detail page has everything in season 1, then movies and series apart; 
     ["mscol-c-timeline-s1", "Link to Season", "stremio:///detail/series/tt9140554?season=1"],
   ]);
   const [stream] = entryStreams(c, arranged(c))[0].streams;
-  assert.deepEqual([stream.title, stream.description], ["Tap to watch", "Tap to watch"]);
+  assert.equal(stream.title, "Tap to watch");
+  assert.ok(!("description" in stream), "Stremio reads title as description, so both would clash");
   const list = { genres: ["G"], name: "L", entries: [["loki"]] };
   assert.equal(entryStreams(list, arranged(list))[0].streams[0].name, "Link to Series", "a whole show");
   const seriesOnly = { genres: ["G"], name: "S", entries: [["loki"], ["wandavision"]] };
