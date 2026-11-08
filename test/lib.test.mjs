@@ -57,8 +57,8 @@ test("names: release order as is, timeline marked, plain lists say what they hol
   assert.equal(displayName({ name: "Marvel" }, { movies: true }), "Every Marvel Movie");
   assert.equal(displayName({ name: "Marvel" }, { movies: true, series: true }), "Every Marvel Movie and Series");
   assert.deepEqual(contentKinds({ entries: [["loki"], ["iron-man"]] }, { loki: {} }, { "iron-man": {} }), { movies: true, series: true });
-  assert.equal(collectionId("Star Wars (Timeline)"), "sercol-star-wars-timeline");
-  assert.equal(collectionId("Marvel Cinematic Universe (Unofficial)"), "sercol-marvel-cinematic-universe-unofficial");
+  assert.equal(collectionId("Star Wars (Timeline)"), "mscol-star-wars-timeline");
+  assert.equal(collectionId("Marvel Cinematic Universe (Unofficial)"), "mscol-marvel-cinematic-universe-unofficial");
 });
 
 test("only timelines add the standard sentence", () => {
@@ -161,7 +161,7 @@ test("a collection's poster carries its genres, contents (movies first) and list
   const c = { group: ["Heroes", "Gods"], name: "Marvel", order: "timeline", description: "Heroes.", entries: [["iron-man"], ["loki", 1], ["wandavision", 1], ["loki", 2]] };
   const name = displayName(c);
   const p = toCollectionPreview(c, name, arranged(c), MANIFEST);
-  assert.equal(p.id, "sercol-marvel-timeline");
+  assert.equal(p.id, "mscol-marvel-timeline");
   assert.equal(p.type, "collections");
   assert.equal(p.name, "Marvel (Timeline)");
   assert.equal(p.poster, ironMan.poster, "the first title's poster");
@@ -179,7 +179,7 @@ test("a collection's poster carries its genres, contents (movies first) and list
     "Watch order: Loki S2",
   ]);
   assert.equal(p.links[0].url, "stremio:///discover/https%3A%2F%2Fexample.test%2Faddon%2Fmanifest.json/collections/collections?genre=Heroes");
-  assert.equal(p.links[2].url, "stremio:///detail/collections/sercol-marvel-timeline", "contents chips stay on the collection");
+  assert.equal(p.links[2].url, "stremio:///detail/collections/mscol-marvel-timeline", "contents chips stay on the collection");
   assert.ok(!toCollectionPreview(c, name, arranged(c)).links.some((l) => l.category === "Genres"), "no genre chips without the addon's URL");
 });
 
@@ -200,13 +200,13 @@ test("the detail page lists the entries with blurbs, and each entry's stream is 
   const name = displayName(c);
   const meta = toCollectionMeta(c, name, arranged(c), MANIFEST);
   assert.deepEqual(meta.videos.map((v) => [v.id, v.title, v.season, v.episode]), [
-    ["sercol-c-timeline-1", "Loki S1", 1, 1],
-    ["sercol-c-timeline-2", "Iron Man", 1, 2],
+    ["mscol-c-timeline-1", "Loki S1", 1, 1],
+    ["mscol-c-timeline-2", "Iron Man", 1, 2],
   ]);
   assert.match(meta.videos[0].overview, /^Season 1 of Loki/);
   assert.deepEqual(entryStreams(c, name, arranged(c)), [
-    { id: "sercol-c-timeline-1", streams: [{ name: "Series Collections", title: "Open Loki S1", externalUrl: "stremio:///detail/series/tt9140554?season=1" }] },
-    { id: "sercol-c-timeline-2", streams: [{ name: "Series Collections", title: "Open Iron Man", externalUrl: "stremio:///detail/movie/tt0371746" }] },
+    { id: "mscol-c-timeline-1", streams: [{ name: "Movie & Series Collections", title: "Open Loki S1", externalUrl: "stremio:///detail/series/tt9140554?season=1" }] },
+    { id: "mscol-c-timeline-2", streams: [{ name: "Movie & Series Collections", title: "Open Iron Man", externalUrl: "stremio:///detail/movie/tt0371746" }] },
   ]);
 });
 
@@ -218,7 +218,7 @@ test("catalogPaths writes every genre spelling, pages of 100, and the no-genre l
   assert.deepEqual(valueSpellings("Sci-Fi"), ["Sci-Fi"]);
   assert.deepEqual(valueSpellings("Crime & Drama"), ["Crime & Drama", "Crime+&+Drama", "Crime%20%26%20Drama", "Crime+%26+Drama"]);
   assert.ok(valueSpellings("Kids' Shows").includes("Kids%27%20Shows"), "strict encoding for ' ( ) too");
-  const metas = Array.from({ length: 150 }, (_, i) => ({ id: `sercol-${i}` }));
+  const metas = Array.from({ length: 150 }, (_, i) => ({ id: `mscol-${i}` }));
   const files = catalogPaths("Sci-Fi", metas);
   assert.deepEqual(files.map((f) => f.rel), [
     "catalog/collections/collections/genre=Sci-Fi.json",
@@ -237,8 +237,8 @@ test("manifest is one Genre catalog in the collections type, with streams for en
   assert.deepEqual(m.types, ["collections"]);
   assert.deepEqual(m.resources, [
     "catalog",
-    { name: "meta", types: ["collections"], idPrefixes: ["sercol-"] },
-    { name: "stream", types: ["collections"], idPrefixes: ["sercol-"] },
+    { name: "meta", types: ["collections"], idPrefixes: ["mscol-"] },
+    { name: "stream", types: ["collections"], idPrefixes: ["mscol-"] },
   ]);
   assert.equal(m.catalogs.length, 1);
   const [c] = m.catalogs;

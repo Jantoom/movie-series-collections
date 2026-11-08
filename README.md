@@ -1,4 +1,4 @@
-# Series Collections
+# Movie & Series Collections
 
 A Stremio addon of movie and TV collections: watch orders for stories told across many films and shows (the Marvel Cinematic Universe, Star Wars, the Arrowverse, Star Trek), and lists of every title in a franchise (Marvel, DC). It's hosted as static files on GitHub Pages and rebuilt weekly by GitHub Actions, so there's no server to run.
 

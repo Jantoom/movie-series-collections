@@ -17,10 +17,10 @@
 // season of a show has the show's id, so only the first season would survive.
 
 export const TYPE = "collections";   // shows as "Collections" in Discover
-export const ADDON_NAME = "Series Collections";
+export const ADDON_NAME = "Movie & Series Collections";
 export const CATALOG_ID = "collections";
 export const CATALOG_NAME = "Genre";
-export const ID_PREFIX = "sercol-";   // no ":" so the ids work as file names on Windows
+export const ID_PREFIX = "mscol-";   // no ":" so the ids work as file names on Windows
 export const PAGE_SIZE = 100;   // Stremio asks for the next page with skip=100, 200, …
 
 // Link chip headings on the side panel and detail page.
@@ -58,7 +58,7 @@ export function displayName(c, kinds = {}) {
   return `Every ${c.name} ${what}`;
 }
 
-/** "Star Wars (Timeline)" → "sercol-star-wars-timeline". */
+/** "Star Wars (Timeline)" → "mscol-star-wars-timeline". */
 export const collectionId = (name) => `${ID_PREFIX}${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
 
 /** The collection's description, with the timeline note where it applies. */
@@ -357,10 +357,10 @@ export function catalogPaths(group, metas) {
 }
 
 // Bump when the manifest changes so installed copies refresh.
-export function buildManifest(collections, version = "0.7.0") {
+export function buildManifest(collections, version = "0.8.0") {
   const groups = groupNames(collections);
   return {
-    id: "community.series-collections",
+    id: "community.movie-series-collections",
     version,
     name: ADDON_NAME,
     description: "Collections of movies and TV series: watch orders, by release or by the story's timeline, and lists of every title in a franchise. Find them under Discover → Collections.",

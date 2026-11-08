@@ -56,14 +56,14 @@ const opts = (outDir, fetchImpl, c = collections) => ({
 const urls = (meta, category = "Watch order") => meta.links.filter((l) => l.category === category).map((l) => l.url.replace(/^stremio:\/\/\/detail\//, ""));
 
 test("builds one Genre catalog with a genre per group, a poster per collection", async () => {
-  const outDir = await mkdtemp(join(tmpdir(), "series-collections-"));
+  const outDir = await mkdtemp(join(tmpdir(), "movie-series-collections-"));
   const { fetchImpl, seen } = fakeFetch();
   const report = await build(opts(outDir, fetchImpl));
   assert.equal(seen.length, 6, "each title is looked up once");
   assert.ok(seen.includes("https://fake.test/meta/movie/tt5.json") && seen.includes("https://fake.test/meta/series/tt1.json"));
 
   const heroes = await read(outDir, "catalog/collections/collections/genre=Heroes.json");
-  const ids = ["sercol-marvel", "sercol-marvel-timeline", "sercol-trek", "sercol-every-daredevil-series"];
+  const ids = ["mscol-marvel", "mscol-marvel-timeline", "mscol-trek", "mscol-every-daredevil-series"];
   assert.deepEqual(heroes.metas.map((m) => m.id), ids);
   assert.deepEqual((await read(outDir, "catalog/collections/collections/genre=Sci-Fi.json")).metas.map((m) => m.name), ["Trek"]);
   const all = await read(outDir, "catalog/collections/collections.json");
@@ -80,10 +80,10 @@ test("builds one Genre catalog with a genre per group, a poster per collection",
   assert.deepEqual(report.upcoming.Marvel, ["Avengers: Doomsday"]);
   assert.deepEqual(report.upcoming["Every Daredevil Series"], ["Daredevil: Born Again season 2"]);
 
-  const meta = (await read(outDir, "meta/collections/sercol-marvel-timeline.json")).meta;
+  const meta = (await read(outDir, "meta/collections/mscol-marvel-timeline.json")).meta;
   assert.deepEqual(urls(meta), urls(timeline), "the detail page has the same links");
   assert.deepEqual(meta.videos.map((v) => v.title), ["Iron Man", "Daredevil S1", "Loki S1", "Daredevil S2", "Daredevil: Born Again S1"]);
-  const stream = await read(outDir, "stream/collections/sercol-marvel-timeline-3.json");
+  const stream = await read(outDir, "stream/collections/mscol-marvel-timeline-3.json");
   assert.equal(stream.streams[0].externalUrl, "stremio:///detail/series/tt1?season=1");
 
   const manifest = await read(outDir, "manifest.json");
@@ -94,7 +94,7 @@ test("builds one Genre catalog with a genre per group, a poster per collection",
 });
 
 test("refuses to publish when an id points at another title or a season is missing", async () => {
-  const outDir = await mkdtemp(join(tmpdir(), "series-collections-"));
+  const outDir = await mkdtemp(join(tmpdir(), "movie-series-collections-"));
   const { fetchImpl } = fakeFetch({ ...cinemetaData, movie: { ...cinemetaData.movie, tt5: { name: "Box 21" } } });
   await assert.rejects(build(opts(outDir, fetchImpl)), /iron-man: tt5 is "Box 21" on Cinemeta, not "Iron Man"/);
 
@@ -104,7 +104,7 @@ test("refuses to publish when an id points at another title or a season is missi
 });
 
 test("refuses a broken config before fetching anything", async () => {
-  const outDir = await mkdtemp(join(tmpdir(), "series-collections-"));
+  const outDir = await mkdtemp(join(tmpdir(), "movie-series-collections-"));
   const { fetchImpl, seen } = fakeFetch();
   await assert.rejects(build(opts(outDir, fetchImpl, [{ group: "G", name: "X", entries: [["thor"]] }])), /no show or movie called "thor"/);
   assert.equal(seen.length, 0);
