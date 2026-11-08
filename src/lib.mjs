@@ -502,7 +502,7 @@ export function catalogPaths(catalogId, genre, metas) {
 }
 
 // Bump when the manifest changes so installed copies refresh.
-export function buildManifest(collections, version = "0.12.0") {
+export function buildManifest(collections, version = "0.12.1") {
   return {
     id: "community.movie-series-collections",
     version,
