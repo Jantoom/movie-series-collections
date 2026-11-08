@@ -8,9 +8,10 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { shows as defaultShows, movies as defaultMovies, collections as defaultCollections } from "../collections.config.mjs";
 import {
-  ADDON_NAME, CATALOGS, TYPE, arrange, buildManifest, catalogOf, catalogPaths, collectionDescription, collectionId, configProblems, displayName,
+  CATALOGS, TYPE, arrange, buildManifest, catalogOf, catalogPaths, collectionId, configProblems, displayName,
   entryStreams, expandEntries, genreNames, genresOf, sameTitle, toCollectionMeta, toCollectionPreview, toMovie, toShow,
 } from "../src/lib.mjs";
+import { installPage } from "../src/install-page.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -116,9 +117,10 @@ export async function build({
     }
   }
 
-  await writeJson("manifest.json", buildManifest(collections));
+  const manifest = buildManifest(collections);
+  await writeJson("manifest.json", manifest);
   await writeFile(join(outDir, ".nojekyll"), "");
-  await writeFile(join(outDir, "index.html"), installPage(siteUrl, lists));
+  await writeFile(join(outDir, "index.html"), sitePage(siteUrl, manifest, lists, { movies: movies.size, series: shows.size }));
   report.series = shows.size;
   report.movies = movies.size;
   await writeJson("report.json", report);
@@ -126,30 +128,34 @@ export async function build({
   return report;
 }
 
-function installPage(siteUrl, lists) {
+function sitePage(siteUrl, manifest, lists, totals) {
   const base = siteUrl.replace(/\/$/, "");
-  const manifest = base ? `${base}/manifest.json` : "manifest.json";
-  const stremio = base ? manifest.replace(/^https?:\/\//, "stremio://") : "#";
-  const escape = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-  const item = ({ c, name }) => `<li><b>${escape(name)}</b> <small>(${escape(genresOf(c).join(", "))})</small>${collectionDescription(c) ? ` — ${escape(collectionDescription(c))}` : ""}</li>`;
-  const list = CATALOGS
-    .map(({ id, name }) => `<h2>${escape(name)}</h2><ul>${lists.filter(({ c }) => catalogOf(c) === id).map(item).join("")}</ul>`)
-    .join("");
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${ADDON_NAME}</title><style>
-:root{color-scheme:light dark;--bg:#fff;--fg:#1a1a1a;--muted:#666;--accent:#7b5bf2}
-@media (prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--muted:#999}}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;padding:16px;box-sizing:border-box}
-main{max-width:520px}h1{margin:0 0 8px}h2{font-size:18px;margin:24px 0 0}p,li{color:var(--muted)}
-a.btn{display:inline-block;background:var(--accent);color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;margin-right:8px}
-code{word-break:break-all;font-size:14px}</style></head><body><main>
-<h1>${ADDON_NAME}</h1>
-<p>Collections of movies and TV series, under Discover → Collections. <b>Connected Storyline</b> has watch orders for stories told across many titles; <b>Other</b> gathers titles that share a franchise, character or brand. Each catalog's genre filter starts on None, showing all of its collections. Each movie, season or show in a collection opens that title.</p>
-<p><a class="btn" href="${stremio}">Install in Stremio</a><a href="report.json">Build report</a></p>
-<p>Or paste this into Stremio's addon search:<br><code>${manifest}</code></p>
-${list}
-<p>This addon has no streams of its own. Titles play through whatever stream addons you already have installed.</p>
-</main></body></html>`;
+  const groups = manifest.catalogs.map((catalog) => {
+    const members = lists.filter(({ c }) => catalogOf(c) === catalog.id);
+    const genres = catalog.extra.find((e) => e.name === "genre").options;
+    return {
+      title: catalog.name,
+      detail: `${members.length} collections`,
+      choicesLabel: "Genres",
+      choices: genres.map((genre) => ({ label: genre, detail: String(members.filter(({ c }) => genresOf(c).includes(genre)).length) })),
+    };
+  });
+  return installPage({
+    name: manifest.name,
+    version: manifest.version,
+    icon: "stack",
+    tagline: "Watch orders and franchise collections of movies and TV series.",
+    manifestUrl: base ? `${base}/manifest.json` : "manifest.json",
+    stats: [
+      { value: lists.length, label: "collections" },
+      { value: totals.movies, label: "movies" },
+      { value: totals.series, label: "series" },
+    ],
+    groups,
+    about: `<p>Find them under <b>Discover</b> → <b>Collections</b>. <b>Connected Storyline</b> has watch orders for stories told across many titles, by release or by the story's timeline. <b>Other</b> gathers titles that share a franchise, character or brand. Each movie, season or show in a collection opens that title.</p>
+<p>This addon has no streams of its own. Titles play through whatever stream addons you already have installed.</p>`,
+    links: [{ label: "Build report", href: "report.json" }],
+  });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
