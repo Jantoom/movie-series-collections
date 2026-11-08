@@ -6,7 +6,7 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { shows as defaultShows, collections as defaultCollections } from "../collections.config.mjs";
-import { ADDON_NAME, TYPE, arrange, buildManifest, catalogPaths, collectionDescription, collectionId, configProblems, displayName, expandSeasons, groupNames, sameTitle, toCollectionMeta, toCollectionPreview, toShow } from "../src/lib.mjs";
+import { ADDON_NAME, TYPE, arrange, buildManifest, catalogPaths, collectionDescription, collectionId, configProblems, displayName, expandSeasons, groupNames, groupsOf, sameTitle, toCollectionMeta, toCollectionPreview, toShow } from "../src/lib.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -71,16 +71,19 @@ export async function build({
     await writeFile(file, JSON.stringify(data));
   };
 
+  // Genre chips link to Discover, which needs the URL the addon is installed from.
+  const manifestUrl = siteUrl ? `${siteUrl.replace(/\/$/, "")}/manifest.json` : undefined;
   const report = { builtAt: now, groups: {}, upcoming };
-  for (const c of collections) {
-    const { entries } = lists.find((l) => l.c === c);
-    await writeJson(`meta/${TYPE}/${collectionId(c)}.json`, { meta: toCollectionMeta(c, entries) });
+  const previews = new Map();
+  for (const { c, entries } of lists) {
+    previews.set(c, toCollectionPreview(c, entries, manifestUrl));
+    await writeJson(`meta/${TYPE}/${collectionId(c)}.json`, { meta: toCollectionMeta(c, entries, manifestUrl) });
   }
-  const everything = [];
+  const everything = new Set();
   for (const group of groupNames(collections)) {
-    const members = lists.filter(({ c }) => c.group === group);
-    const metas = members.map(({ c, entries }) => toCollectionPreview(c, entries));
-    everything.push(...metas);
+    const members = lists.filter(({ c }) => groupsOf(c).includes(group));
+    const metas = members.map(({ c }) => previews.get(c));
+    metas.forEach((m) => everything.add(m));
     for (const { rel, metas: page } of catalogPaths(group, metas)) {
       await writeJson(rel, { metas: page });
     }
@@ -90,8 +93,8 @@ export async function build({
       log(`${group} / ${name}: ${entries.length} seasons${upcoming[name] ? ` (not aired yet: ${upcoming[name].join(", ")})` : ""}`);
     }
   }
-  // No genre: every collection, group by group. This is also the home-screen row.
-  for (const { rel, metas: page } of catalogPaths(undefined, everything)) {
+  // No genre: every collection once, group by group. This is also the home-screen row.
+  for (const { rel, metas: page } of catalogPaths(undefined, [...everything])) {
     await writeJson(rel, { metas: page });
   }
 
@@ -111,7 +114,7 @@ function installPage(siteUrl, collections) {
   const escape = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
   const item = (c) => `<li><b>${escape(displayName(c))}</b>${collectionDescription(c) ? ` — ${escape(collectionDescription(c))}` : ""}</li>`;
   const list = groupNames(collections)
-    .map((g) => `<h2>${escape(g)}</h2><ul>${collections.filter((c) => c.group === g).map(item).join("")}</ul>`)
+    .map((g) => `<h2>${escape(g)}</h2><ul>${collections.filter((c) => groupsOf(c).includes(g)).map(item).join("")}</ul>`)
     .join("");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${ADDON_NAME}</title><style>
@@ -122,7 +125,7 @@ main{max-width:520px}h1{margin:0 0 8px}h2{font-size:18px;margin:24px 0 0}p,li{co
 a.btn{display:inline-block;background:var(--accent);color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;margin-right:8px}
 code{word-break:break-all;font-size:14px}</style></head><body><main>
 <h1>${ADDON_NAME}</h1>
-<p>TV series collections in watch order. Find them under Discover → Series → Collections, pick a group from the genre filter, then select a collection: its seasons are listed under "Watch order", and each one opens that show on that season.</p>
+<p>TV series collections: watch orders, season by season, and lists of every show in a franchise. Find them under Discover → Series → Collections, optionally pick a group from the genre filter, then select a collection. Each season or show in it opens that show.</p>
 <p><a class="btn" href="${stremio}">Install in Stremio</a><a href="report.json">Build report</a></p>
 <p>Or paste this into Stremio's addon search:<br><code>${manifest}</code></p>
 ${list}

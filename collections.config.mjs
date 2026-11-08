@@ -1,9 +1,8 @@
 // Everything you'd normally change lives here. Push a change and the workflow rebuilds.
 //
 // The addon has one catalog, "Collections" (Discover → Series → Collections). Its genre
-// filter picks a group, and each poster in a group is a collection. A collection lists
-// its seasons in watch order as "Watch order" links; each opens the real show on that
-// season's tab.
+// filter picks a group, and each poster is a collection: either a watch order, listed
+// season by season, or a plain list of every show in a franchise.
 
 // Every show the collections use, by a short key. `name` is only a check: the build
 // looks each IMDb id up on Cinemeta and fails if the title there doesn't match, so a
@@ -29,6 +28,9 @@ export const shows = {
   "marvel-zombies": { imdb: "tt16027014", name: "Marvel Zombies" },
   "wonder-man": { imdb: "tt21066182", name: "Wonder Man" },
   "visionquest": { imdb: "tt23112594", name: "VisionQuest" },
+  // Marvel Animation, outside the MCU timeline
+  "x-men-97": { imdb: "tt16026746", name: "X-Men '97" },
+  "spider-man-yfn": { imdb: "tt16027074", name: "Your Friendly Neighborhood Spider-Man" },
   // Marvel Television: Netflix
   "daredevil": { imdb: "tt3322312", name: "Daredevil" },
   "jessica-jones": { imdb: "tt2357547", name: "Jessica Jones" },
@@ -43,6 +45,15 @@ export const shows = {
   "runaways": { imdb: "tt1236246", name: "Runaways" },
   "cloak-and-dagger": { imdb: "tt5614844", name: "Cloak & Dagger" },
   "helstrom": { imdb: "tt10266874", name: "Helstrom" },
+  // Other Marvel series
+  "x-men-tas": { imdb: "tt0103584", name: "X-Men" },
+  "spider-man-tas": { imdb: "tt0112175", name: "Spider-Man: The Animated Series" },
+  "x-men-evolution": { imdb: "tt0247827", name: "X-Men: Evolution" },
+  "legion": { imdb: "tt5114356", name: "Legion" },
+  "the-gifted": { imdb: "tt4396630", name: "The Gifted" },
+  "moon-girl": { imdb: "tt8041658", name: "Moon Girl and Devil Dinosaur" },
+  "modok": { imdb: "tt9811118", name: "M.O.D.O.K." },
+  "hit-monkey": { imdb: "tt9811316", name: "Hit-Monkey" },
   // Arrowverse
   "arrow": { imdb: "tt2193021", name: "Arrow" },
   "the-flash": { imdb: "tt3107288", name: "The Flash" },
@@ -51,10 +62,20 @@ export const shows = {
   "black-lightning": { imdb: "tt6045840", name: "Black Lightning" },
   "batwoman": { imdb: "tt8712204", name: "Batwoman" },
   "superman-and-lois": { imdb: "tt11192306", name: "Superman & Lois" },
-  // Stargate
-  "stargate-sg1": { imdb: "tt0118480", name: "Stargate SG-1" },
-  "stargate-atlantis": { imdb: "tt0374455", name: "Stargate: Atlantis" },
-  "stargate-universe": { imdb: "tt1286039", name: "Stargate Universe" },
+  // Other DC series
+  "batman-tas": { imdb: "tt0103359", name: "Batman: The Animated Series" },
+  "superman-tas": { imdb: "tt0115378", name: "Superman: The Animated Series" },
+  "justice-league": { imdb: "tt0275137", name: "Justice League" },
+  "smallville": { imdb: "tt0279600", name: "Smallville" },
+  "gotham": { imdb: "tt3749900", name: "Gotham" },
+  "lucifer": { imdb: "tt4052886", name: "Lucifer" },
+  "titans": { imdb: "tt1043813", name: "Titans" },
+  "doom-patrol": { imdb: "tt8416494", name: "Doom Patrol" },
+  "harley-quinn": { imdb: "tt7658402", name: "Harley Quinn" },
+  "stargirl": { imdb: "tt8722888", name: "Stargirl" },
+  "peacemaker": { imdb: "tt13146488", name: "Peacemaker" },
+  "the-penguin": { imdb: "tt15435876", name: "The Penguin" },
+  "creature-commandos": { imdb: "tt26545355", name: "Creature Commandos" },
   // Star Trek
   "star-trek": { imdb: "tt0060028", name: "Star Trek" },
   "star-trek-tas": { imdb: "tt0069637", name: "Star Trek: The Animated Series" },
@@ -68,11 +89,16 @@ export const shows = {
   "star-trek-prodigy": { imdb: "tt9795876", name: "Star Trek: Prodigy" },
   "star-trek-snw": { imdb: "tt12327578", name: "Star Trek: Strange New Worlds" },
   "star-trek-academy": { imdb: "tt8622160", name: "Star Trek: Starfleet Academy" },
+  // Stargate
+  "stargate-sg1": { imdb: "tt0118480", name: "Stargate SG-1" },
+  "stargate-atlantis": { imdb: "tt0374455", name: "Stargate: Atlantis" },
+  "stargate-universe": { imdb: "tt1286039", name: "Stargate Universe" },
 };
 
 // Disney+'s official complete MCU timeline (as of VisionQuest), series only. It
-// includes the Netflix shows (added January 2024) but not the ABC/Hulu shows or the
-// own-universe animation (X-Men '97, Your Friendly Neighborhood Spider-Man).
+// includes the Netflix shows (added January 2024). It leaves out the ABC/Hulu shows,
+// and Marvel Animation's own-universe shows (X-Men '97, Your Friendly Neighborhood
+// Spider-Man), which are in the Marvel list instead.
 const mcuTimeline = [
   ["eyes-of-wakanda", 1],
   ["i-am-groot", 1],
@@ -112,63 +138,82 @@ const mcuTimeline = [
   ["visionquest", 1],
 ];
 
+const arrowverse = [
+  ["arrow"], ["the-flash"], ["supergirl"], ["legends-of-tomorrow"], ["black-lightning"], ["batwoman"], ["superman-and-lois"],
+];
+
 // Each collection:
-//   group        the genre filter value it appears under, such as "Superheroes". Groups
-//                appear in the order collections first use them. With no genre picked
-//                (and on the home-screen row), every collection shows, group by group.
-//                Letters, digits, spaces, ' & and - only.
-//   name         the poster's name. Same characters as group.
-//   order        "release" (default): sorted by each season's premiere date.
-//                "chronological": seasons stay in the order listed, which should follow
-//                the story's timeline. The name gets " (Chronological)" added and the
-//                description a standard sentence explaining the difference.
+//   group        the genre filter value it appears under, such as "Superheroes", or a
+//                list of them, such as ["Sci-Fi", "Fantasy"]. Groups show as the
+//                collection's genres too. With no genre picked (and on the home-screen
+//                row), every collection shows. Letters, digits, spaces, ' & and - only.
+//   name         the poster's name, spelled out ("Marvel Cinematic Universe", not
+//                "MCU"). Same characters as group.
+//   order        "release": a watch order, sorted by each season's premiere date. The
+//                name gets " (Release Order)".
+//                "chronological": a watch order, kept in the order listed, which should
+//                follow the story's timeline. The name gets " (Chronological)" and the
+//                description a standard sentence saying so.
+//                Left out: a plain list of shows with no shared continuity, sorted by
+//                premiere, each linking to the show itself.
 //   description  optional. Shown on the collection's side panel and detail page, and
 //                on the install page. The series and season counts and the years are
 //                added for you.
-//   poster       optional image URL; defaults to the first season's show poster.
-//   seasons      [showKey, season] for one season, or [showKey] for every season.
+//   poster       optional image URL; defaults to the first show's poster.
+//   seasons      [showKey] for every season of a show. Watch orders can also take
+//                [showKey, season] for one season.
 // Seasons that haven't aired yet are skipped until a build after their premiere.
 export const collections = [
   {
     group: "Superheroes",
-    name: "MCU",
+    name: "Marvel Cinematic Universe",
+    order: "release",
     description: "Marvel Studios' Disney+ series and the Netflix Defenders shows.",
     seasons: mcuTimeline,
   },
   {
     group: "Superheroes",
-    name: "MCU",
+    name: "Marvel Cinematic Universe",
     order: "chronological",
     description: "Marvel Studios' Disney+ series and the Netflix Defenders shows, in Disney+'s official MCU timeline order.",
     seasons: mcuTimeline,
   },
   {
-    // Not on Marvel's official timeline, so release order only.
+    // Loosely tied to the MCU but not on its timeline. Cloak & Dagger and Runaways
+    // cross over, so release order still matters.
     group: "Superheroes",
     name: "Marvel Television",
+    order: "release",
     description: "Marvel Television's series for ABC, Hulu and Freeform.",
-    seasons: [
-      ["agents-of-shield"],
-      ["agent-carter"],
-      ["inhumans"],
-      ["runaways"],
-      ["cloak-and-dagger"],
-      ["helstrom"],
-    ],
+    seasons: [["agents-of-shield"], ["agent-carter"], ["inhumans"], ["runaways"], ["cloak-and-dagger"], ["helstrom"]],
   },
   {
     // The yearly crossovers only make sense in airing order.
     group: "Superheroes",
     name: "Arrowverse",
+    order: "release",
     description: "The CW's DC shows, from Arrow to Superman & Lois.",
+    seasons: arrowverse,
+  },
+  {
+    group: "Superheroes",
+    name: "Marvel",
+    description: "Every Marvel series, across all its universes.",
     seasons: [
-      ["arrow"],
-      ["the-flash"],
-      ["supergirl"],
-      ["legends-of-tomorrow"],
-      ["black-lightning"],
-      ["batwoman"],
-      ["superman-and-lois"],
+      ...mcuTimeline.map(([key]) => [key]).filter(([key], i, all) => all.findIndex(([k]) => k === key) === i),
+      ["agents-of-shield"], ["agent-carter"], ["inhumans"], ["runaways"], ["cloak-and-dagger"], ["helstrom"],
+      ["x-men-97"], ["spider-man-yfn"], ["x-men-tas"], ["spider-man-tas"], ["x-men-evolution"],
+      ["legion"], ["the-gifted"], ["moon-girl"], ["modok"], ["hit-monkey"],
+    ],
+  },
+  {
+    group: "Superheroes",
+    name: "DC",
+    description: "Every DC series, across all its universes.",
+    seasons: [
+      ...arrowverse,
+      ["batman-tas"], ["superman-tas"], ["justice-league"], ["smallville"], ["gotham"], ["lucifer"],
+      ["titans"], ["doom-patrol"], ["harley-quinn"], ["stargirl"], ["peacemaker"], ["the-penguin"], ["creature-commandos"],
     ],
   },
   {
@@ -176,31 +221,19 @@ export const collections = [
     // airing order is how they were meant to be watched.
     group: "Sci-Fi",
     name: "Star Trek",
+    order: "release",
     description: "Every Star Trek series, from the original to Starfleet Academy.",
     seasons: [
-      ["star-trek"],
-      ["star-trek-tas"],
-      ["star-trek-tng"],
-      ["star-trek-ds9"],
-      ["star-trek-voyager"],
-      ["star-trek-enterprise"],
-      ["star-trek-discovery"],
-      ["star-trek-picard"],
-      ["star-trek-lower-decks"],
-      ["star-trek-prodigy"],
-      ["star-trek-snw"],
-      ["star-trek-academy"],
+      ["star-trek"], ["star-trek-tas"], ["star-trek-tng"], ["star-trek-ds9"], ["star-trek-voyager"], ["star-trek-enterprise"],
+      ["star-trek-discovery"], ["star-trek-picard"], ["star-trek-lower-decks"], ["star-trek-prodigy"], ["star-trek-snw"], ["star-trek-academy"],
     ],
   },
   {
     // Atlantis spun off mid-SG-1, so the two overlap for three years.
     group: "Sci-Fi",
     name: "Stargate",
+    order: "release",
     description: "SG-1, Atlantis and Universe.",
-    seasons: [
-      ["stargate-sg1"],
-      ["stargate-atlantis"],
-      ["stargate-universe"],
-    ],
+    seasons: [["stargate-sg1"], ["stargate-atlantis"], ["stargate-universe"]],
   },
 ];
