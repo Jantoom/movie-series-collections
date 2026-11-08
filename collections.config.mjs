@@ -5469,7 +5469,7 @@ export const collections = [
   },
   {
     name: "Frozen",
-    genres: ["Animation", "Family", "Musical", "Fantasy"],
+    genres: ["Animation", "Family", "Music", "Fantasy"],
     order: "release",
     description: "Anna and Elsa, royal sisters of Arendelle, one of whom can't control her ice powers. The first film became the highest-grossing animated film of its day, and Frozen II follows Elsa into the enchanted forest.",
     entries: [
@@ -5496,7 +5496,7 @@ export const collections = [
   },
   {
     name: "Trolls",
-    genres: ["Animation", "Family", "Musical", "Comedy"],
+    genres: ["Animation", "Family", "Music", "Comedy"],
     order: "release",
     description: "Poppy and Branch, two very different Trolls, on musical adventures with Anna Kendrick and Justin Timberlake's voices. The films and series carry on through World Tour and Band Together.",
     entries: [
@@ -5523,7 +5523,7 @@ export const collections = [
   },
   {
     name: "Moana",
-    genres: ["Animation", "Family", "Musical", "Adventure"],
+    genres: ["Animation", "Family", "Music", "Adventure"],
     order: "release",
     description: "Moana, the daughter of a Polynesian chief, sailing beyond the reef with the demigod Maui. Moana 2 sends her across the ocean again three years later.",
     entries: [
@@ -5541,7 +5541,7 @@ export const collections = [
   },
   {
     name: "Tangled",
-    genres: ["Animation", "Family", "Musical", "Fantasy"],
+    genres: ["Animation", "Family", "Music", "Fantasy"],
     order: "release",
     description: "Rapunzel, locked in a tower for eighteen years, and Flynn Rider, the thief who gets her out. Before Ever After and the series that follows it pick up between the film and the short Tangled Ever After.",
     entries: [
@@ -5550,7 +5550,7 @@ export const collections = [
   },
   {
     name: "The Lion King",
-    genres: ["Animation", "Family", "Musical", "Drama"],
+    genres: ["Animation", "Family", "Music", "Drama"],
     order: "release",
     description: "Simba's journey from cub to king of the Pride Lands, in Disney's 1994 classic. Simba's Pride and The Lion King 1½ continue and retell it, Timon & Pumbaa get their own series, and The Lion Guard follows Simba's son Kion.",
     entries: [
@@ -5559,7 +5559,7 @@ export const collections = [
   },
   {
     name: "The Lion King (2019)",
-    genres: ["Family", "Musical", "Drama", "Adventure"],
+    genres: ["Family", "Music", "Drama", "Adventure"],
     order: "release",
     description: "Jon Favreau's photorealistic retelling of The Lion King, and Barry Jenkins' Mufasa, which tells how Simba's father became king. Mufasa is framed as a story told to Simba's daughter Kiara.",
     entries: [
@@ -5568,7 +5568,7 @@ export const collections = [
   },
   {
     name: "Aladdin",
-    genres: ["Animation", "Family", "Musical", "Fantasy"],
+    genres: ["Animation", "Family", "Music", "Fantasy"],
     order: "release",
     description: "Aladdin, Jasmine and Robin Williams' Genie, in Disney's 1992 film, its two sequels and the TV series set between them.",
     entries: [
@@ -5587,7 +5587,7 @@ export const collections = [
   },
   {
     name: "The Little Mermaid",
-    genres: ["Animation", "Family", "Musical", "Fantasy"],
+    genres: ["Animation", "Family", "Music", "Fantasy"],
     order: "release",
     description: "Ariel, the mermaid who trades her voice to become human, in the 1989 film that began Disney's renaissance. A prequel series, a sequel about her daughter and a prequel film followed. The 2023 live-action film is a remake.",
     entries: [
@@ -5669,7 +5669,7 @@ export const collections = [
   },
   {
     name: "Wicked",
-    genres: ["Musical", "Fantasy", "Romance"],
+    genres: ["Music", "Fantasy", "Romance"],
     order: "release",
     description: "The untold story of the witches of Oz, with Cynthia Erivo as Elphaba and Ariana Grande as Glinda, adapted from the Broadway musical in two parts.",
     entries: [
@@ -5768,7 +5768,7 @@ export const collections = [
   },
   {
     name: "Mamma Mia!",
-    genres: ["Musical", "Comedy", "Romance"],
+    genres: ["Music", "Comedy", "Romance"],
     order: "release",
     description: "ABBA's songs on a Greek island, where a bride invites three men who might be her father to her wedding. Here We Go Again tells her mother Donna's story in parallel.",
     entries: [
@@ -5777,7 +5777,7 @@ export const collections = [
   },
   {
     name: "Grease",
-    genres: ["Musical", "Romance", "Comedy"],
+    genres: ["Music", "Romance", "Comedy"],
     order: "release",
     description: "Danny and Sandy at Rydell High in 1958, in the musical that made John Travolta and Olivia Newton-John icons. Grease 2 brings a new class to Rydell, and Rise of the Pink Ladies goes back to 1954.",
     entries: [
@@ -5786,7 +5786,7 @@ export const collections = [
   },
   {
     name: "High School Musical",
-    genres: ["Musical", "Family", "Romance"],
+    genres: ["Music", "Family", "Romance"],
     order: "release",
     franchise: false,
     description: "Troy and Gabriella at East High, in the Disney Channel musicals that became a phenomenon, and the theatrical Senior Year. Sharpay's Fabulous Adventure takes Ashley Tisdale's diva to New York.",
@@ -5796,7 +5796,7 @@ export const collections = [
   },
   {
     name: "Descendants",
-    genres: ["Musical", "Family", "Fantasy"],
+    genres: ["Music", "Family", "Fantasy"],
     order: "release",
     description: "The teenage children of Disney's villains, sent to a prep school in the kingdom of Auradon. Four films and an animated series, ending with The Rise of Red.",
     entries: [
@@ -5815,7 +5815,7 @@ export const collections = [
   },
   {
     name: "Zombies",
-    genres: ["Musical", "Family", "Romance"],
+    genres: ["Music", "Family", "Romance"],
     order: "release",
     description: "Disney Channel's musical love story between a zombie and a cheerleader in Seabrook, which keeps adding werewolves, aliens and vampires.",
     entries: [
@@ -6855,7 +6855,7 @@ export const collections = [
   },
   {
     name: "The Muppets",
-    genres: ["Family", "Comedy", "Musical"],
+    genres: ["Family", "Comedy", "Music"],
     catalogs: ["franchise"],
     description: "Jim Henson's Kermit the Frog, Miss Piggy and friends, from The Muppet Show's variety stage to their films and the shows that followed. Muppet Babies reimagines them as toddlers.",
     entries: [
@@ -6873,7 +6873,7 @@ export const collections = [
   },
   {
     name: "Every High School Musical Movie and Series",
-    genres: ["Musical", "Family", "Comedy"],
+    genres: ["Music", "Family", "Comedy"],
     catalogs: ["franchise"],
     description: "Every High School Musical title: the Disney Channel trilogy, Sharpay's spin-off, and High School Musical: The Musical: The Series, a meta mockumentary about East High students staging the original as their school musical.",
     entries: [
@@ -6970,7 +6970,7 @@ export const collections = [
   },
   {
     name: "Every Walt Disney Animation Studios Movie",
-    genres: ["Animation", "Family", "Musical", "Fantasy"],
+    genres: ["Animation", "Family", "Music", "Fantasy"],
     catalogs: ["studio"],
     description: "Every feature in the Walt Disney Animation Studios canon, from Snow White and the Seven Dwarfs in 1937, the first full-length cel-animated film, through the renaissance of The Little Mermaid and The Lion King to Frozen and Zootopia.",
     entries: [
