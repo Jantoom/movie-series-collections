@@ -2,24 +2,46 @@
 // Builds the static Stremio addon into ./dist from Cinemeta data.
 //   node scripts/build.mjs
 // Optional env: SITE_URL (public base URL, used for genre links and the install page),
-// OUT_DIR, CINEMETA_URL.
+// OUT_DIR, CINEMETA_URL, RATINGS_URL.
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { shows as defaultShows, movies as defaultMovies, collections as defaultCollections } from "../collections.config.mjs";
 import {
-  CATALOGS, TYPE, arrange, buildManifest, catalogOf, catalogPaths, collectionId, collectionPopularity, configProblems, displayName,
-  entryStreams, expandEntries, genreNames, genresOf, popularityRanks, sameTitle, toCollectionMeta, toCollectionPreview, toMovie, toShow,
+  CATALOGS, TYPE, arrange, buildManifest, catalogPaths, catalogsOf, collectionScore, configProblems, displayName, entryStreams,
+  expandEntries, genreNames, genresOf, idOf, sameTitle, titleScore, toCollectionMeta, toCollectionPreview, toMovie, toShow,
+  withFranchiseCopies,
 } from "../src/lib.mjs";
 import { installPage } from "../src/install-page.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
+/**
+ * IMDb's public ratings dataset (rating and vote count for every title), trimmed to the
+ * given ids. If it can't be fetched, the build carries on with Cinemeta's ratings alone.
+ */
+export async function loadImdbRatings(ids, { fetchImpl = globalThis.fetch, url = process.env.RATINGS_URL || "https://datasets.imdbws.com/title.ratings.tsv.gz", log = console.log } = {}) {
+  const ratings = new Map();
+  try {
+    const res = await fetchImpl(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await new Response(res.body.pipeThrough(new DecompressionStream("gzip"))).text();
+    for (const line of text.split("\n")) {
+      const [id, rating, votes] = line.split("\t");
+      if (ids.has(id)) ratings.set(id, { rating: Number(rating), votes: Number(votes) });
+    }
+  } catch (err) {
+    log(`IMDb ratings unavailable (${err.message}); sorting by Cinemeta's ratings only.`);
+  }
+  return ratings;
+}
+
 export async function build({
   fetchImpl = globalThis.fetch,
   shows: showsConfig = defaultShows,
   movies: moviesConfig = defaultMovies,
-  collections = defaultCollections,
+  collections: configCollections = defaultCollections,
+  loadRatings = (ids) => loadImdbRatings(ids, { log }),
   now = new Date().toISOString(),
   cinemeta = process.env.CINEMETA_URL || "https://v3-cinemeta.strem.io",
   outDir = process.env.OUT_DIR || join(root, "dist"),
@@ -43,24 +65,26 @@ export async function build({
 
   // ---- 1. Look up every show and movie the collections use, once ----------
   const fix = (problems) => new Error(`Fix collections.config.mjs:\n  ${problems.join("\n  ")}`);
+  const collections = withFranchiseCopies(configCollections);
   const configErrors = configProblems(showsConfig, moviesConfig, collections);
   if (configErrors.length) throw fix(configErrors);
   const shows = new Map(), movies = new Map();
   const problems = [], skipped = [];
   const lookup = async (key) => {
     const isMovie = Boolean(moviesConfig[key]);
-    const { imdb, name, released } = isMovie ? moviesConfig[key] : showsConfig[key];
+    const { imdb, name, title, released } = isMovie ? moviesConfig[key] : showsConfig[key];
     const found = (await getJson(`${cinemeta}/meta/${isMovie ? "movie" : "series"}/${imdb}.json`)).meta;
     // The config's `released` wins: Cinemeta has no date for some titles, and dates others
     // by a later release (a US or anniversary release of a Japanese film).
+    // `title` is the name to show, when Cinemeta's isn't the one English speakers know.
     const cm = found && { ...found, released: released ?? found.released };
     // A title Cinemeta doesn't have, or has under another name (a typo'd id, or a regional
     // show it renamed), is left out rather than holding up the whole build. Cinemeta's
     // servers don't always agree on these, so the build log and report.json list them.
     if (!cm?.name) skipped.push(`${key}: ${imdb} ("${name}") isn't on Cinemeta as a ${isMovie ? "movie" : "series"}`);
     else if (!sameTitle(name, cm.name)) skipped.push(`${key}: ${imdb} is "${cm.name}" on Cinemeta, not "${name}"`);
-    else if (isMovie) movies.set(key, toMovie(imdb, cm));
-    else shows.set(key, toShow(imdb, cm));
+    else if (isMovie) movies.set(key, toMovie(imdb, { ...cm, name: title ?? cm.name }));
+    else shows.set(key, toShow(imdb, { ...cm, name: title ?? cm.name }));
   };
   // Hundreds of titles, so a few lookups at a time.
   const queue = [...new Set(collections.flatMap((c) => c.entries.map(([k]) => k)))];
@@ -71,8 +95,10 @@ export async function build({
   // Failing stops the workflow from replacing the last good deployment.
   if (problems.length) throw fix(problems);
 
-  // ---- 2. Put each collection's entries in order, and the most popular first -
-  const ranks = popularityRanks([shows.values(), movies.values()]);
+  // ---- 2. Put each collection's entries in order, and the best-loved first ----
+  const titles = [...shows.values(), ...movies.values()];
+  const ratings = await loadRatings(new Set(titles.map((t) => t.imdb)));
+  const scores = new Map(titles.map((t) => [t.imdb, titleScore(ratings.get(t.imdb) ?? { rating: t.rating })]));
   const lists = [];
   const upcoming = {};
   for (const config of collections) {
@@ -81,12 +107,13 @@ export async function build({
     if (!c.entries.length) { problems.push(`${name}: none of its titles are on Cinemeta`); continue; }
     const expanded = expandEntries(c, shows, movies, now);
     problems.push(...expanded.problems);
-    if (expanded.upcoming.length) upcoming[name] = expanded.upcoming;
-    const entries = arrange(expanded.entries, c.order, c.first);
-    lists.push({ c: config, name, entries, popularity: collectionPopularity(entries, ranks) });
+    // A Franchise copy (it has its own id) repeats its watch order's upcoming titles.
+    if (expanded.upcoming.length && !config.id) upcoming[name] = expanded.upcoming;
+    const entries = arrange(expanded.entries, c.order);
+    lists.push({ c: config, name, entries, score: collectionScore(entries, scores) });
   }
   // Sorting keeps the config's order between equals, so a release order stays ahead of its timeline.
-  lists.sort((a, b) => b.popularity - a.popularity);
+  lists.sort((a, b) => b.score - a.score);
   if (problems.length) throw fix(problems);
 
   // ---- 3. Write the static addon --------------------------------------------
@@ -102,15 +129,15 @@ export async function build({
   const manifestUrl = siteUrl ? `${siteUrl.replace(/\/$/, "")}/manifest.json` : undefined;
   const report = { builtAt: now, catalogs: {}, upcoming, skipped: skipped.sort() };
   const previews = new Map();
-  for (const { c, name, entries } of lists) {
-    previews.set(c, toCollectionPreview(c, name, entries, manifestUrl));
-    await writeJson(`meta/${TYPE}/${collectionId(name)}.json`, { meta: toCollectionMeta(c, name, entries, manifestUrl) });
-    for (const { id, streams } of entryStreams(c, name, entries)) {
+  for (const { c, entries } of lists) {
+    previews.set(c, toCollectionPreview(c, entries, manifestUrl));
+    await writeJson(`meta/${TYPE}/${idOf(c)}.json`, { meta: toCollectionMeta(c, entries, manifestUrl) });
+    for (const { id, streams } of entryStreams(c, entries)) {
       await writeJson(`stream/${TYPE}/${id}.json`, { streams });
     }
   }
   for (const catalog of CATALOGS) {
-    const members = lists.filter(({ c }) => catalogOf(c) === catalog.id);
+    const members = lists.filter(({ c }) => catalogsOf(c).includes(catalog.id));
     // No genre ("None"): all of the catalog's collections. Also its home-screen row.
     for (const { rel, metas } of catalogPaths(catalog.id, undefined, members.map(({ c }) => previews.get(c)))) {
       await writeJson(rel, { metas });
@@ -121,7 +148,7 @@ export async function build({
         await writeJson(rel, { metas });
       }
     }
-    report.catalogs[catalog.name] = Object.fromEntries(members.map(({ name, entries, popularity }) => [name, { entries: entries.length, popularity: Number(popularity.toFixed(3)) }]));
+    report.catalogs[catalog.name] = Object.fromEntries(members.map(({ name, entries, score }) => [name, { entries: entries.length, score: Number(score.toFixed(2)) }]));
     for (const { name, entries } of members) {
       log(`${catalog.name} / ${name}: ${entries.length} entries${upcoming[name] ? ` (not out yet: ${upcoming[name].join(", ")})` : ""}`);
     }
@@ -142,7 +169,7 @@ export async function build({
 function sitePage(siteUrl, manifest, lists, totals) {
   const base = siteUrl.replace(/\/$/, "");
   const groups = manifest.catalogs.map((catalog) => {
-    const members = lists.filter(({ c }) => catalogOf(c) === catalog.id);
+    const members = lists.filter(({ c }) => catalogsOf(c).includes(catalog.id));
     const genres = catalog.extra.find((e) => e.name === "genre").options;
     return {
       title: catalog.name,
@@ -163,7 +190,7 @@ function sitePage(siteUrl, manifest, lists, totals) {
       { value: totals.series, label: "series" },
     ],
     groups,
-    about: `<p>Find them under <b>Discover</b> → <b>Collections</b>. <b>Connected Storyline</b> has watch orders for stories told across many titles, by release or by the story's timeline. <b>Other</b> gathers titles that share a franchise, character or brand. Each movie, season or show in a collection opens that title.</p>
+    about: `<p>Find them under <b>Discover</b> → <b>Collections</b>. <b>Storyline</b> has watch orders for stories told across many titles, by release or by the story's timeline. <b>Franchise</b>, <b>Person</b> and <b>Studio</b> gather the titles of a franchise, a director or personality, or a studio, newest first, and <b>Other</b> has the rest. Each movie, season or show in a collection opens that title.</p>
 <p>This addon has no streams of its own. Titles play through whatever stream addons you already have installed.</p>`,
     links: [{ label: "Build report", href: "report.json" }],
   });

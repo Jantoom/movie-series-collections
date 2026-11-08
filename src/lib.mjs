@@ -1,12 +1,14 @@
 // Pure helpers: turning Cinemeta data into collection posters and the addon's files.
 //
 // The addon has its own type, "collections", so it gets its own Discover tab next to
-// Movies and Series, with two catalogs:
-//   - "Connected Storyline": watch orders, whose entries tell one story. Release order
-//     ("Star Wars") sorts by release date; a timeline ("Star Wars (Timeline)") keeps the
-//     story's order.
-//   - "Other": titles that share an IP but not a story ("Every Marvel Series", "Love
-//     Island"), each listed once by release date.
+// Movies and Series, with five catalogs:
+//   - "Storyline": watch orders, whose entries tell one story. Release order ("Star
+//     Wars") sorts by release date; a timeline ("Star Wars (Timeline)") keeps the story's
+//     order.
+//   - "Franchise", "Person", "Studio" and "Other": titles that share a franchise, a
+//     director or personality, a studio, or something else, each listed once, newest
+//     first. A collection can be in several of these. Big watch orders also get a copy
+//     in Franchise, listing their titles.
 // Each catalog's genre filter starts on "None", listing all of its collections, and each
 // genre (Action, Sci-Fi, Reality-TV, …) narrows it.
 //
@@ -26,17 +28,22 @@ export const ID_PREFIX = "mscol-";   // no ":" so the ids work as file names on 
 export const PAGE_SIZE = 100;   // Stremio asks for the next page with skip=100, 200, …
 
 export const CATALOGS = [
-  { id: "connected", name: "Connected Storyline" },
+  { id: "storyline", name: "Storyline" },
+  { id: "franchise", name: "Franchise" },
+  { id: "person", name: "Person" },
+  { id: "studio", name: "Studio" },
   { id: "other", name: "Other" },
 ];
-/** Watch orders go in Connected Storyline; everything else in Other. */
-export const catalogOf = (c) => (c.order ? "connected" : "other");
+/** The catalogs a collection without a watch order can name in `catalogs`. */
+export const LIST_CATALOGS = ["franchise", "person", "studio", "other"];
+/** Watch orders go in Storyline; everything else where its `catalogs` say, or Other. */
+export const catalogsOf = (c) => (c.order ? ["storyline"] : c.catalogs ?? ["other"]);
 
 // Link chip headings on the side panel and detail page.
 export const GENRES_CATEGORY = "Genres";       // the collection's genres
 export const CONTENTS_CATEGORY = "Contents";   // "40 Movies", "24 Series", "36 Seasons"
 export const ORDER_CATEGORY = "Watch order";   // a watch order's entries
-export const LIST_CATEGORY = "Titles";         // an Other collection's entries
+export const LIST_CATEGORY = "Titles";         // a list's entries
 
 export const TIMELINE_NOTE = "This collection follows the story's timeline instead of release order.";
 export const ORDERS = ["release", "timeline"];
@@ -57,6 +64,9 @@ export const displayName = (c) => (c.order === "timeline" ? `${c.name} (Timeline
 export const collectionId = (name) =>
   `${ID_PREFIX}${name.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
 
+/** A collection's id: from its name, unless it has its own (a Franchise copy does). */
+export const idOf = (c) => c.id ?? collectionId(displayName(c));
+
 /** The collection's description, with the timeline note where it applies. */
 export function collectionDescription(c) {
   return [c.description, c.order === "timeline" && TIMELINE_NOTE].filter(Boolean).join(" ") || undefined;
@@ -66,7 +76,35 @@ export const genresOf = (c) => c.genres ?? [];
 
 /** The genres in one catalog's filter, alphabetically. */
 export const genreNames = (collections, catalogId) =>
-  [...new Set(collections.filter((c) => catalogOf(c) === catalogId).flatMap(genresOf))].sort();
+  [...new Set(collections.filter((c) => catalogsOf(c).includes(catalogId)).flatMap(genresOf))].sort();
+
+/** Watch orders with more titles than this also get a copy in Franchise. */
+export const FRANCHISE_COPY_OVER = 3;
+
+/**
+ * The collections plus a Franchise copy of each big release-order watch order, listing
+ * its titles once each, so Franchise doesn't miss Wizarding World or Middle-earth. A
+ * watch order opts out with `franchise: false`, or adds titles the story leaves out
+ * (reboots, remakes) with `franchise: { extra: [[key], …] }`, and can rename it.
+ */
+export function withFranchiseCopies(collections) {
+  const copies = [];
+  for (const c of collections) {
+    if (c.order !== "release" || c.franchise === false) continue;
+    const keys = [...new Set([...c.entries, ...(c.franchise?.extra ?? [])].map(([k]) => k))];
+    if (keys.length <= FRANCHISE_COPY_OVER) continue;
+    const name = c.franchise?.name ?? c.name;
+    copies.push({
+      name,
+      id: `${ID_PREFIX}franchise-${collectionId(name).slice(ID_PREFIX.length)}`,
+      genres: c.genres,
+      catalogs: ["franchise"],
+      description: c.franchise?.description ?? c.description,
+      entries: keys.map((k) => [k]),
+    });
+  }
+  return [...collections, ...copies];
+}
 
 // Genres are filter values and part of file names, so keep them plain.
 const PLAIN = /^[A-Za-z0-9][A-Za-z0-9 '&-]*$/;
@@ -76,20 +114,25 @@ const NAME = /^[\p{L}\p{N}][\p{L}\p{N} '&:;().,!?-]*$/u;
 export function configProblems(shows, movies, collections) {
   const problems = [];
   for (const key of Object.keys(shows)) if (movies[key]) problems.push(`"${key}" is both a show and a movie; keys must be unique`);
-  const names = new Set();
+  const ids = new Set();
+  const known = (label, key) => shows[key] || movies[key] || problems.push(`${label}: no show or movie called "${key}"`);
   for (const c of collections) {
     const label = c.name ?? "(unnamed)";
     if (!NAME.test(c.name ?? "")) problems.push(`collection name "${c.name}" can only use letters, digits, spaces and ' & : ; ( ) . , ! ? -`);
-    if (names.has(collectionId(displayName(c)))) problems.push(`collection "${displayName(c)}" is used twice`);
-    names.add(collectionId(displayName(c)));
+    if (ids.has(idOf(c))) problems.push(`collection "${displayName(c)}" is used twice`);
+    ids.add(idOf(c));
     if (!genresOf(c).length) problems.push(`${label} has no genres`);
     for (const g of genresOf(c)) if (!PLAIN.test(g)) problems.push(`${label}: genre "${g}" can only use letters, digits, spaces, ' & and -`);
     if (c.order !== undefined && !ORDERS.includes(c.order)) problems.push(`${label}: order must be "release", "timeline" or left out, not "${c.order}"`);
+    if (c.order && c.catalogs) problems.push(`${label}: a watch order is always in Storyline, so it takes no "catalogs"`);
+    if (!c.order && c.catalogs !== undefined && (!c.catalogs.length || c.catalogs.some((id) => !LIST_CATALOGS.includes(id)))) {
+      problems.push(`${label}: catalogs must be some of ${LIST_CATALOGS.join(", ")}`);
+    }
+    if (c.franchise !== undefined && c.order !== "release") problems.push(`${label}: only a release-order watch order has a Franchise copy, so it takes no "franchise"`);
+    for (const [key] of c.franchise?.extra ?? []) known(`${label} (franchise)`, key);
     if (!c.entries?.length) { problems.push(`${label} has no entries`); continue; }
-    if (c.first !== undefined && c.order === "timeline") problems.push(`${label}: a timeline is already in the order listed, so it takes no "first"`);
-    for (const key of c.first ?? []) if (!c.entries.some(([k]) => k === key)) problems.push(`${label}: "first" names "${key}", which isn't one of its entries`);
     for (const [key, season] of c.entries) {
-      if (!shows[key] && !movies[key]) problems.push(`${label}: no show or movie called "${key}"`);
+      known(label, key);
       if (season === undefined) continue;
       if (movies[key]) problems.push(`${label}: "${key}" is a movie, so it takes no season`);
       else if (!c.order) problems.push(`${label}: a collection without an order takes whole shows, so ["${key}"], not ["${key}", ${JSON.stringify(season)}]`);
@@ -108,8 +151,7 @@ export function firstSentence(text) {
 // Cinemeta stands in 1970-01-01 (a zero timestamp) for dates it doesn't have.
 const dated = (date) => (date && !date.startsWith("1970-01-01") ? date : undefined);
 const poster = (cm) => cm.poster?.replace("/poster/small/", "/poster/medium/");
-// Cinemeta's popularity signals, by source ("moviedb", "stremio", "trakt").
-const popularity = (cm) => cm.popularities ?? (cm.popularity === undefined ? {} : { stremio: cm.popularity });
+const rating = (cm) => Number.parseFloat(cm.imdbRating) || undefined;
 
 /**
  * A show from Cinemeta, trimmed to what the addon uses. Seasons are keyed by number,
@@ -140,7 +182,7 @@ export function toShow(imdb, cm) {
     ongoing: cm.status === "Continuing" || /[–-]\s*$/.test(cm.releaseInfo ?? ""),
     seasons: new Map([...seasons].sort(([a], [b]) => a - b)),
     country: cm.country,
-    popularity: popularity(cm),
+    rating: rating(cm),
   };
 }
 
@@ -148,11 +190,12 @@ export function toShow(imdb, cm) {
 export function toMovie(imdb, cm) {
   return {
     imdb, name: cm.name, poster: poster(cm), background: cm.background, description: cm.description, released: dated(cm.released),
-    country: cm.country, popularity: popularity(cm),
+    country: cm.country, rating: rating(cm),
   };
 }
 
 const isOut = (date, now) => Boolean(date) && date <= now;
+const titleOf = (e) => (e.kind === "movie" ? e.movie : e.show);
 
 /**
  * A collection's entries, as { kind: "season", key, show, season, date },
@@ -193,52 +236,38 @@ export function expandEntries(collection, shows, movies, now = new Date().toISOS
 }
 
 /**
- * "timeline" keeps the config's order; release order and Other sort by date. `first`
- * lists keys to put ahead of the rest, in that order (a collection's poster is its first
- * title's, so this can pick one that has a poster).
+ * "timeline" keeps the config's order and "release" sorts by date. A list (no order)
+ * goes newest title first, by each title's first release, so its poster is its newest
+ * title's and the latest additions are on top.
  */
-export function arrange(entries, order, first = []) {
+export function arrange(entries, order) {
   if (order === "timeline") return entries;
-  const pinned = (e) => (first.includes(e.key) ? first.indexOf(e.key) : first.length);
-  return [...entries].sort((a, b) => pinned(a) - pinned(b) || a.date.localeCompare(b.date));
+  const byDate = [...entries].sort((a, b) => a.date.localeCompare(b.date));
+  if (order === "release") return byDate;
+  const firstOut = new Map();
+  for (const e of byDate) if (!firstOut.has(titleOf(e).imdb)) firstOut.set(titleOf(e).imdb, e.date);
+  return byDate.sort((a, b) => firstOut.get(titleOf(b).imdb).localeCompare(firstOut.get(titleOf(a).imdb)));
 }
-
-// Cinemeta's public popularity signals; it also passes along internal ones.
-const POPULARITY_SOURCES = ["moviedb", "stremio", "trakt"];
 
 /**
- * Each title's popularity from 0 to 1: its rank among the given titles of the same kind
- * (pass movies and series as separate groups, since Cinemeta's scales differ), averaged
- * over the signals it has. Ranks rather than raw numbers, so one hit can't outweigh the
- * rest of a collection. A title with no signals counts as middling, not unpopular.
+ * A title's score: its IMDb rating weighted by how many people rated it (the log of the
+ * vote count), so a well-loved hit beats both a beloved obscurity and a widely seen flop.
+ * Without a vote count (a title missing from IMDb's dataset), Cinemeta's rating counts
+ * as if a thousand people rated it.
  */
-export function popularityRanks(groups) {
-  const ranks = new Map();
-  for (const group of groups) {
-    const list = [...group];
-    const scores = new Map(list.map((t) => [t.imdb, []]));
-    for (const source of POPULARITY_SOURCES) {
-      const rated = list.filter((t) => typeof t.popularity?.[source] === "number");
-      if (rated.length < 2) continue;
-      const sorted = rated.map((t) => t.popularity[source]).sort((a, b) => a - b);
-      for (const t of rated) scores.get(t.imdb).push(sorted.indexOf(t.popularity[source]) / (rated.length - 1));
-    }
-    for (const [imdb, s] of scores) ranks.set(imdb, s.length ? s.reduce((a, b) => a + b, 0) / s.length : 0.5);
-  }
-  return ranks;
-}
+export const titleScore = ({ rating, votes } = {}) => (rating ? rating * Math.log10((votes ?? 1000) + 1) : 0);
 
 export const HEADLINERS = 5;
 
 /**
- * A collection's popularity: the average rank of its few most popular titles, each title
- * counted once. A franchise is known by its biggest titles, so a long tail of lesser
- * spin-offs shouldn't sink it below a collection of two.
+ * A collection's score: the average of its few best-scoring titles, each title counted
+ * once. A franchise is known by its biggest titles, so a long tail of lesser spin-offs
+ * shouldn't sink it below a collection of two.
  */
-export function collectionPopularity(entries, ranks) {
-  const ids = [...new Set(entries.map((e) => (e.kind === "movie" ? e.movie.imdb : e.show.imdb)))];
-  const top = ids.map((id) => ranks.get(id) ?? 0).sort((a, b) => b - a).slice(0, HEADLINERS);
-  return top.length ? top.reduce((sum, r) => sum + r, 0) / top.length : 0;
+export function collectionScore(entries, scores) {
+  const ids = [...new Set(entries.map((e) => titleOf(e).imdb))];
+  const top = ids.map((id) => scores.get(id) ?? 0).sort((a, b) => b - a).slice(0, HEADLINERS);
+  return top.length ? top.reduce((sum, s) => sum + s, 0) / top.length : 0;
 }
 
 const year = (date) => Number.parseInt(date, 10) || undefined;
@@ -246,6 +275,7 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const span = (a, b) => (a === b || !b ? `${a}` : `${a}–${b}`);
 
 const movieItem = ({ movie }) => ({
+  kind: "movie",
   title: movie.name,
   url: `stremio:///detail/movie/${movie.imdb}`,
   thumbnail: movie.background,
@@ -253,6 +283,7 @@ const movieItem = ({ movie }) => ({
 });
 
 const showItem = ({ show }) => ({
+  kind: "series",
   title: show.name,
   url: `stremio:///detail/series/${show.imdb}`,
   thumbnail: show.background,
@@ -263,6 +294,7 @@ const showItem = ({ show }) => ({
 });
 
 const seasonItem = ({ show, season, date }) => ({
+  kind: "series",
   title: `${show.name} S${season.number}`,
   url: `stremio:///detail/series/${show.imdb}?season=${season.number}`,
   thumbnail: show.background,
@@ -274,23 +306,20 @@ const seasonItem = ({ show, season, date }) => ({
 
 /**
  * What the collection lists, in order. A watch order lists each season ("Daredevil S2",
- * opening that season's tab) and movie; an Other collection lists each show and movie
- * once. Each item has a short blurb, shown when the entry is selected, so selecting it
- * says more than the collection's own description. `entries` must already be arranged.
+ * opening that season's tab) and movie; a list has each show and movie once. Each item
+ * has a short blurb, shown when the entry is selected, so selecting it says more than the
+ * collection's own description. `entries` must already be arranged.
  */
 export function listItems(collection, entries) {
   const seen = new Set();
-  const listed = collection.order ? entries : entries.filter((e) => {
-    const id = e.kind === "movie" ? e.movie.imdb : e.show.imdb;
-    return !seen.has(id) && seen.add(id);
-  });
+  const listed = collection.order ? entries : entries.filter((e) => !seen.has(titleOf(e).imdb) && seen.add(titleOf(e).imdb));
   const item = (e) => (e.kind === "movie" ? movieItem(e) : e.kind === "season" && collection.order ? seasonItem(e) : showItem(e));
   return disambiguate(listed.map(item), listed);
 }
 
 const SHORT_COUNTRY = { "United Kingdom": "UK", "United States": "US", USA: "US" };
 const countryOf = (e) => {
-  const c = (e.kind === "movie" ? e.movie : e.show).country?.split(",")[0].trim();
+  const c = titleOf(e).country?.split(",")[0].trim();
   return SHORT_COUNTRY[c] ?? c;
 };
 
@@ -332,17 +361,17 @@ export const genreLink = (manifestUrl, catalogId, genre) =>
   `stremio:///discover/${encodeURIComponent(manifestUrl)}/${TYPE}/${catalogId}?genre=${encodeURIComponent(genre)}`;
 
 /**
- * Chips above the list: the collection's genres (each opening that genre of its catalog
- * in Discover, when the addon's URL is known), then what it holds, movies first (each
- * just pointing back at the collection).
+ * Chips above the list: the collection's genres (each opening that genre of its first
+ * catalog in Discover, when the addon's URL is known), then what it holds, movies first
+ * (each just pointing back at the collection).
  */
-function headerLinks(collection, name, entries, manifestUrl) {
-  const self = `stremio:///detail/${TYPE}/${collectionId(name)}`;
+function headerLinks(collection, entries, manifestUrl) {
+  const self = `stremio:///detail/${TYPE}/${idOf(collection)}`;
   const movies = new Set(entries.filter((e) => e.kind === "movie").map((e) => e.movie.imdb)).size;
   const series = new Set(entries.filter((e) => e.kind !== "movie").map((e) => e.show.imdb)).size;
   const seasons = entries.filter((e) => e.kind === "season").length;
   const genres = manifestUrl
-    ? genresOf(collection).map((g) => ({ name: g, category: GENRES_CATEGORY, url: genreLink(manifestUrl, catalogOf(collection), g) }))
+    ? genresOf(collection).map((g) => ({ name: g, category: GENRES_CATEGORY, url: genreLink(manifestUrl, catalogsOf(collection)[0], g) }))
     : [];
   const contents = [
     movies && plural(movies, "Movie"),
@@ -354,56 +383,61 @@ function headerLinks(collection, name, entries, manifestUrl) {
 
 /**
  * The collection's poster, as a catalog item. The links travel with it, so Discover's
- * side panel lists the entries as soon as the poster is selected. `name` is
- * displayName() for this collection.
+ * side panel lists the entries as soon as the poster is selected.
  */
-export function toCollectionPreview(collection, name, entries, manifestUrl) {
-  const [first] = entries;
-  const art = first && (first.kind === "movie" ? first.movie : first.show);
+export function toCollectionPreview(collection, entries, manifestUrl) {
+  const art = entries[0] && titleOf(entries[0]);
   const category = collection.order ? ORDER_CATEGORY : LIST_CATEGORY;
   return {
-    id: collectionId(name),
+    id: idOf(collection),
     type: TYPE,
-    name,
+    name: displayName(collection),
     poster: collection.poster ?? art?.poster,
     background: collection.background ?? art?.background,
     releaseInfo: yearSpan(entries),
     description: collectionDescription(collection),
     links: [
-      ...headerLinks(collection, name, entries, manifestUrl),
+      ...headerLinks(collection, entries, manifestUrl),
       ...listItems(collection, entries).map(({ title, url }) => ({ name: title, category, url })),
     ],
   };
 }
 
-/** Each entry's id on the detail page and in its stream file. */
-const entryId = (name, i) => `${collectionId(name)}-${i + 1}`;
+/**
+ * The entries as the detail page's episodes. Season 1 has everything; a collection with
+ * both movies and series adds season 2 with just its movies and season 3 with just its
+ * series, in the same order. Each episode's id also names its stream file.
+ */
+export function collectionVideos(collection, entries) {
+  const items = listItems(collection, entries);
+  const seasons = [{ season: 1, tag: "", items }];
+  const movies = items.filter((it) => it.kind === "movie"), series = items.filter((it) => it.kind === "series");
+  if (movies.length && series.length) seasons.push({ season: 2, tag: "m", items: movies }, { season: 3, tag: "s", items: series });
+  return seasons.flatMap(({ season, tag, items: list }) => list.map(({ title, url, thumbnail, overview }, i) => ({
+    id: `${idOf(collection)}-${tag}${i + 1}`, season, episode: i + 1, title, url, thumbnail, overview,
+  })));
+}
 
 /**
- * The collection's detail page: the same poster and links, plus the list again as one
- * long run of entries in its episode column, each with its blurb.
+ * The collection's detail page: the same poster and links, plus the entries in its
+ * episode column, each with its blurb.
  */
-export function toCollectionMeta(collection, name, entries, manifestUrl) {
+export function toCollectionMeta(collection, entries, manifestUrl) {
   return {
-    ...toCollectionPreview(collection, name, entries, manifestUrl),
-    videos: listItems(collection, entries).map(({ title, thumbnail, overview }, i) => ({
-      id: entryId(name, i),
-      title,
-      season: 1,
-      episode: i + 1,
-      thumbnail,
-      overview,
+    ...toCollectionPreview(collection, entries, manifestUrl),
+    videos: collectionVideos(collection, entries).map(({ id, season, episode, title, thumbnail, overview }) => ({
+      id, title, season, episode, thumbnail, overview,
     })),
   };
 }
 
 /**
- * Each entry's one stream: its link, as "Open …". Web follows it inside the app;
+ * Each episode's one stream: its link, as "Open …". Web follows it inside the app;
  * Stremio 5 desktop opens it in the system browser behind Stremio's warning page.
  */
-export function entryStreams(collection, name, entries) {
-  return listItems(collection, entries).map(({ title, url }, i) => ({
-    id: entryId(name, i),
+export function entryStreams(collection, entries) {
+  return collectionVideos(collection, entries).map(({ id, title, url }) => ({
+    id,
     streams: [{ name: ADDON_NAME, title: `Open ${title}`, externalUrl: url }],
   }));
 }
@@ -450,12 +484,12 @@ export function catalogPaths(catalogId, genre, metas) {
 }
 
 // Bump when the manifest changes so installed copies refresh.
-export function buildManifest(collections, version = "0.10.0") {
+export function buildManifest(collections, version = "0.11.0") {
   return {
     id: "community.movie-series-collections",
     version,
     name: ADDON_NAME,
-    description: "Collections of movies and TV series. Connected Storyline has watch orders for stories told across many titles, by release or by the story's timeline; Other gathers titles that share a franchise, character or brand. Find them under Discover → Collections.",
+    description: "Collections of movies and TV series. Storyline has watch orders for stories told across many titles, by release or by the story's timeline; Franchise, Person and Studio gather the titles of a franchise, a director or personality, or a studio, newest first. Find them under Discover → Collections.",
     resources: [
       "catalog",
       { name: "meta", types: [TYPE], idPrefixes: [ID_PREFIX] },

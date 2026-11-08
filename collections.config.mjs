@@ -1,12 +1,15 @@
 // Everything you'd normally change lives here. Push a change and the workflow rebuilds.
 //
-// The addon has its own Discover tab, "Collections", with two catalogs: "Connected
-// Storyline" for watch orders, and "Other" for titles that share an IP but not one story.
-// Each catalog's genre filter starts on "None", which lists all of its collections.
+// The addon has its own Discover tab, "Collections", with five catalogs: "Storyline" for
+// watch orders, and "Franchise", "Person", "Studio" and "Other" for lists of titles that
+// share one of those but not one story. Each catalog's genre filter starts on "None",
+// which lists all of its collections.
 
 // Every show and movie the collections use, by a short key (unique across both tables).
-// `name` is only a check: the build looks each IMDb id up on Cinemeta and fails if the
-// title there doesn't match, so a typo'd id can't quietly point at the wrong title.
+// `name` is only a check: the build looks each IMDb id up on Cinemeta and leaves the title
+// out if the name there doesn't match, so a typo'd id can't quietly point at the wrong
+// title. `title` is the name to show instead, when Cinemeta's isn't the English one people
+// know ("Gran hermano" → "Big Brother Spain"). `released` overrides Cinemeta's date.
 // To find an id:
 //   https://v3-cinemeta.strem.io/catalog/series/top/search=<title>.json
 //   https://v3-cinemeta.strem.io/catalog/movie/top/search=<title>.json
@@ -391,7 +394,7 @@ export const shows = {
   "masterchef-us": { imdb: "tt1694423", name: "MasterChef: USA" },
   "masterchef-junior": { imdb: "tt3038248", name: "MasterChef Junior" },
   "masterchef-au": { imdb: "tt1433870", name: "MasterChef: Australia" },
-  "celebrity-masterchef": { imdb: "tt0870973", name: "Celebrity Masterchef" },
+  "celebrity-masterchef": { imdb: "tt0870973", name: "Celebrity Masterchef", title: "Celebrity MasterChef UK" },
   // Gordon Ramsay
   "hells-kitchen-uk": { imdb: "tt0412137", name: "Hell's Kitchen" },
   "ramsays-kitchen-nightmares": { imdb: "tt0409608", name: "Ramsay's Kitchen Nightmares" },
@@ -505,7 +508,6 @@ export const shows = {
   // The Mighty Ducks
   "mighty-ducks-game-changers": { imdb: "tt7939768", name: "The Mighty Ducks: Game Changers" },
   // Percy Jackson
-  "percy-jackson-series": { imdb: "tt12324366", name: "Percy Jackson and the Olympians" },
   // Tron
   "tron-uprising": { imdb: "tt1812523", name: "Tron: Uprising" },
   // Blade Runner
@@ -649,7 +651,6 @@ export const shows = {
   "narcos-mexico": { imdb: "tt8714904", name: "Narcos: Mexico" },
   // Money Heist
   "money-heist": { imdb: "tt6468322", name: "Money Heist" },
-  "money-heist-korea": { imdb: "tt13696452", name: "Money Heist: Korea - Joint Economic Area" },
   "berlin": { imdb: "tt16288804", name: "Berlin and the Jewels of Paris" },
   // Vikings
   "vikings": { imdb: "tt2306299", name: "Vikings" },
@@ -694,8 +695,6 @@ export const shows = {
   "rock-and-chips": { imdb: "tt1553620", name: "Rock & Chips" },
   // Luther
   "luther": { imdb: "tt1474684", name: "Luther" },
-  // Top Boy
-  "top-boy-2011": { imdb: "tt1830379", name: "Top Boy" },
   // Entourage
   "entourage": { imdb: "tt0387199", name: "Entourage" },
   // Veronica Mars
@@ -761,7 +760,6 @@ export const shows = {
   "chainsaw-man": { imdb: "tt13616990", name: "Chainsaw Man" },
   // Cowboy Bebop
   "cowboy-bebop": { imdb: "tt0213338", name: "Cowboy Bebop" },
-  "cowboy-bebop-netflix": { imdb: "tt1267295", name: "Cowboy Bebop" },
   // Ghost in the Shell
   "gits-sac": { imdb: "tt0346314", name: "Ghost in the Shell: Stand Alone Complex" },
   "gits-arise": { imdb: "tt4508686", name: "Ghost in the Shell Arise: Alternative Architecture" },
@@ -935,85 +933,85 @@ export const shows = {
   "physical-100": { imdb: "tt25274446", name: "Physical: 100" },
   "physical-asia": { imdb: "tt35664835", name: "Physical: Asia" },
   "physical-100-usa": { imdb: "tt37592601", name: "Physical 100: USA" },
-  "physical-italia": { imdb: "tt37694172", name: "Physical Italia: da 100 a 1" },
+  "physical-italia": { imdb: "tt37694172", name: "Physical Italia: da 100 a 1", title: "Physical 100: Italy" },
   "physical-100-sweden": { imdb: "tt38999816", name: "Physical 100: Sweden" },
-  "physical-mexico": { imdb: "tt39390479", name: "Habilidad física: 100-México" },
+  "physical-mexico": { imdb: "tt39390479", name: "Habilidad física: 100-México", title: "Physical 100: Mexico" },
   // The Voice
   "the-voice-of-holland": { imdb: "tt2419212", name: "The Voice of Holland" },
   "the-voice-us": { imdb: "tt1839337", name: "The Voice" },
-  "glasat-na-bulgaria": { imdb: "tt2041904", name: "Glasat na Bulgaria" },
+  "glasat-na-bulgaria": { imdb: "tt2041904", name: "Glasat na Bulgaria", title: "The Voice of Bulgaria" },
   "the-voice-of-germany": { imdb: "tt2119931", name: "The Voice of Germany" },
   "the-voice-of-finland": { imdb: "tt2336091", name: "The Voice of Finland" },
   "the-voice-portugal": { imdb: "tt3632686", name: "The Voice Portugal" },
-  "the-voice-van-vlaanderen": { imdb: "tt4911934", name: "The Voice van Vlaanderen" },
-  "la-voz-mexico": { imdb: "tt4959196", name: "La Voz... México" },
-  "the-voice-belgique": { imdb: "tt6369954", name: "The Voice Belgique" },
-  "vocea-romaniei": { imdb: "tt6576138", name: "Vocea Romaniei" },
+  "the-voice-van-vlaanderen": { imdb: "tt4911934", name: "The Voice van Vlaanderen", title: "The Voice Flanders" },
+  "la-voz-mexico": { imdb: "tt4959196", name: "La Voz... México", title: "The Voice Mexico" },
+  "the-voice-belgique": { imdb: "tt6369954", name: "The Voice Belgique", title: "The Voice Belgium" },
+  "vocea-romaniei": { imdb: "tt6576138", name: "Vocea Romaniei", title: "The Voice of Romania" },
   "the-voice-of-the-country": { imdb: "tt7787336", name: "The Voice of the Country" },
   "the-voice-of-poland": { imdb: "tt8299402", name: "The Voice of Poland" },
-  "o-ses-turkiye": { imdb: "tt8960548", name: "O Ses Türkiye" },
-  "the-voice-kids-ukraine": { imdb: "tt12719560", name: "The Voice Kids (Ukraine)" },
-  "la-voz-argentina": { imdb: "tt14992862", name: "La Voz Argentina" },
+  "o-ses-turkiye": { imdb: "tt8960548", name: "O Ses Türkiye", title: "The Voice Turkey" },
+  "the-voice-kids-ukraine": { imdb: "tt12719560", name: "The Voice Kids (Ukraine)", title: "The Voice Kids Ukraine" },
+  "la-voz-argentina": { imdb: "tt14992862", name: "La Voz Argentina", title: "The Voice Argentina" },
   "the-voice-uk": { imdb: "tt1971245", name: "The Voice UK" },
-  "the-voice-brasil": { imdb: "tt2162116", name: "The Voice Brasil" },
-  "the-voice-cesko-slovensko": { imdb: "tt2163949", name: "The Voice Česko Slovensko" },
+  "the-voice-brasil": { imdb: "tt2162116", name: "The Voice Brasil", title: "The Voice Brazil" },
+  "the-voice-cesko-slovensko": { imdb: "tt2163949", name: "The Voice Česko Slovensko", title: "The Voice Czech Republic & Slovakia" },
   "the-voice-kids-netherlands": { imdb: "tt2211093", name: "The Voice Kids" },
   "the-voice-of-ireland": { imdb: "tt2275275", name: "The Voice of Ireland" },
   "the-voice-au": { imdb: "tt2334429", name: "The Voice" },
-  "the-voice-la-plus-belle-voix": { imdb: "tt2362849", name: "The Voice: La plus belle voix" },
-  "la-voz-spain": { imdb: "tt2404696", name: "La voz" },
+  "the-voice-la-plus-belle-voix": { imdb: "tt2362849", name: "The Voice: La plus belle voix", title: "The Voice France" },
+  "la-voz-spain": { imdb: "tt2404696", name: "La voz", title: "The Voice Spain" },
   "the-voice-israel": { imdb: "tt3029822", name: "The Voice: Israel" },
   "sing-china-china": { imdb: "tt5314574", name: "Sing! China" },
-  "the-voice-sverige": { imdb: "tt5419918", name: "The Voice Sverige" },
-  "mbc-the-voice": { imdb: "tt5442458", name: "Mbc the Voice" },
+  "the-voice-sverige": { imdb: "tt5419918", name: "The Voice Sverige", title: "The Voice Sweden" },
+  "mbc-the-voice": { imdb: "tt5442458", name: "Mbc the Voice", title: "MBC The Voice" },
   "the-voice-thailand": { imdb: "tt6166216", name: "The Voice Thailand" },
-  "golos": { imdb: "tt6677872", name: "Golos" },
-  "the-voice-norges-beste-stemme": { imdb: "tt6684464", name: "The Voice - Norges beste stemme" },
+  "golos": { imdb: "tt6677872", name: "Golos", title: "The Voice Russia" },
+  "the-voice-norges-beste-stemme": { imdb: "tt6684464", name: "The Voice - Norges beste stemme", title: "The Voice Norway" },
   "the-voice-of-korea": { imdb: "tt8227696", name: "The Voice of Korea" },
-  "la-voz-peru": { imdb: "tt10349256", name: "La Voz Perú" },
-  "la-voix": { imdb: "tt15469110", name: "La Voix" },
+  "la-voz-peru": { imdb: "tt10349256", name: "La Voz Perú", title: "The Voice Peru" },
+  "la-voix": { imdb: "tt15469110", name: "La Voix", title: "The Voice Quebec" },
   "the-voice-kids-germany": { imdb: "tt2811616", name: "The Voice Kids" },
   "the-voice-kids-united-states": { imdb: "tt2946268", name: "The Voice Kids" },
   "the-voice-of-the-philippines": { imdb: "tt2971694", name: "The Voice of the Philippines" },
   "the-voice-of-italy": { imdb: "tt2987992", name: "The Voice of Italy" },
   "the-voice-kids-france": { imdb: "tt10385760", name: "The Voice Kids" },
-  "la-voz-kids-colombia": { imdb: "tt10913680", name: "La Voz Kids" },
+  "la-voz-kids-colombia": { imdb: "tt10913680", name: "La Voz Kids", title: "The Voice Kids Colombia" },
   "the-voice-kids-belgium": { imdb: "tt18358236", name: "The Voice Kids" },
-  "la-voz-kids-peru": { imdb: "tt22012730", name: "La Voz Kids" },
+  "la-voz-kids-peru": { imdb: "tt22012730", name: "La Voz Kids", title: "The Voice Kids Peru" },
   "the-voice-kids-philippines": { imdb: "tt26258980", name: "The Voice Kids" },
   "the-voice-of-greece": { imdb: "tt3461864", name: "The Voice of Greece" },
-  "la-voz-kids-spain": { imdb: "tt3551662", name: "La Voz Kids" },
+  "la-voz-kids-spain": { imdb: "tt3551662", name: "La Voz Kids", title: "The Voice Kids Spain" },
   "the-voice-kids-australia": { imdb: "tt3801702", name: "The Voice Kids" },
   "the-voice-kids-portugal": { imdb: "tt4309384", name: "The Voice Kids" },
   "the-voice-chile": { imdb: "tt5878752", name: "The Voice Chile" },
-  "the-voice-india": { imdb: "tt7678864", name: "The Voice (India)" },
-  "la-voix-junior": { imdb: "tt32119010", name: "La Voix Junior" },
+  "the-voice-india": { imdb: "tt7678864", name: "The Voice (India)", title: "The Voice India" },
+  "la-voix-junior": { imdb: "tt32119010", name: "La Voix Junior", title: "The Voice Junior Quebec" },
   "the-voice-kids-brazil": { imdb: "tt5218922", name: "The Voice Kids" },
-  "mbc-the-voice-kids": { imdb: "tt5443200", name: "Mbc the Voice Kids" },
+  "mbc-the-voice-kids": { imdb: "tt5443200", name: "Mbc the Voice Kids", title: "MBC The Voice Kids" },
   "sing-china-china-2016": { imdb: "tt7353808", name: "Sing! China" },
   "the-voice-nigeria": { imdb: "tt8227608", name: "The Voice Nigeria" },
   "the-voice-kids-india": { imdb: "tt8227660", name: "The Voice Kids India" },
   "the-voice-kids-united-kingdom": { imdb: "tt6394320", name: "The Voice Kids" },
-  "vocea-romaniei-junior": { imdb: "tt6584916", name: "Vocea Romaniei Junior" },
-  "la-voz-kids-mexico": { imdb: "tt7908380", name: "La Voz Kids México" },
-  "the-voice-kids-pl": { imdb: "tt11867616", name: "The Voice Kids PL" },
-  "the-voice-senior-de": { imdb: "tt13781464", name: "The Voice Senior (DE)" },
+  "vocea-romaniei-junior": { imdb: "tt6584916", name: "Vocea Romaniei Junior", title: "The Voice of Romania Junior" },
+  "la-voz-kids-mexico": { imdb: "tt7908380", name: "La Voz Kids México", title: "The Voice Kids Mexico" },
+  "the-voice-kids-pl": { imdb: "tt11867616", name: "The Voice Kids PL", title: "The Voice Kids Poland" },
+  "the-voice-senior-de": { imdb: "tt13781464", name: "The Voice Senior (DE)", title: "The Voice Senior Germany" },
   "the-voice-senior": { imdb: "tt8039854", name: "The Voice Senior" },
   "la-voz-united-states": { imdb: "tt8983466", name: "La Voz" },
-  "la-voz-senior": { imdb: "tt10554108", name: "La voz Senior" },
+  "la-voz-senior": { imdb: "tt10554108", name: "La voz Senior", title: "The Voice Senior Spain" },
   "the-voice-poland": { imdb: "tt11867596", name: "The Voice Poland" },
   "the-voice-portugal-2019": { imdb: "tt12787138", name: "The Voice Portugal 2019" },
   "the-voice-of-germany-comeback-stage": { imdb: "tt13724450", name: "The Voice of Germany: Comeback Stage" },
-  "la-voz-mexico-2019": { imdb: "tt13777486", name: "La voz" },
-  "the-voice-senior-italia": { imdb: "tt16263726", name: "The Voice Senior (Italia)" },
-  "o-ses-turkiye-rap": { imdb: "tt13169104", name: "O Ses Türkiye Rap" },
+  "la-voz-mexico-2019": { imdb: "tt13777486", name: "La voz", title: "The Voice Mexico" },
+  "the-voice-senior-italia": { imdb: "tt16263726", name: "The Voice Senior (Italia)", title: "The Voice Senior Italy" },
+  "o-ses-turkiye-rap": { imdb: "tt13169104", name: "O Ses Türkiye Rap", title: "The Voice Turkey Rap" },
   "the-voice-brazil": { imdb: "tt13862962", name: "The Voice +" },
   "the-voice-of-finland-senior": { imdb: "tt20754604", name: "The Voice of Finland: Senior" },
   "the-voice-generations-australia": { imdb: "tt32118957", name: "The Voice Generations Australia" },
   "the-voice-india-2023": { imdb: "tt27609689", name: "The Voice" },
   "the-voice-of-germany-rap": { imdb: "tt27662511", name: "The Voice of Germany Rap" },
   "the-voice-generations": { imdb: "tt28495080", name: "The Voice Generations" },
-  "the-voice-generations-italia": { imdb: "tt32118950", name: "The Voice Generations (Italia)" },
+  "the-voice-generations-italia": { imdb: "tt32118950", name: "The Voice Generations (Italia)", title: "The Voice Generations Italy" },
   "the-voice-kids-croatia": { imdb: "tt34618095", name: "The Voice Kids Croatia" },
   // Terrace House
   "terrace-house-boys-girls-next-door": { imdb: "tt2562280", name: "Terrace House: Boys × Girls Next Door" },
@@ -1023,40 +1021,40 @@ export const shows = {
   "terrace-house-tokyo-2019": { imdb: "tt10686814", name: "Terrace House: Tokyo 2019-2020" },
   // Got Talent
   "agt": { imdb: "tt0759364", name: "America's Got Talent" },
-  "la-france-a-un-incroyable-talent-ca-continue": { imdb: "tt35013125", name: "La France a un incroyable talent, ça continue" },
-  "la-france-a-un-incroyable-talent": { imdb: "tt9454934", name: "La France a un Incroyable Talent" },
+  "la-france-a-un-incroyable-talent-ca-continue": { imdb: "tt35013125", name: "La France a un incroyable talent, ça continue", title: "France's Got Talent Continues" },
+  "la-france-a-un-incroyable-talent": { imdb: "tt9454934", name: "La France a un Incroyable Talent", title: "France's Got Talent" },
   "agt-australia": { imdb: "tt1000022", name: "Australia's Got Talent" },
   "bgt": { imdb: "tt1034201", name: "Britain's Got Talent" },
   "bgt-more-talent": { imdb: "tt1049244", name: "Britain's Got More Talent" },
-  "talent-suomi": { imdb: "tt1092258", name: "Talent Suomi" },
-  "das-supertalent": { imdb: "tt1134766", name: "Das Supertalent" },
-  "tienes-talento": { imdb: "tt1179228", name: "Tienes talento" },
+  "talent-suomi": { imdb: "tt1092258", name: "Talent Suomi", title: "Finland's Got Talent" },
+  "das-supertalent": { imdb: "tt1134766", name: "Das Supertalent", title: "Germany's Got Talent" },
+  "tienes-talento": { imdb: "tt1179228", name: "Tienes talento", title: "Spain's Got Talent" },
   "holland-s-got-talent": { imdb: "tt1219297", name: "Holland's Got Talent" },
-  "talent-danmark": { imdb: "tt1288340", name: "Talent Danmark" },
-  "slovensko-ma-talent": { imdb: "tt1354673", name: "Slovensko má talent" },
-  "norske-talenter": { imdb: "tt2115019", name: "Norske Talenter" },
+  "talent-danmark": { imdb: "tt1288340", name: "Talent Danmark", title: "Denmark's Got Talent" },
+  "slovensko-ma-talent": { imdb: "tt1354673", name: "Slovensko má talent", title: "Slovakia's Got Talent" },
+  "norske-talenter": { imdb: "tt2115019", name: "Norske Talenter", title: "Norway's Got Talent" },
   "new-zealand-s-got-talent": { imdb: "tt2398126", name: "New Zealand's Got Talent" },
-  "mam-talent": { imdb: "tt3895796", name: "Mam talent!" },
+  "mam-talent": { imdb: "tt3895796", name: "Mam talent!", title: "Poland's Got Talent" },
   "italia-s-got-talent": { imdb: "tt1725903", name: "Italia's Got Talent" },
   "india-s-got-talent": { imdb: "tt4197638", name: "India's Got Talent" },
   "ukraine-s-got-talent": { imdb: "tt4465532", name: "Ukraine's Got Talent" },
   "sa-s-got-talent": { imdb: "tt5763250", name: "SA's Got Talent" },
-  "yetenek-sizsiniz-turkiye": { imdb: "tt9089698", name: "Yetenek Sizsiniz Türkiye" },
+  "yetenek-sizsiniz-turkiye": { imdb: "tt9089698", name: "Yetenek Sizsiniz Türkiye", title: "Turkey's Got Talent" },
   "pilipinas-got-talent": { imdb: "tt1651113", name: "Pilipinas Got Talent" },
-  "cesko-slovensko-ma-talent": { imdb: "tt1755103", name: "Česko Slovensko má talent" },
+  "cesko-slovensko-ma-talent": { imdb: "tt1755103", name: "Česko Slovensko má talent", title: "Czech Republic & Slovakia's Got Talent" },
   "china-s-got-talent": { imdb: "tt7382436", name: "China's Got Talent" },
   "arabs-got-talent": { imdb: "tt3240080", name: "Arabs' Got Talent" },
   "thailand-s-got-talent": { imdb: "tt5196750", name: "Thailand's Got Talent" },
-  "romanii-au-talent": { imdb: "tt6601678", name: "Romanii au talent" },
+  "romanii-au-talent": { imdb: "tt6601678", name: "Romanii au talent", title: "Romania's Got Talent" },
   "canadas-got-talent": { imdb: "tt2180809", name: "Canada's Got Talent" },
   "belgium-s-got-talent-belgium": { imdb: "tt2497106", name: "Belgium's Got Talent" },
   "brazil-s-got-talent": { imdb: "tt2817438", name: "Brazil's Got Talent" },
   "mexico-s-got-talent": { imdb: "tt12630264", name: "Mexico's Got Talent" },
-  "danmark-har-talent": { imdb: "tt5537708", name: "Danmark har talent" },
+  "danmark-har-talent": { imdb: "tt5537708", name: "Danmark har talent", title: "Denmark's Got Talent" },
   "got-talent-portugal": { imdb: "tt11350014", name: "Got Talent Portugal" },
   "hungary-s-got-talent": { imdb: "tt13677272", name: "Hungary's Got Talent" },
   "asias-got-talent": { imdb: "tt4679312", name: "Asia's Got Talent" },
-  "got-talent-espana": { imdb: "tt5651816", name: "Got Talent España" },
+  "got-talent-espana": { imdb: "tt5651816", name: "Got Talent España", title: "Got Talent Spain" },
   "israel-s-got-talent": { imdb: "tt12779670", name: "Israel's Got Talent" },
   "ireland-s-got-talent": { imdb: "tt8490194", name: "Ireland's Got Talent" },
   "bgt-champions": { imdb: "tt10426684", name: "Britain's Got Talent: The Champions" },
@@ -1064,7 +1062,7 @@ export const shows = {
   "dominicana-s-got-talent": { imdb: "tt9591920", name: "Dominicana's Got Talent" },
   "persia-s-got-talent": { imdb: "tt11707798", name: "Persia's Got Talent" },
   "got-talent-uruguay": { imdb: "tt12866776", name: "Got Talent Uruguay" },
-  "la-france-a-un-incroyable-talent-la-bataille-du-jury": { imdb: "tt33348509", name: "La France a un incroyable talent: La Bataille Du Jury" },
+  "la-france-a-un-incroyable-talent-la-bataille-du-jury": { imdb: "tt33348509", name: "La France a un incroyable talent: La Bataille Du Jury", title: "France's Got Talent: The Jury Battle" },
   "bgt-unseen": { imdb: "tt40791848", name: "Britain's Got Talent: Unseen" },
   "agt-all-stars": { imdb: "tt22525742", name: "America's Got Talent: All-Stars" },
   "got-talent-argentina": { imdb: "tt28776578", name: "Got Talent Argentina" },
@@ -1075,44 +1073,44 @@ export const shows = {
   // Idol
   "pop-idol": { imdb: "tt0302163", name: "Pop Idol" },
   "american-idol": { imdb: "tt0319931", name: "American Idol" },
-  "deutschland-sucht-den-superstar": { imdb: "tt0362339", name: "Deutschland sucht den Superstar" },
+  "deutschland-sucht-den-superstar": { imdb: "tt0362339", name: "Deutschland sucht den Superstar", title: "Idol Germany" },
   "idols-netherlands": { imdb: "tt0364820", name: "Idols" },
-  "idool-2003": { imdb: "tt0390727", name: "Idool 2003" },
+  "idool-2003": { imdb: "tt0390727", name: "Idool 2003", title: "Idol Belgium" },
   "idols-south-africa": { imdb: "tt4764576", name: "Idols" },
   "idol-poland": { imdb: "tt4777744", name: "Idol" },
   "canadian-idol": { imdb: "tt0365991", name: "Canadian Idol" },
-  "a-la-recherche-de-la-nouvelle-star": { imdb: "tt0367444", name: "À la recherche de la nouvelle star" },
+  "a-la-recherche-de-la-nouvelle-star": { imdb: "tt0367444", name: "À la recherche de la nouvelle star", title: "Idol France" },
   "idol-norway": { imdb: "tt0368509", name: "Idol" },
   "idols-denmark": { imdb: "tt0371456", name: "Idols" },
   "australian-idol": { imdb: "tt0382400", name: "Australian Idol" },
   "idols-finland": { imdb: "tt0384743", name: "Idols" },
-  "idolos-portugal": { imdb: "tt0389708", name: "Ídolos" },
+  "idolos-portugal": { imdb: "tt0389708", name: "Ídolos", title: "Idol Portugal" },
   "superstar-kz": { imdb: "tt1245435", name: "SuperStar KZ" },
   "idol-serbia": { imdb: "tt4822122", name: "Idol" },
   "new-zealand-idol": { imdb: "tt0390746", name: "New Zealand Idol" },
-  "idolos-chile": { imdb: "tt0429375", name: "Idolos" },
-  "idool-2004": { imdb: "tt0431530", name: "Idool 2004" },
+  "idolos-chile": { imdb: "tt0429375", name: "Idolos", title: "Idol Chile" },
+  "idool-2004": { imdb: "tt0431530", name: "Idool 2004", title: "Idol Belgium" },
   "malaysian-idol": { imdb: "tt0460658", name: "Malaysian Idol" },
   "indian-idol": { imdb: "tt0486068", name: "Indian Idol" },
   "singapore-idol": { imdb: "tt0815077", name: "Singapore Idol" },
-  "hrvatski-idol": { imdb: "tt1237843", name: "Hrvatski Idol" },
+  "hrvatski-idol": { imdb: "tt1237843", name: "Hrvatski Idol", title: "Croatian Idol" },
   "idol-sweden": { imdb: "tt1237844", name: "Idol" },
   "indonesian-idol": { imdb: "tt1237845", name: "Indonesian Idol" },
-  "cesko-hleda-superstar": { imdb: "tt1255958", name: "Česko hledá SuperStar" },
+  "cesko-hleda-superstar": { imdb: "tt1255958", name: "Česko hledá SuperStar", title: "Czech SuperStar" },
   "philippine-idol": { imdb: "tt0953112", name: "Philippine Idol" },
   "latin-american-idol": { imdb: "tt1095932", name: "Latin American Idol" },
   "afrikaans-idols": { imdb: "tt12681596", name: "Afrikaans Idols" },
-  "idolos-brazil": { imdb: "tt2306810", name: "Ídolos" },
+  "idolos-brazil": { imdb: "tt2306810", name: "Ídolos", title: "Idol Brazil" },
   "music-idol": { imdb: "tt1237846", name: "Music Idol" },
-  "idool-2007": { imdb: "tt4892720", name: "Idool 2007" },
+  "idool-2007": { imdb: "tt4892720", name: "Idool 2007", title: "Idol Belgium" },
   "idols-nigeria": { imdb: "tt6020598", name: "Idols" },
   "pinoy-idol": { imdb: "tt1213004", name: "Pinoy Idol" },
   "idols-kenya": { imdb: "tt6021036", name: "Idols" },
   "superstar": { imdb: "tt1522461", name: "SuperStar" },
   "arab-idol": { imdb: "tt2318873", name: "Arab Idol" },
-  "idool-2011": { imdb: "tt5607716", name: "Idool 2011" },
+  "idool-2011": { imdb: "tt5607716", name: "Idool 2011", title: "Idol Belgium" },
   "georgian-idol": { imdb: "tt13911218", name: "Georgian Idol" },
-  "idolos-kids": { imdb: "tt2929774", name: "Ídolos Kids" },
+  "idolos-kids": { imdb: "tt2929774", name: "Ídolos Kids", title: "Idol Kids Brazil" },
   "idol-kids-puerto-rico": { imdb: "tt7628478", name: "Idol Kids Puerto Rico" },
   "pakistan-idol": { imdb: "tt3420360", name: "Pakistan Idol" },
   "nepal-idol": { imdb: "tt6838228", name: "Nepal Idol" },
@@ -1136,7 +1134,7 @@ export const shows = {
   "x-factor-us": { imdb: "tt1582461", name: "The X Factor" },
   "x-factor-slovakia": { imdb: "tt1774260", name: "X Factor" },
   "x-factor-india": { imdb: "tt6081966", name: "X-Factor India" },
-  "x-factor-polska": { imdb: "tt6220636", name: "X Factor Polska" },
+  "x-factor-polska": { imdb: "tt6220636", name: "X Factor Polska", title: "X Factor Poland" },
   "the-x-factor-philippines": { imdb: "tt2197536", name: "The X Factor Philippines" },
   "x-factor-indonesia": { imdb: "tt2658396", name: "X Factor Indonesia" },
   "x-factor-sweden": { imdb: "tt7238510", name: "X Factor" },
@@ -1157,37 +1155,37 @@ export const shows = {
   "strictly-come-dancing": { imdb: "tt0411027", name: "Strictly Come Dancing" },
   "dwts-au": { imdb: "tt0434676", name: "Dancing with the Stars" },
   "strictly-it-takes-two": { imdb: "tt0439401", name: "Strictly Come Dancing: It Takes Two" },
-  "dancing-with-the-stars-taniec-z-gwiazdami-poland": { imdb: "tt0461890", name: "Dancing with the Stars. Taniec z gwiazdami" },
+  "dancing-with-the-stars-taniec-z-gwiazdami-poland": { imdb: "tt0461890", name: "Dancing with the Stars. Taniec z gwiazdami", title: "Dancing with the Stars Poland" },
   "dancing-with-the-stars-us": { imdb: "tt0463398", name: "Dancing with the Stars" },
-  "vild-med-dans": { imdb: "tt0465360", name: "Vild med dans" },
+  "vild-med-dans": { imdb: "tt0465360", name: "Vild med dans", title: "Dancing with the Stars Denmark" },
   "dancing-with-the-stars-netherlands": { imdb: "tt0481979", name: "Dancing with the Stars" },
   "dancing-with-the-stars-israel": { imdb: "tt0805447", name: "Dancing with the Stars - Israel" },
   "dancing-with-the-stars-new-zealand": { imdb: "tt1666205", name: "Dancing with the Stars" },
   "dancing-stars": { imdb: "tt1831016", name: "Dancing Stars" },
-  "danca-dos-famosos": { imdb: "tt20203310", name: "Dança dos Famosos" },
+  "danca-dos-famosos": { imdb: "tt20203310", name: "Dança dos Famosos", title: "Dancing with the Stars Brazil" },
   "dancing-with-the-stars-italy": { imdb: "tt2341574", name: "Dancing with the Stars - Italy" },
   "let-s-dance-germany": { imdb: "tt0780370", name: "Let's Dance" },
-  "tanssii-tahtien-kanssa": { imdb: "tt0790359", name: "Tanssii tähtien kanssa" },
-  "skal-vi-danse": { imdb: "tt1021041", name: "Skal vi danse" },
+  "tanssii-tahtien-kanssa": { imdb: "tt0790359", name: "Tanssii tähtien kanssa", title: "Dancing with the Stars Finland" },
+  "skal-vi-danse": { imdb: "tt1021041", name: "Skal vi danse", title: "Dancing with the Stars Norway" },
   "strictly-come-dancing-south-africa": { imdb: "tt1047347", name: "Strictly Come Dancing" },
   "let-s-dance-sweden": { imdb: "tt1192257", name: "Let's Dance Sweden" },
   "let-s-dance-slovakia": { imdb: "tt1354668", name: "Let's Dance" },
   "stardance": { imdb: "tt1782958", name: "StarDance" },
   "dancing-with-the-stars-russia": { imdb: "tt5277982", name: "Dancing with the Stars" },
   "dancing-with-the-stars-greece": { imdb: "tt1627003", name: "Dancing with the Stars" },
-  "mira-quien-baila": { imdb: "tt2955856", name: "Mira quién baila" },
-  "danse-avec-les-stars": { imdb: "tt1867711", name: "Danse avec les stars" },
+  "mira-quien-baila": { imdb: "tt2955856", name: "Mira quién baila", title: "Dancing with the Stars Univision" },
+  "danse-avec-les-stars": { imdb: "tt1867711", name: "Danse avec les stars", title: "Dancing with the Stars France" },
   "dancing-with-the-stars-south-korea": { imdb: "tt35227377", name: "Dancing with the Stars" },
   "strictly-come-dancing-netherlands": { imdb: "tt11006672", name: "Strictly Come Dancing" },
-  "danca-com-as-estrelas": { imdb: "tt3038368", name: "Dança Com as Estrelas" },
-  "dancing-with-the-stars-taniec-z-gwiazdami-poland-2014": { imdb: "tt8152294", name: "Dancing with the Stars. Taniec z gwiazdami" },
-  "uite-cine-danseaza": { imdb: "tt6607400", name: "Uite cine danseaza!" },
+  "danca-com-as-estrelas": { imdb: "tt3038368", name: "Dança Com as Estrelas", title: "Dancing with the Stars Portugal" },
+  "dancing-with-the-stars-taniec-z-gwiazdami-poland-2014": { imdb: "tt8152294", name: "Dancing with the Stars. Taniec z gwiazdami", title: "Dancing with the Stars Poland" },
+  "uite-cine-danseaza": { imdb: "tt6607400", name: "Uite cine danseaza!", title: "Dancing with the Stars Romania" },
   "dancing-with-the-stars-ireland": { imdb: "tt6763662", name: "Dancing with the Stars" },
-  "mqb-mira-quien-baila": { imdb: "tt8932136", name: "MQB: mira quién baila" },
+  "mqb-mira-quien-baila": { imdb: "tt8932136", name: "MQB: mira quién baila", title: "Dancing with the Stars Mexico" },
   "dancing-with-the-stars-south-africa": { imdb: "tt37075035", name: "Dancing with the Stars" },
-  "bailando-con-las-estrellas": { imdb: "tt8335426", name: "Bailando con las estrellas" },
+  "bailando-con-las-estrellas": { imdb: "tt8335426", name: "Bailando con las estrellas", title: "Dancing with the Stars Spain" },
   "dwts-juniors": { imdb: "tt8746434", name: "Dancing with the Stars: Juniors" },
-  "dancing-with-the-stars-hungary-mindenki-tancol": { imdb: "tt13246948", name: "Dancing with the Stars - Hungary - Mindenki táncol" },
+  "dancing-with-the-stars-hungary-mindenki-tancol": { imdb: "tt13246948", name: "Dancing with the Stars - Hungary - Mindenki táncol", title: "Dancing with the Stars Hungary" },
   "dancing-with-the-stars-mongolia": { imdb: "tt36924201", name: "Dancing with the Stars" },
   "dancing-with-the-stars-belgium": { imdb: "tt36923938", name: "Dancing with the Stars" },
   "dwts-the-next-pro": { imdb: "tt40367753", name: "Dancing with the Stars: The Next Pro" },
@@ -1197,29 +1195,29 @@ export const shows = {
   "the-masked-singer-bulgaria": { imdb: "tt10964982", name: "The Masked Singer Bulgaria" },
   "the-masked-singer-australia": { imdb: "tt10970268", name: "The Masked Singer Australia" },
   "the-masked-singer-netherlands": { imdb: "tt11050916", name: "The Masked Singer" },
-  "mask-singer": { imdb: "tt11312806", name: "Mask Singer" },
+  "mask-singer": { imdb: "tt11312806", name: "Mask Singer", title: "The Masked Singer France" },
   "the-mask-singer-myanmar": { imdb: "tt32590523", name: "The Mask Singer Myanmar" },
   "masked-singer-us": { imdb: "tt7670568", name: "The Masked Singer" },
   "masked-singer-uk": { imdb: "tt10477884", name: "The Masked Singer UK" },
   "masked-dancer-us": { imdb: "tt11646232", name: "The Masked Dancer" },
-  "mask-singer-adivina-quien-canta": { imdb: "tt11692780", name: "Mask Singer: Adivina quién canta" },
+  "mask-singer-adivina-quien-canta": { imdb: "tt11692780", name: "Mask Singer: Adivina quién canta", title: "The Masked Singer Spain" },
   "the-masked-singer-austria": { imdb: "tt11725826", name: "The Masked Singer Austria" },
-  "masked-singer-suomi": { imdb: "tt11966998", name: "Masked Singer Suomi" },
-  "alarcos-enekes": { imdb: "tt12408324", name: "Álarcos énekes" },
+  "masked-singer-suomi": { imdb: "tt11966998", name: "Masked Singer Suomi", title: "The Masked Singer Finland" },
+  "alarcos-enekes": { imdb: "tt12408324", name: "Álarcos énekes", title: "The Masked Singer Hungary" },
   "the-masked-singer-israel": { imdb: "tt13155524", name: "The Masked Singer Israel" },
-  "balss-maska": { imdb: "tt13444814", name: "Balss Maska" },
-  "maskis-laulja": { imdb: "tt13444856", name: "Maskis laulja" },
+  "balss-maska": { imdb: "tt13444814", name: "Balss Maska", title: "The Masked Singer Latvia" },
+  "maskis-laulja": { imdb: "tt13444856", name: "Maskis laulja", title: "The Masked Singer Estonia" },
   "the-masked-singer-switzerland": { imdb: "tt13458626", name: "The Masked Singer Switzerland" },
-  "maskorama": { imdb: "tt13510734", name: "Maskorama" },
+  "maskorama": { imdb: "tt13510734", name: "Maskorama", title: "The Masked Singer Norway" },
   "the-masked-singer-belgium": { imdb: "tt16994140", name: "The Masked Singer" },
   "masked-singer-romania": { imdb: "tt22058452", name: "Masked Singer Romania" },
-  "the-masked-singer-inta-min": { imdb: "tt23395546", name: "The Masked Singer - Inta Min" },
-  "masked-singer-pilipinas": { imdb: "tt23929272", name: "Masked Singer Pilipinas" },
+  "the-masked-singer-inta-min": { imdb: "tt23395546", name: "The Masked Singer - Inta Min", title: "The Masked Singer Arabic" },
+  "masked-singer-pilipinas": { imdb: "tt23929272", name: "Masked Singer Pilipinas", title: "The Masked Singer Philippines" },
   "the-masked-singer-malaysia": { imdb: "tt25811744", name: "The Masked Singer Malaysia" },
   "the-masked-singer-russia": { imdb: "tt27927579", name: "The Masked Singer Russia" },
   "masked-dancer-uk": { imdb: "tt14183328", name: "The Masked Dancer" },
-  "masked-singer-sverige": { imdb: "tt14329766", name: "Masked Singer Sverige" },
-  "the-masked-singer-brasil": { imdb: "tt15210070", name: "The Masked Singer Brasil" },
+  "masked-singer-sverige": { imdb: "tt14329766", name: "Masked Singer Sverige", title: "The Masked Singer Sweden" },
+  "the-masked-singer-brasil": { imdb: "tt15210070", name: "The Masked Singer Brasil", title: "The Masked Singer Brazil" },
   "the-masked-singer-japan": { imdb: "tt15261788", name: "The Masked Singer Japan" },
   "the-masked-singer-nz": { imdb: "tt22394628", name: "The Masked Singer NZ" },
   "the-masked-dancer-germany": { imdb: "tt15839516", name: "The Masked Dancer Germany" },
@@ -1235,53 +1233,53 @@ export const shows = {
   "gbbo": { imdb: "tt1877368", name: "The Great British Baking Show" },
   "junior-bake-off": { imdb: "tt2131864", name: "Junior Bake Off" },
   "the-great-sport-relief-bake-off": { imdb: "tt2255405", name: "The Great Sport Relief Bake Off" },
-  "le-meilleur-patissier": { imdb: "tt3020702", name: "Le meilleur patissier" },
-  "hela-sverige-bakar": { imdb: "tt3438150", name: "Hela Sverige bakar" },
-  "den-store-bagedyst": { imdb: "tt9313008", name: "Den store bagedyst" },
+  "le-meilleur-patissier": { imdb: "tt3020702", name: "Le meilleur patissier", title: "Bake Off France" },
+  "hela-sverige-bakar": { imdb: "tt3438150", name: "Hela Sverige bakar", title: "Bake Off Sweden" },
+  "den-store-bagedyst": { imdb: "tt9313008", name: "Den store bagedyst", title: "Bake Off Denmark" },
   "creme-de-la-creme": { imdb: "tt2222049", name: "Crème de la Crème" },
   "the-great-australian-bake-off": { imdb: "tt2569326", name: "The Great Australian Bake Off" },
-  "das-gro-e-backen": { imdb: "tt3363800", name: "Das große Backen" },
-  "heel-holland-bakt": { imdb: "tt4250064", name: "Heel Holland Bakt" },
+  "das-gro-e-backen": { imdb: "tt3363800", name: "Das große Backen", title: "Bake Off Germany" },
+  "heel-holland-bakt": { imdb: "tt4250064", name: "Heel Holland Bakt", title: "Bake Off Holland" },
   "the-great-comic-relief-bake-off": { imdb: "tt4448752", name: "The Great Comic Relief Bake Off" },
   "the-great-irish-bake-off": { imdb: "tt5080246", name: "The Great Irish Bake Off" },
-  "bake-off-italia-dolci-in-forno": { imdb: "tt5684368", name: "Bake Off Italia - Dolci in forno" },
-  "hele-norge-baker": { imdb: "tt7049168", name: "Hele Norge Baker" },
+  "bake-off-italia-dolci-in-forno": { imdb: "tt5684368", name: "Bake Off Italia - Dolci in forno", title: "Bake Off Italy" },
+  "hele-norge-baker": { imdb: "tt7049168", name: "Hele Norge Baker", title: "Bake Off Norway" },
   "the-great-british-bake-off-an-extra-slice": { imdb: "tt4057258", name: "The Great British Bake Off: An Extra Slice" },
-  "hela-kandis-sverige-bakar": { imdb: "tt7551142", name: "Hela kändis-Sverige bakar" },
+  "hela-kandis-sverige-bakar": { imdb: "tt7551142", name: "Hela kändis-Sverige bakar", title: "Celebrity Bake Off Sweden" },
   "the-great-holiday-baking-show": { imdb: "tt5233284", name: "The Great Holiday Baking Show" },
   "the-great-south-african-bake-off": { imdb: "tt5574086", name: "The Great South African Bake Off" },
-  "bake-off-brasil-mao-na-massa": { imdb: "tt8495648", name: "Bake Off Brasil: Mão na Massa" },
-  "le-meilleur-patissier-celebrites": { imdb: "tt23059614", name: "Le Meilleur Pâtissier - Célébrités" },
+  "bake-off-brasil-mao-na-massa": { imdb: "tt8495648", name: "Bake Off Brasil: Mão na Massa", title: "Bake Off Brazil" },
+  "le-meilleur-patissier-celebrites": { imdb: "tt23059614", name: "Le Meilleur Pâtissier - Célébrités", title: "Celebrity Bake Off France" },
   "the-great-british-baking-show-the-professionals": { imdb: "tt5622304", name: "The Great British Baking Show: The Professionals" },
-  "bake-off-israel": { imdb: "tt5622868", name: "Bake Off - Israel" },
+  "bake-off-israel": { imdb: "tt5622868", name: "Bake Off - Israel", title: "Bake Off Israel" },
   "bake-off-romania": { imdb: "tt6608812", name: "Bake Off Romania" },
-  "bake-off-vlaanderen": { imdb: "tt10952228", name: "Bake Off Vlaanderen" },
-  "das-gro-e-promibacken": { imdb: "tt11865384", name: "Das große Promibacken" },
-  "le-meilleur-patissier-les-professionnels": { imdb: "tt23060328", name: "Le Meilleur Pâtissier : Les Professionnels" },
+  "bake-off-vlaanderen": { imdb: "tt10952228", name: "Bake Off Vlaanderen", title: "Bake Off Flanders" },
+  "das-gro-e-promibacken": { imdb: "tt11865384", name: "Das große Promibacken", title: "Celebrity Bake Off Germany" },
+  "le-meilleur-patissier-les-professionnels": { imdb: "tt23060328", name: "Le Meilleur Pâtissier : Les Professionnels", title: "Bake Off France: The Professionals" },
   "the-great-canadian-baking-show": { imdb: "tt7332358", name: "The Great Canadian Baking Show" },
   "the-great-kiwi-bake-off": { imdb: "tt12739866", name: "The Great Kiwi Bake Off" },
-  "bake-off-argentina-el-gran-pastelero": { imdb: "tt13451758", name: "Bake Off Argentina: El gran pastelero" },
+  "bake-off-argentina-el-gran-pastelero": { imdb: "tt13451758", name: "Bake Off Argentina: El gran pastelero", title: "Bake Off Argentina" },
   "the-great-british-baking-show-holidays": { imdb: "tt16161100", name: "The Great British Baking Show: Holidays" },
-  "junior-bake-off-brasil": { imdb: "tt8502396", name: "Júnior Bake Off Brasil" },
+  "junior-bake-off-brasil": { imdb: "tt8502396", name: "Júnior Bake Off Brasil", title: "Junior Bake Off Brazil" },
   "ide-suss": { imdb: "tt8738020", name: "Ide süss!" },
   "the-great-celebrity-bake-off-for-su2c": { imdb: "tt9022462", name: "The Great Celebrity Bake Off for SU2C" },
   "bake-off-greece": { imdb: "tt9061686", name: "Bake Off Greece" },
-  "bake-off-espana": { imdb: "tt10453228", name: "Bake Off España" },
-  "en-route-pour-le-meilleur-patissier": { imdb: "tt23156810", name: "En route pour le meilleur pâtissier" },
-  "heel-holland-bakt-kids": { imdb: "tt13424046", name: "Heel Holland Bakt Kids" },
-  "bake-off-brasil-cereja-do-bolo": { imdb: "tt27095961", name: "Bake Off Brasil: Cereja do Bolo" },
-  "le-meilleur-patissier-gateaux-sur-commande": { imdb: "tt28750658", name: "Le Meilleur pâtissier : Gâteaux sur commande" },
-  "den-store-juniorbagedyst": { imdb: "tt14273652", name: "Den store juniorbagedyst" },
-  "celebrity-bake-off-espana": { imdb: "tt14404654", name: "Celebrity Bake Off España" },
-  "el-gran-pastelero-bake-off-mexico": { imdb: "tt14741098", name: "El Gran Pastelero: Bake Off México" },
-  "heel-holland-bakt-nog-een-keer": { imdb: "tt15393068", name: "Heel Holland Bakt nog een keer" },
-  "bake-off-brasil-celebridades": { imdb: "tt26687839", name: "Bake Off Brasil: Celebridades" },
+  "bake-off-espana": { imdb: "tt10453228", name: "Bake Off España", title: "Bake Off Spain" },
+  "en-route-pour-le-meilleur-patissier": { imdb: "tt23156810", name: "En route pour le meilleur pâtissier", title: "Bake Off France: On the Road" },
+  "heel-holland-bakt-kids": { imdb: "tt13424046", name: "Heel Holland Bakt Kids", title: "Bake Off Holland Kids" },
+  "bake-off-brasil-cereja-do-bolo": { imdb: "tt27095961", name: "Bake Off Brasil: Cereja do Bolo", title: "Bake Off Brazil: Cherry on Top" },
+  "le-meilleur-patissier-gateaux-sur-commande": { imdb: "tt28750658", name: "Le Meilleur pâtissier : Gâteaux sur commande", title: "Bake Off France: Custom Cakes" },
+  "den-store-juniorbagedyst": { imdb: "tt14273652", name: "Den store juniorbagedyst", title: "Junior Bake Off Denmark" },
+  "celebrity-bake-off-espana": { imdb: "tt14404654", name: "Celebrity Bake Off España", title: "Celebrity Bake Off Spain" },
+  "el-gran-pastelero-bake-off-mexico": { imdb: "tt14741098", name: "El Gran Pastelero: Bake Off México", title: "Bake Off Mexico" },
+  "heel-holland-bakt-nog-een-keer": { imdb: "tt15393068", name: "Heel Holland Bakt nog een keer", title: "Bake Off Holland: Once More" },
+  "bake-off-brasil-celebridades": { imdb: "tt26687839", name: "Bake Off Brasil: Celebridades", title: "Celebrity Bake Off Brazil" },
   "junior-bake-off-flanders": { imdb: "tt27915444", name: "Junior Bake Off Flanders" },
   "bake-off-japan": { imdb: "tt19265334", name: "Bake Off Japan" },
-  "le-meilleur-patissier-du-quebec": { imdb: "tt21148418", name: "Le meilleur pâtissier du Québec" },
+  "le-meilleur-patissier-du-quebec": { imdb: "tt21148418", name: "Le meilleur pâtissier du Québec", title: "Bake Off Quebec" },
   "the-great-american-baking-show": { imdb: "tt21822674", name: "The Great American Baking Show" },
-  "bake-off-celebrity-el-gran-pastelero-colombia": { imdb: "tt23646216", name: "Bake Off Celebrity, El Gran Pastelero: Colombia" },
-  "bake-off-famosos-argentina": { imdb: "tt33513686", name: "Bake Off Famosos Argentina" },
+  "bake-off-celebrity-el-gran-pastelero-colombia": { imdb: "tt23646216", name: "Bake Off Celebrity, El Gran Pastelero: Colombia", title: "Celebrity Bake Off Colombia" },
+  "bake-off-famosos-argentina": { imdb: "tt33513686", name: "Bake Off Famosos Argentina", title: "Celebrity Bake Off Argentina" },
   // Too Hot to Handle
   "too-hot-to-handle": { imdb: "tt12004280", name: "Too Hot to Handle" },
   "too-hot-to-handle-brazil": { imdb: "tt14902484", name: "Too Hot to Handle: Brazil" },
@@ -1297,34 +1295,34 @@ export const shows = {
   "the-circle-brazil": { imdb: "tt9581782", name: "The Circle: Brazil" },
   "the-celebrity-circle": { imdb: "tt14122638", name: "The Celebrity Circle" },
   // Married at First Sight
-  "gift-ved-f-rste-blik": { imdb: "tt6125534", name: "Gift ved første blik" },
-  "hochzeit-auf-den-ersten-blick": { imdb: "tt13402590", name: "Hochzeit auf den ersten Blick" },
+  "gift-ved-f-rste-blik": { imdb: "tt6125534", name: "Gift ved første blik", title: "Married at First Sight Denmark" },
+  "hochzeit-auf-den-ersten-blick": { imdb: "tt13402590", name: "Hochzeit auf den ersten Blick", title: "Married at First Sight Germany" },
   "married-at-first-sight-sweden": { imdb: "tt19269444", name: "Married at First Sight Sweden" },
   "married-at-first-sight-united-states": { imdb: "tt3868860", name: "Married at First Sight" },
-  "gift-ved-f-rste-blikk": { imdb: "tt7056862", name: "Gift ved første blikk" },
+  "gift-ved-f-rste-blikk": { imdb: "tt7056862", name: "Gift ved første blikk", title: "Married at First Sight Norway" },
   "married-at-first-sight-the-first-year": { imdb: "tt4357586", name: "Married at First Sight: The First Year" },
   "married-at-first-sight-australia": { imdb: "tt4771108", name: "Married at First Sight: Australia" },
   "married-at-first-sight-uk": { imdb: "tt5434216", name: "Married at First Sight UK" },
-  "casados-a-primera-vista-spain": { imdb: "tt7139982", name: "Casados a primera vista" },
+  "casados-a-primera-vista-spain": { imdb: "tt7139982", name: "Casados a primera vista", title: "Married at First Sight Spain" },
   "married-at-first-sight-netherlands": { imdb: "tt15254812", name: "Married at First Sight" },
   "married-at-first-sight-france": { imdb: "tt21624800", name: "Married at First Sight" },
   "married-at-first-sight-unfiltered": { imdb: "tt5672428", name: "Married at First Sight: Unfiltered" },
   "married-at-first-sight-south-africa": { imdb: "tt9066756", name: "Married at First Sight: South Africa" },
-  "married-at-first-sight-israel": { imdb: "tt13302116", name: "חתונה ממבט ראשון" },
+  "married-at-first-sight-israel": { imdb: "tt13302116", name: "חתונה ממבט ראשון", title: "Married at First Sight Israel" },
   "married-at-first-sight-nz": { imdb: "tt31390179", name: "Married at First Sight NZ" },
   "married-at-first-sight-second-chances": { imdb: "tt6958600", name: "Married at First Sight: Second Chances" },
   "married-at-first-sight-honeymoon-island": { imdb: "tt8994522", name: "Married at First Sight: Honeymoon Island" },
   "married-at-first-sight-happily-ever-after": { imdb: "tt8994550", name: "Married at First Sight: Happily Ever After" },
-  "casados-a-primeira-vista": { imdb: "tt9264674", name: "Casados à Primeira Vista" },
-  "lykkelig-gift-ved-f-rste-blikk": { imdb: "tt11355420", name: "Lykkelig gift ved første blikk" },
-  "matrimonio-a-prima-vista-italia": { imdb: "tt27936959", name: "Matrimonio A Prima Vista Italia" },
+  "casados-a-primeira-vista": { imdb: "tt9264674", name: "Casados à Primeira Vista", title: "Married at First Sight Portugal" },
+  "lykkelig-gift-ved-f-rste-blikk": { imdb: "tt11355420", name: "Lykkelig gift ved første blikk", title: "Married at First Sight Norway: Happily Married" },
+  "matrimonio-a-prima-vista-italia": { imdb: "tt27936959", name: "Matrimonio A Prima Vista Italia", title: "Married at First Sight Italy" },
   "married-at-first-sight-couples-cam": { imdb: "tt12224832", name: "Married at First Sight: Couples Cam" },
   "married-at-first-sight-unmatchables": { imdb: "tt13087486", name: "Married at First Sight: Unmatchables" },
   "married-at-first-sight-grand-reunion-event": { imdb: "tt14163204", name: "Married at First Sight Grand Reunion Event" },
   "married-at-first-sight-couples-couch": { imdb: "tt28481413", name: "Married at First Sight: Couples Couch" },
   "married-at-first-sight-mzansi": { imdb: "tt37599730", name: "Married at First Sight: Mzansi" },
-  "hochzeit-auf-den-zweiten-blick": { imdb: "tt36951950", name: "Hochzeit auf den zweiten Blick" },
-  "casados-a-primera-vista-spain-2026": { imdb: "tt39440115", name: "Casados a primera vista" },
+  "hochzeit-auf-den-zweiten-blick": { imdb: "tt36951950", name: "Hochzeit auf den zweiten Blick", title: "Married at Second Sight Germany" },
+  "casados-a-primera-vista-spain-2026": { imdb: "tt39440115", name: "Casados a primera vista", title: "Married at First Sight Spain" },
   // The Ultimatum
   "the-ultimatum-marry-or-move-on": { imdb: "tt18396952", name: "The Ultimatum: Marry or Move On" },
   "the-ultimatum-france": { imdb: "tt23905576", name: "The Ultimatum: France" },
@@ -1334,52 +1332,52 @@ export const shows = {
   "temptation-island-united-states": { imdb: "tt0273025", name: "Temptation Island" },
   "temptation-island-belgium": { imdb: "tt0313135", name: "Temptation Island" },
   "temptation-island-denmark": { imdb: "tt0397205", name: "Temptation Island" },
-  "temptation-island-it": { imdb: "tt37449227", name: "Temptation Island (IT)" },
-  "temptation-island-ro": { imdb: "tt28504410", name: "Temptation Island (RO)" },
-  "temptation-island-suomi": { imdb: "tt4514104", name: "Temptation Island Suomi" },
-  "temptation-island-vip-it": { imdb: "tt37744822", name: "Temptation Island VIP (IT)" },
-  "temptation-island-vips": { imdb: "tt8621286", name: "Temptation Island VIPS" },
-  "temptation-island-versuchung-im-paradies": { imdb: "tt15010278", name: "Temptation Island - Versuchung im Paradies" },
+  "temptation-island-it": { imdb: "tt37449227", name: "Temptation Island (IT)", title: "Temptation Island Italy" },
+  "temptation-island-ro": { imdb: "tt28504410", name: "Temptation Island (RO)", title: "Temptation Island Romania" },
+  "temptation-island-suomi": { imdb: "tt4514104", name: "Temptation Island Suomi", title: "Temptation Island Finland" },
+  "temptation-island-vip-it": { imdb: "tt37744822", name: "Temptation Island VIP (IT)", title: "Temptation Island VIP Italy" },
+  "temptation-island-vips": { imdb: "tt8621286", name: "Temptation Island VIPS", title: "Temptation Island VIPs" },
+  "temptation-island-versuchung-im-paradies": { imdb: "tt15010278", name: "Temptation Island - Versuchung im Paradies", title: "Temptation Island Germany" },
   "temptation-island-united-states-2019": { imdb: "tt8694398", name: "Temptation Island" },
-  "la-isla-de-las-tentaciones-spain": { imdb: "tt10225276", name: "La isla de las tentaciones" },
+  "la-isla-de-las-tentaciones-spain": { imdb: "tt10225276", name: "La isla de las tentaciones", title: "Temptation Island Spain" },
   "temptation-island-love-or-leave": { imdb: "tt13241806", name: "Temptation Island Love or Leave" },
   "temptation-island-vip": { imdb: "tt38990519", name: "Temptation Island VIP" },
   "temptation-island-south-africa": { imdb: "tt14541400", name: "Temptation Island South Africa" },
   "temptation-island-india": { imdb: "tt29418391", name: "Temptation Island India" },
-  "ilha-da-tentacao-brasil": { imdb: "tt29472571", name: "Ilha da Tentação: Brasil" },
-  "temptation-island-mexico": { imdb: "tt29473465", name: "Temptation Island México" },
-  "la-isla-de-las-tentaciones-argentina-and-chile": { imdb: "tt29536722", name: "La isla de las tentaciones: Argentina & Chile" },
+  "ilha-da-tentacao-brasil": { imdb: "tt29472571", name: "Ilha da Tentação: Brasil", title: "Temptation Island Brazil" },
+  "temptation-island-mexico": { imdb: "tt29473465", name: "Temptation Island México", title: "Temptation Island Mexico" },
+  "la-isla-de-las-tentaciones-argentina-and-chile": { imdb: "tt29536722", name: "La isla de las tentaciones: Argentina & Chile", title: "Temptation Island Argentina & Chile" },
   "temptation-island-united-states-2025": { imdb: "tt35931863", name: "Temptation Island" },
   // Are You the One?
   "are-you-the-one-united-states": { imdb: "tt3484274", name: "Are You the One?" },
   "are-you-the-one-the-aftermatch-live": { imdb: "tt5194980", name: "Are You the One? The Aftermatch Live" },
-  "are-you-the-one-brasil": { imdb: "tt4569162", name: "Are You the One? Brasil" },
-  "are-you-the-one-el-match-perfecto": { imdb: "tt12975534", name: "Are You the One? El match perfecto" },
+  "are-you-the-one-brasil": { imdb: "tt4569162", name: "Are You the One? Brasil", title: "Are You the One? Brazil" },
+  "are-you-the-one-el-match-perfecto": { imdb: "tt12975534", name: "Are You the One? El match perfecto", title: "Are You the One? Mexico" },
   "are-you-the-one-second-chances": { imdb: "tt6715172", name: "Are You the One: Second Chances" },
-  "are-you-the-one-sverige": { imdb: "tt39747179", name: "Are You the One? Sverige" },
+  "are-you-the-one-sverige": { imdb: "tt39747179", name: "Are You the One? Sverige", title: "Are You the One? Sweden" },
   "are-you-the-one-germany": { imdb: "tt12606560", name: "Are You The One?" },
   "are-you-the-one-realitystars-in-love": { imdb: "tt34623336", name: "Are You The One? – Realitystars in Love" },
   "are-you-the-one-uk": { imdb: "tt20859908", name: "Are You The One? UK" },
-  "are-you-the-one-italia": { imdb: "tt27552064", name: "Are you the one? Italia" },
+  "are-you-the-one-italia": { imdb: "tt27552064", name: "Are you the one? Italia", title: "Are You the One? Italy" },
   "are-you-the-one-china": { imdb: "tt29363632", name: "Are You the One" },
   "are-you-the-one-czech-republic": { imdb: "tt42827449", name: "Are You the One?" },
   // Ex on the Beach
   "ex-on-the-beach-united-kingdom": { imdb: "tt3522052", name: "Ex on the Beach" },
-  "ex-on-the-beach-sverige": { imdb: "tt5470438", name: "Ex on the Beach Sverige" },
+  "ex-on-the-beach-sverige": { imdb: "tt5470438", name: "Ex on the Beach Sverige", title: "Ex on the Beach Sweden" },
   "ex-on-the-beach-double-dutch": { imdb: "tt10413838", name: "Ex on the Beach: Double Dutch" },
-  "de-ferias-com-o-ex-brasil": { imdb: "tt8470764", name: "De Férias com o Ex Brasil" },
+  "de-ferias-com-o-ex-brasil": { imdb: "tt8470764", name: "De Férias com o Ex Brasil", title: "Ex on the Beach Brazil" },
   "ex-on-the-beach-hungary": { imdb: "tt6733322", name: "Ex on the Beach" },
-  "ex-on-the-beach-italia": { imdb: "tt10462656", name: "Ex on the Beach Italia" },
-  "ex-on-the-beach-norge": { imdb: "tt13398410", name: "Ex on the Beach Norge" },
-  "ex-on-the-beach-danmark": { imdb: "tt23159104", name: "Ex On The Beach - Danmark" },
+  "ex-on-the-beach-italia": { imdb: "tt10462656", name: "Ex on the Beach Italia", title: "Ex on the Beach Italy" },
+  "ex-on-the-beach-norge": { imdb: "tt13398410", name: "Ex on the Beach Norge", title: "Ex on the Beach Norway" },
+  "ex-on-the-beach-danmark": { imdb: "tt23159104", name: "Ex On The Beach - Danmark", title: "Ex on the Beach Denmark" },
   "ex-on-the-beach-united-states": { imdb: "tt8285922", name: "Ex on the Beach" },
   "ex-on-the-beach-body-sos": { imdb: "tt8308006", name: "Ex on the Beach: Body SOS" },
-  "ex-on-the-beach-suomi": { imdb: "tt14230834", name: "Ex on the Beach Suomi" },
+  "ex-on-the-beach-suomi": { imdb: "tt14230834", name: "Ex on the Beach Suomi", title: "Ex on the Beach Finland" },
   "ex-on-the-beach-germany": { imdb: "tt15113096", name: "Ex on the Beach" },
   "celebrity-ex-on-the-beach": { imdb: "tt26862164", name: "Celebrity Ex on the Beach" },
   "ex-on-the-beach-vip-latin-america": { imdb: "tt26734156", name: "Ex on the Beach VIP Latin America" },
   "ex-on-the-beach-caribbean": { imdb: "tt24083664", name: "Ex on the Beach: Caribbean" },
-  "de-ferias-com-o-ex-diretoria": { imdb: "tt29730536", name: "De Férias com o Ex Diretoria" },
+  "de-ferias-com-o-ex-diretoria": { imdb: "tt29730536", name: "De Férias com o Ex Diretoria", title: "Ex on the Beach Brazil: Directors" },
   "ex-on-the-beach-france": { imdb: "tt36175368", name: "Ex on the Beach France" },
   // Selling Sunset
   "selling-sunset": { imdb: "tt9817298", name: "Selling Sunset" },
@@ -1410,8 +1408,8 @@ export const shows = {
   "jersey-shore": { imdb: "tt1563069", name: "Jersey Shore" },
   "geordie-shore": { imdb: "tt1960255", name: "Geordie Shore" },
   "snooki-and-jwoww": { imdb: "tt2083701", name: "Snooki & JWoww" },
-  "gandia-shore": { imdb: "tt2456962", name: "Gandía Shore" },
-  "warsaw-shore-ekipa-z-warszawy": { imdb: "tt4662998", name: "Warsaw Shore: Ekipa z Warszawy" },
+  "gandia-shore": { imdb: "tt2456962", name: "Gandía Shore", title: "Gandia Shore" },
+  "warsaw-shore-ekipa-z-warszawy": { imdb: "tt4662998", name: "Warsaw Shore: Ekipa z Warszawy", title: "Warsaw Shore" },
   "acapulco-shore": { imdb: "tt5459372", name: "Acapulco Shore" },
   "snooki-and-jwoww-moms-with-attitude": { imdb: "tt8632156", name: "Snooki & JWOWW: Moms with Attitude" },
   "super-shore": { imdb: "tt7643936", name: "Super Shore" },
@@ -1422,7 +1420,7 @@ export const shows = {
   "buckhead-shore": { imdb: "tt20606446", name: "Buckhead Shore" },
   "all-star-shore": { imdb: "tt20859150", name: "All Star Shore" },
   "frenchie-shore": { imdb: "tt30006118", name: "Frenchie Shore" },
-  "italia-shore": { imdb: "tt29031833", name: "Italia Shore" },
+  "italia-shore": { imdb: "tt29031833", name: "Italia Shore", title: "Italy Shore" },
   "aussie-shore": { imdb: "tt30292502", name: "Aussie Shore" },
   // Teen Mom
   "16-and-pregnant": { imdb: "tt1454730", name: "16 & Pregnant" },
@@ -1437,14 +1435,14 @@ export const shows = {
   "teen-mom-family-reunion": { imdb: "tt16288636", name: "Teen Mom: Family Reunion" },
   "teen-mom-girls-night-in": { imdb: "tt16288666", name: "Teen Mom: Girls' Night In" },
   "teen-mom-the-next-chapter": { imdb: "tt21663658", name: "Teen Mom: The Next Chapter" },
-  "teen-mom-italia": { imdb: "tt26692004", name: "Teen Mom Italia" },
+  "teen-mom-italia": { imdb: "tt26692004", name: "Teen Mom Italia", title: "Teen Mom Italy" },
   "teen-mom-uk-next-generation": { imdb: "tt28018364", name: "Teen Mom UK: Next Generation" },
   // Top Model
   "america-s-next-top-model": { imdb: "tt0363307", name: "America's Next Top Model" },
   "sweden-s-next-top-model-sweden": { imdb: "tt1456379", name: "Sweden's Next Top Model" },
   "britain-s-next-top-model": { imdb: "tt0481440", name: "Britain's Next Top Model" },
   "australia-s-next-top-model": { imdb: "tt0835977", name: "Australia's Next Top Model" },
-  "top-model-norge": { imdb: "tt0930830", name: "Top model Norge" },
+  "top-model-norge": { imdb: "tt0930830", name: "Top model Norge", title: "Norway's Next Top Model" },
   "thailand-s-next-top-model": { imdb: "tt8938736", name: "Thailand's Next Top Model" },
   "germany-s-next-topmodel": { imdb: "tt0764947", name: "Germany's Next Topmodel" },
   "canada-s-next-top-model": { imdb: "tt0770472", name: "Canada's Next Top Model" },
@@ -1452,14 +1450,14 @@ export const shows = {
   "norway-s-next-top-model": { imdb: "tt5353008", name: "Norway's Next Top Model" },
   "brazil-s-next-top-model": { imdb: "tt1456134", name: "Brazil's Next Top Model" },
   "philippines-next-top-model": { imdb: "tt1456259", name: "Philippines' Next Top Model" },
-  "hrvatski-top-model": { imdb: "tt4526348", name: "Hrvatski top model" },
+  "hrvatski-top-model": { imdb: "tt4526348", name: "Hrvatski top model", title: "Croatia's Next Top Model" },
   "austria-s-next-topmodel": { imdb: "tt1456123", name: "Austria's Next Topmodel" },
   "new-zealand-s-next-top-model": { imdb: "tt1464058", name: "New Zealand's Next Top Model" },
   "mexico-s-next-top-model": { imdb: "tt1578024", name: "Mexico's Next Top Model" },
   "next-top-model": { imdb: "tt1583006", name: "Next Top Model" },
   "benelux-next-top-model": { imdb: "tt1649461", name: "Benelux' Next Top Model" },
-  "vietnam-s-next-top-model-nguoi-mau-viet-nam": { imdb: "tt12784954", name: "Vietnam's Next Top Model - Nguoi Mau Viêt Nam" },
-  "danmarks-n-ste-topmodel": { imdb: "tt1741789", name: "Danmarks næste topmodel" },
+  "vietnam-s-next-top-model-nguoi-mau-viet-nam": { imdb: "tt12784954", name: "Vietnam's Next Top Model - Nguoi Mau Viêt Nam", title: "Vietnam's Next Top Model" },
+  "danmarks-n-ste-topmodel": { imdb: "tt1741789", name: "Danmarks næste topmodel", title: "Denmark's Next Top Model" },
   "top-model": { imdb: "tt1822120", name: "Top Model" },
   "korea-s-next-top-model": { imdb: "tt3291672", name: "Korea's Next Top Model" },
   "romania-s-next-top-model": { imdb: "tt9219012", name: "Romania's Next Top Model" },
@@ -1492,16 +1490,16 @@ export const shows = {
   "sasuke": { imdb: "tt1263006", name: "Sasuke" },
   "ninja-warrior-japan": { imdb: "tt1014786", name: "Ninja Warrior" },
   "american-ninja-warrior": { imdb: "tt1587934", name: "American Ninja Warrior" },
-  "ninja-warrior-turkiye": { imdb: "tt8707794", name: "Ninja Warrior Türkiye" },
+  "ninja-warrior-turkiye": { imdb: "tt8707794", name: "Ninja Warrior Türkiye", title: "Ninja Warrior Turkey" },
   "sasuke-ninja-warrior-indonesia": { imdb: "tt12015330", name: "Sasuke Ninja Warrior Indonesia" },
-  "ninja-warrior-sverige": { imdb: "tt4371494", name: "Ninja Warrior Sverige" },
+  "ninja-warrior-sverige": { imdb: "tt4371494", name: "Ninja Warrior Sverige", title: "Ninja Warrior Sweden" },
   "ninja-warrior-uk": { imdb: "tt4683956", name: "Ninja Warrior UK" },
   "sasuke-vietnam": { imdb: "tt5706878", name: "Sasuke Vietnam" },
   "ninja-warrior-germany": { imdb: "tt11252198", name: "Ninja Warrior Germany" },
   "team-ninja-warrior": { imdb: "tt5559366", name: "Team Ninja Warrior" },
   "american-ninja-warrior-crashing-the-course": { imdb: "tt5865630", name: "American Ninja Warrior: Crashing the Course" },
   "ninja-warriors": { imdb: "tt6407530", name: "Ninja Warriors" },
-  "ninja-warrior-le-parcours-des-heros": { imdb: "tt7143414", name: "Ninja Warrior : Le Parcours des héros" },
+  "ninja-warrior-le-parcours-des-heros": { imdb: "tt7143414", name: "Ninja Warrior : Le Parcours des héros", title: "Ninja Warrior France: The Heroes' Course" },
   "american-ninja-warrior-ninja-vs-ninja": { imdb: "tt7424250", name: "American Ninja Warrior: Ninja vs Ninja" },
   "ninja-warrior-austria": { imdb: "tt11292602", name: "Ninja Warrior Austria" },
   "ninja-warrior-in-arabic": { imdb: "tt6152390", name: "Ninja Warrior in Arabic" },
@@ -1511,68 +1509,68 @@ export const shows = {
   "american-ninja-warrior-junior": { imdb: "tt10193082", name: "American Ninja Warrior Junior" },
   "ninja-warrior-switzerland": { imdb: "tt11289894", name: "Ninja Warrior Switzerland" },
   "team-ninja-warrior-germany": { imdb: "tt11331774", name: "Team Ninja Warrior Germany" },
-  "ninja-warrior-romania": { imdb: "tt11352866", name: "Ninja Warrior România" },
+  "ninja-warrior-romania": { imdb: "tt11352866", name: "Ninja Warrior România", title: "Ninja Warrior Romania" },
   "ninja-israel": { imdb: "tt27307455", name: "Ninja Israel" },
-  "ninja-warrior-polska": { imdb: "tt11346772", name: "Ninja Warrior Polska" },
+  "ninja-warrior-polska": { imdb: "tt11346772", name: "Ninja Warrior Polska", title: "Ninja Warrior Poland" },
   "ninja-warrior-germany-kids": { imdb: "tt12731372", name: "Ninja Warrior Germany Kids" },
   "ninja-warrior-germany-allstars": { imdb: "tt14389834", name: "Ninja Warrior Germany Allstars" },
-  "ninja-warrior-le-choc-des-nations": { imdb: "tt33501946", name: "Ninja Warrior : Le Choc des Nations" },
+  "ninja-warrior-le-choc-des-nations": { imdb: "tt33501946", name: "Ninja Warrior : Le Choc des Nations", title: "Ninja Warrior France: Clash of Nations" },
   "ninja-warrior-germany-kids-academy": { imdb: "tt37257054", name: "Ninja Warrior Germany Kids Academy" },
   // The Traitors
   "traitor": { imdb: "tt13353444", name: "Traitor" },
-  "de-verraders": { imdb: "tt13915848", name: "De Verraders" },
-  "les-traitres-belgium": { imdb: "tt32340251", name: "Les traîtres" },
-  "de-verraders-videoland-editie": { imdb: "tt33328129", name: "De verraders: Videoland editie" },
+  "de-verraders": { imdb: "tt13915848", name: "De Verraders", title: "The Traitors Netherlands" },
+  "les-traitres-belgium": { imdb: "tt32340251", name: "Les traîtres", title: "The Traitors Belgium" },
+  "de-verraders-videoland-editie": { imdb: "tt33328129", name: "De verraders: Videoland editie", title: "The Traitors Netherlands: Videoland Edition" },
   "the-traitors-belgium": { imdb: "tt18070206", name: "The Traitors" },
-  "forr-der-norway": { imdb: "tt22529708", name: "Forræder" },
+  "forr-der-norway": { imdb: "tt22529708", name: "Forræder", title: "The Traitors Norway" },
   "the-traitors-australia": { imdb: "tt22640400", name: "The Traitors Australia" },
   "the-traitors-uk": { imdb: "tt23743442", name: "The Traitors UK" },
   "the-traitors-france": { imdb: "tt27789959", name: "The Traitors France" },
   "the-traitors-united-kingdom": { imdb: "tt15557874", name: "The Traitors" },
-  "traitors-espana": { imdb: "tt21272398", name: "Traitors España" },
+  "traitors-espana": { imdb: "tt21272398", name: "Traitors España", title: "The Traitors Spain" },
   "the-traitors-nz": { imdb: "tt28088954", name: "The Traitors NZ" },
   "the-traitors-canada-canada": { imdb: "tt28251824", name: "The Traitors Canada" },
-  "forr-der-denmark": { imdb: "tt28618242", name: "Forræder" },
-  "forradarna": { imdb: "tt28862450", name: "Förrädarna" },
-  "de-verraders-de-ronde-tafel": { imdb: "tt29282421", name: "De Verraders: De Ronde Tafel" },
+  "forr-der-denmark": { imdb: "tt28618242", name: "Forræder", title: "The Traitors Denmark" },
+  "forradarna": { imdb: "tt28862450", name: "Förrädarna", title: "The Traitors Sweden" },
+  "de-verraders-de-ronde-tafel": { imdb: "tt29282421", name: "De Verraders: De Ronde Tafel", title: "The Traitors Netherlands: The Round Table" },
   "the-traitors-hungary": { imdb: "tt30128014", name: "The Traitors Hungary" },
   "the-traitors-uncloaked": { imdb: "tt30490874", name: "The Traitors: Uncloaked" },
-  "les-traitres-canada": { imdb: "tt31124565", name: "Les Traîtres" },
-  "the-traitors-zdrajcy": { imdb: "tt31962145", name: "The Traitors. Zdrajcy" },
-  "zradci": { imdb: "tt33321873", name: "Zrádci" },
-  "the-traitors-unfamiliar-territory-dk": { imdb: "tt34651911", name: "The Traitors - Unfamiliar Territory (DK)" },
-  "les-traitres-nouvelle-generation": { imdb: "tt34966672", name: "Les Traîtres: Nouvelle Génération" },
-  "forradarna-gravkammaren": { imdb: "tt35414278", name: "Förrädarna - Gravkammaren" },
+  "les-traitres-canada": { imdb: "tt31124565", name: "Les Traîtres", title: "The Traitors Quebec" },
+  "the-traitors-zdrajcy": { imdb: "tt31962145", name: "The Traitors. Zdrajcy", title: "The Traitors Poland" },
+  "zradci": { imdb: "tt33321873", name: "Zrádci", title: "The Traitors Czech Republic" },
+  "the-traitors-unfamiliar-territory-dk": { imdb: "tt34651911", name: "The Traitors - Unfamiliar Territory (DK)", title: "The Traitors Denmark: Unfamiliar Territory" },
+  "les-traitres-nouvelle-generation": { imdb: "tt34966672", name: "Les Traîtres: Nouvelle Génération", title: "The Traitors France: New Generation" },
+  "forradarna-gravkammaren": { imdb: "tt35414278", name: "Förrädarna - Gravkammaren", title: "The Traitors Sweden: The Burial Chamber" },
   "the-celebrity-traitors-uk": { imdb: "tt33248156", name: "The Celebrity Traitors UK" },
   "the-traitors-india": { imdb: "tt33347879", name: "The Traitors" },
   "the-traitors-ireland": { imdb: "tt34060796", name: "The Traitors Ireland" },
   "the-traitors-israel": { imdb: "tt34357666", name: "The Traitors Israel" },
-  "the-traitors-italy": { imdb: "tt35659504", name: "The Traitors - Italy" },
+  "the-traitors-italy": { imdb: "tt35659504", name: "The Traitors - Italy", title: "The Traitors Italy" },
   "the-traitors-bulgaria": { imdb: "tt37615251", name: "The Traitors Bulgaria" },
   "the-traitors-ireland-uncloaked": { imdb: "tt37898706", name: "The Traitors Ireland Uncloaked" },
   "the-celebrity-traitors-uncloaked": { imdb: "tt38588981", name: "The Celebrity Traitors: Uncloaked" },
-  "the-traitors-brasil": { imdb: "tt37428629", name: "The Traitors Brasil" },
-  "the-traitors-turkiye": { imdb: "tt38750982", name: "The Traitors Türkiye" },
-  "the-traitors-srbija": { imdb: "tt40057990", name: "The Traitors Srbija" },
-  "reeturid": { imdb: "tt40057993", name: "Reeturid" },
+  "the-traitors-brasil": { imdb: "tt37428629", name: "The Traitors Brasil", title: "The Traitors Brazil" },
+  "the-traitors-turkiye": { imdb: "tt38750982", name: "The Traitors Türkiye", title: "The Traitors Turkey" },
+  "the-traitors-srbija": { imdb: "tt40057990", name: "The Traitors Srbija", title: "The Traitors Serbia" },
+  "reeturid": { imdb: "tt40057993", name: "Reeturid", title: "The Traitors Estonia" },
   "the-traitors-telugu": { imdb: "tt40856774", name: "The Traitors (Telugu)" },
-  "forr-der-under-kutten": { imdb: "tt43725237", name: "Forræder: Under kutten" },
+  "forr-der-under-kutten": { imdb: "tt43725237", name: "Forræder: Under kutten", title: "The Traitors Denmark: Under the Cloaks" },
   // Lego Masters
   "lego-masters-united-kingdom": { imdb: "tt7332868", name: "Lego Masters" },
   "lego-masters-germany": { imdb: "tt22000912", name: "Lego Masters Germany" },
   "lego-masters-australia": { imdb: "tt10285320", name: "Lego Masters Australia" },
   "lego-masters-dutch": { imdb: "tt12300552", name: "Lego Masters - Dutch" },
-  "lego-masters-sverige": { imdb: "tt14889086", name: "Lego Masters Sverige" },
-  "lego-masters-france": { imdb: "tt32607480", name: "Lego Masters (France)" },
+  "lego-masters-sverige": { imdb: "tt14889086", name: "Lego Masters Sverige", title: "Lego Masters Sweden" },
+  "lego-masters-france": { imdb: "tt32607480", name: "Lego Masters (France)", title: "Lego Masters France" },
   "lego-masters-poland": { imdb: "tt32636842", name: "Lego Masters: Poland" },
   "lego-masters-united-states": { imdb: "tt9615014", name: "Lego Masters" },
   "lego-masters-spain": { imdb: "tt15467116", name: "LEGO Masters - Spain" },
   "lego-masters-bricksmas-specials": { imdb: "tt16480818", name: "LEGO Masters Bricksmas Specials" },
   "lego-masters-china": { imdb: "tt16491380", name: "LEGO Masters China" },
   "lego-masters-norway": { imdb: "tt30868758", name: "LEGO Masters Norway" },
-  "lego-masters-danmark": { imdb: "tt31647578", name: "LEGO Masters Danmark" },
+  "lego-masters-danmark": { imdb: "tt31647578", name: "LEGO Masters Danmark", title: "Lego Masters Denmark" },
   "lego-masters-korea": { imdb: "tt16306094", name: "LEGO Masters Korea" },
-  "lego-masters-suomi": { imdb: "tt18257226", name: "Lego Masters Suomi" },
+  "lego-masters-suomi": { imdb: "tt18257226", name: "Lego Masters Suomi", title: "Lego Masters Finland" },
   "lego-masters-czech-republic-and-slovakia": { imdb: "tt21044036", name: "Lego Masters Czech Republic & Slovakia" },
   "lego-masters-nz": { imdb: "tt27566334", name: "Lego Masters NZ" },
   "lego-masters-celebrity-holiday-bricktacular": { imdb: "tt30985094", name: "Lego Masters: Celebrity Holiday Bricktacular" },
@@ -1580,13 +1578,13 @@ export const shows = {
   // The Amazing Race
   "the-amazing-race-united-states": { imdb: "tt0285335", name: "The Amazing Race" },
   "the-amazing-race-asia": { imdb: "tt0944980", name: "The Amazing Race Asia" },
-  "the-amazing-race-a-corrida-milionaria": { imdb: "tt1139830", name: "The Amazing Race: A Corrida Milionária" },
+  "the-amazing-race-a-corrida-milionaria": { imdb: "tt1139830", name: "The Amazing Race: A Corrida Milionária", title: "The Amazing Race Brazil" },
   "the-amazing-race-israel": { imdb: "tt1435084", name: "The Amazing Race Israel" },
-  "the-amazing-race-en-discovery-channel": { imdb: "tt1933990", name: "The Amazing Race en Discovery Channel" },
+  "the-amazing-race-en-discovery-channel": { imdb: "tt1933990", name: "The Amazing Race en Discovery Channel", title: "The Amazing Race on Discovery Channel" },
   "the-amazing-race-venezuela": { imdb: "tt6040556", name: "The Amazing Race" },
   "the-amazing-race-china-rush": { imdb: "tt1629668", name: "The Amazing Race: China Rush" },
   "the-amazing-race-australia": { imdb: "tt1932308", name: "The Amazing Race Australia" },
-  "the-amazing-race-en-space": { imdb: "tt3560942", name: "The Amazing Race En Space" },
+  "the-amazing-race-en-space": { imdb: "tt3560942", name: "The Amazing Race En Space", title: "The Amazing Race on Space" },
   "the-amazing-race-norway": { imdb: "tt2356541", name: "The Amazing Race - Norway" },
   "the-amazing-race-vietnam": { imdb: "tt2387914", name: "The Amazing Race Vietnam" },
   "the-amazing-race-philippines": { imdb: "tt2509720", name: "The Amazing Race Philippines" },
@@ -1605,13 +1603,13 @@ export const shows = {
   "taskmaster-united-kingdom": { imdb: "tt4934214", name: "Taskmaster" },
   "taskmaster-champion-of-champions": { imdb: "tt37675109", name: "Taskmaster: Champion of Champions" },
   "taskmaster-united-states": { imdb: "tt8272292", name: "Taskmaster" },
-  "kongen-befaler": { imdb: "tt13218362", name: "Kongen befaler" },
+  "kongen-befaler": { imdb: "tt13218362", name: "Kongen befaler", title: "Taskmaster Norway" },
   "taskmaster-nz": { imdb: "tt13544772", name: "Taskmaster NZ" },
   "taskmaster-portugal": { imdb: "tt18935036", name: "Taskmaster Portugal" },
   "taskmaster-australia": { imdb: "tt25523050", name: "Taskmaster" },
   "junior-taskmaster": { imdb: "tt34234603", name: "Junior Taskmaster" },
   "taskmaster-iceland": { imdb: "tt39635361", name: "Taskmaster Iceland" },
-  "taskmaster-kuninga-kasul": { imdb: "tt39975266", name: "Taskmaster - kuninga käsul" },
+  "taskmaster-kuninga-kasul": { imdb: "tt39975266", name: "Taskmaster - kuninga käsul", title: "Taskmaster Estonia" },
   "taskmaster-nl": { imdb: "tt41588449", name: "Taskmaster NL" },
   "taskmaster-poland": { imdb: "tt42371777", name: "Taskmaster Poland" },
   // Love on the Spectrum
@@ -1623,55 +1621,55 @@ export const shows = {
   "dragons-den-canada": { imdb: "tt1170858", name: "Dragons' Den" },
   "dragons-den-ireland": { imdb: "tt1403113", name: "Dragons' Den" },
   "shark-tank-united-states": { imdb: "tt1442550", name: "Shark Tank" },
-  "den-d-dragon-s-den": { imdb: "tt4531712", name: "Den D/Dragon's Den" },
-  "die-hohle-der-lowen": { imdb: "tt4061464", name: "Die Höhle der Löwen" },
+  "den-d-dragon-s-den": { imdb: "tt4531712", name: "Den D/Dragon's Den", title: "Dragons' Den Czech Republic" },
+  "die-hohle-der-lowen": { imdb: "tt4061464", name: "Die Höhle der Löwen", title: "Dragons' Den Germany" },
   "shark-tank-australia": { imdb: "tt4406222", name: "Shark Tank Australia" },
   "beyond-the-tank": { imdb: "tt4524424", name: "Beyond the Tank" },
   "shark-tank-italy": { imdb: "tt4731466", name: "Shark Tank" },
-  "shark-tank-mexico": { imdb: "tt6640444", name: "Shark Tank México" },
-  "shark-tank-brasil-negociando-com-tubaroes": { imdb: "tt7328308", name: "Shark Tank Brasil: Negociando com Tubarões" },
+  "shark-tank-mexico": { imdb: "tt6640444", name: "Shark Tank México", title: "Shark Tank Mexico" },
+  "shark-tank-brasil-negociando-com-tubaroes": { imdb: "tt7328308", name: "Shark Tank Brasil: Negociando com Tubarões", title: "Shark Tank Brazil" },
   "shark-tank-colombia": { imdb: "tt8075142", name: "Shark Tank Colombia" },
-  "qui-veut-etre-mon-associe": { imdb: "tt12845926", name: "Qui veut être mon associé ?" },
-  "qui-veut-etre-mon-associe-la-suite": { imdb: "tt39387203", name: "Qui veut être mon associé ? La suite" },
+  "qui-veut-etre-mon-associe": { imdb: "tt12845926", name: "Qui veut être mon associé ?", title: "Dragons' Den France" },
+  "qui-veut-etre-mon-associe-la-suite": { imdb: "tt39387203", name: "Qui veut être mon associé ? La suite", title: "Dragons' Den France: The Sequel" },
   "shark-tank-india": { imdb: "tt16385150", name: "Shark Tank India" },
   "dragons-den-greece": { imdb: "tt26249086", name: "Dragons' Den Greece" },
   "shark-tank-egypt": { imdb: "tt27044979", name: "Shark Tank Egypt" },
   "shark-tank-bangladesh": { imdb: "tt32223746", name: "Shark Tank Bangladesh" },
   "dragon-s-den": { imdb: "tt34966938", name: "Dragon's Den" },
-  "shark-tank-brasil-versao-creators": { imdb: "tt37188592", name: "Shark Tank Brasil: Versão Creators" },
+  "shark-tank-brasil-versao-creators": { imdb: "tt37188592", name: "Shark Tank Brasil: Versão Creators", title: "Shark Tank Brazil: Creators Version" },
   "shark-tank-pakistan": { imdb: "tt42364459", name: "Shark Tank Pakistan" },
   "shark-tank-nepal": { imdb: "tt37330356", name: "Shark Tank Nepal" },
   // Who Wants to Be a Millionaire
   "who-wants-to-be-a-millionaire-united-kingdom": { imdb: "tt0166064", name: "Who Wants to Be a Millionaire?" },
   "who-wants-to-be-a-millionaire-australia": { imdb: "tt0197194", name: "Who Wants to Be a Millionaire" },
   "who-wants-to-be-a-millionaire-united-states": { imdb: "tt0211178", name: "Who Wants to Be a Millionaire" },
-  "wer-wird-millionar": { imdb: "tt0216519", name: "Wer wird Millionär?" },
+  "wer-wird-millionar": { imdb: "tt0216519", name: "Wer wird Millionär?", title: "Who Wants to Be a Millionaire Germany" },
   "who-wants-to-be-a-millionaire-israel": { imdb: "tt0231033", name: "Who Wants to Be a Millionaire?" },
-  "weekend-miljonairs": { imdb: "tt0813740", name: "Weekend Miljonairs" },
-  "milionerzy": { imdb: "tt1774040", name: "Milionerzy" },
-  "show-do-milhao": { imdb: "tt3007328", name: "Show do Milhão" },
+  "weekend-miljonairs": { imdb: "tt0813740", name: "Weekend Miljonairs", title: "Weekend Millionaires" },
+  "milionerzy": { imdb: "tt1774040", name: "Milionerzy", title: "Who Wants to Be a Millionaire Poland" },
+  "show-do-milhao": { imdb: "tt3007328", name: "Show do Milhão", title: "Who Wants to Be a Millionaire Brazil" },
   "kaun-banega-crorepati": { imdb: "tt0250875", name: "Kaun Banega Crorepati?" },
   "who-wants-to-win-millions": { imdb: "tt0251525", name: "Who Wants to Win Millions?" },
-  "quien-quiere-ser-millonario-venezuela": { imdb: "tt1242586", name: "¿Quién quiere ser millonario?" },
-  "chi-vuol-essere-milionario": { imdb: "tt1515314", name: "Chi vuol essere milionario?" },
-  "quien-quiere-ser-millonario-argentina": { imdb: "tt11294498", name: "¿Quién quiere ser millonario?" },
-  "kto-khochet-stat-millionerom": { imdb: "tt1389647", name: "Kto khochet stat millionerom?" },
-  "quien-quiere-ser-millonario-chile": { imdb: "tt14225148", name: "¿Quién quiere ser millonario?" },
+  "quien-quiere-ser-millonario-venezuela": { imdb: "tt1242586", name: "¿Quién quiere ser millonario?", title: "Who Wants to Be a Millionaire Venezuela" },
+  "chi-vuol-essere-milionario": { imdb: "tt1515314", name: "Chi vuol essere milionario?", title: "Who Wants to Be a Millionaire Italy" },
+  "quien-quiere-ser-millonario-argentina": { imdb: "tt11294498", name: "¿Quién quiere ser millonario?", title: "Who Wants to Be a Millionaire Argentina" },
+  "kto-khochet-stat-millionerom": { imdb: "tt1389647", name: "Kto khochet stat millionerom?", title: "Who Wants to Be a Millionaire Russia" },
+  "quien-quiere-ser-millonario-chile": { imdb: "tt14225148", name: "¿Quién quiere ser millonario?", title: "Who Wants to Be a Millionaire Chile" },
   "who-wants-to-be-a-millionaire-united-states-2002": { imdb: "tt0321019", name: "Who Wants to Be a Millionaire" },
   "who-wants-to-be-a-super-millionaire": { imdb: "tt0412256", name: "Who Wants to Be a Super Millionaire" },
   "who-wants-to-be-a-millionaire-nigeria": { imdb: "tt1515717", name: "Who Wants to Be a Millionaire?" },
   "who-wants-to-be-a-millionaire-hot-seat": { imdb: "tt1421009", name: "Who Wants to Be a Millionaire: Hot Seat" },
   "the-million-pound-drop-live": { imdb: "tt1770445", name: "The Million Pound Drop Live" },
-  "lotto-weekend-miljonairs": { imdb: "tt15330380", name: "Lotto Weekend Miljonairs" },
+  "lotto-weekend-miljonairs": { imdb: "tt15330380", name: "Lotto Weekend Miljonairs", title: "Lotto Weekend Millionaires" },
   "who-wants-to-be-a-millionaire-egypt": { imdb: "tt7763804", name: "Who Wants to Be a Millionaire?" },
-  "quien-quiere-ser-millonario-spain": { imdb: "tt11530150", name: "¿Quién quiere ser millonario?" },
+  "quien-quiere-ser-millonario-spain": { imdb: "tt11530150", name: "¿Quién quiere ser millonario?", title: "Who Wants to Be a Millionaire Spain" },
   "who-wants-to-be-a-millionaire-united-states-2020": { imdb: "tt12057284", name: "Who Wants to Be a Millionaire" },
   "who-wants-to-be-a-millionaire-the-million-pound-question": { imdb: "tt13472332", name: "Who Wants to Be a Millionaire: The Million Pound Question" },
   "millionaire-hot-seat": { imdb: "tt39310984", name: "Millionaire Hot Seat" },
   // The Chase
   "the-chase-united-kingdom": { imdb: "tt1502749", name: "The Chase" },
   "the-chase-celebrity-special": { imdb: "tt3466116", name: "The Chase: Celebrity Special" },
-  "gefragt-gejagt": { imdb: "tt2247150", name: "Gefragt - Gejagt" },
+  "gefragt-gejagt": { imdb: "tt2247150", name: "Gefragt - Gejagt", title: "The Chase Germany" },
   "the-chase-united-states": { imdb: "tt3077336", name: "The Chase" },
   "the-chase-australia": { imdb: "tt5057752", name: "The Chase Australia" },
   "the-family-chase": { imdb: "tt7313412", name: "The Family Chase" },
@@ -1680,16 +1678,16 @@ export const shows = {
   "beat-the-chasers-australia": { imdb: "tt13381572", name: "Beat the Chasers Australia" },
   "the-chase-united-states-2021": { imdb: "tt13496094", name: "The Chase" },
   "the-chase-greece": { imdb: "tt16929850", name: "The Chase (Greece)" },
-  "gefragt-gejagt-allein-gegen-alle": { imdb: "tt22817206", name: "Gefragt - gejagt: Allein gegen alle" },
+  "gefragt-gejagt-allein-gegen-alle": { imdb: "tt22817206", name: "Gefragt - gejagt: Allein gegen alle", title: "The Chase Germany: Alone Against All" },
   "the-chase-around-the-world": { imdb: "tt43686384", name: "The Chase Around The World" },
   // Wheel of Fortune
   "wheel-of-fortune-united-states": { imdb: "tt1577766", name: "Wheel of Fortune" },
   "wheel-of-fortune-australia": { imdb: "tt0080304", name: "Wheel of Fortune" },
-  "les-roues-de-la-fortune": { imdb: "tt0834031", name: "Les roues de la fortune" },
+  "les-roues-de-la-fortune": { imdb: "tt0834031", name: "Les roues de la fortune", title: "Wheel of Fortune Belgium" },
   "wheel-of-fortune-united-states-1983": { imdb: "tt0072584", name: "Wheel of Fortune" },
-  "la-roue-de-la-fortune": { imdb: "tt0292838", name: "La Roue de la fortune" },
-  "la-ruota-della-fortuna": { imdb: "tt32322041", name: "La ruota della fortuna" },
-  "glucksrad": { imdb: "tt0144049", name: "Glücksrad" },
+  "la-roue-de-la-fortune": { imdb: "tt0292838", name: "La Roue de la fortune", title: "Wheel of Fortune France" },
+  "la-ruota-della-fortuna": { imdb: "tt32322041", name: "La ruota della fortuna", title: "Wheel of Fortune Italy" },
+  "glucksrad": { imdb: "tt0144049", name: "Glücksrad", title: "Wheel of Fortune Germany" },
   "wheel-of-fortune-united-kingdom": { imdb: "tt0200395", name: "Wheel of Fortune" },
   "celebrity-wheel-of-fortune-australia": { imdb: "tt2149630", name: "Celebrity Wheel of Fortune" },
   "wheel-of-fortune-new-zealand": { imdb: "tt0211883", name: "Wheel of Fortune" },
@@ -1703,7 +1701,7 @@ export const shows = {
   "family-feud-united-states": { imdb: "tt0073991", name: "Family Feud" },
   "family-feud-australia": { imdb: "tt16299078", name: "Family Feud" },
   "family-fortunes-united-kingdom": { imdb: "tt0195457", name: "Family Fortunes" },
-  "une-famille-en-or": { imdb: "tt0478351", name: "Une Famille en Or" },
+  "une-famille-en-or": { imdb: "tt0478351", name: "Une Famille en Or", title: "Family Feud France" },
   "family-feud-united-states-1988": { imdb: "tt0094460", name: "Family Feud" },
   "family-feud-germany": { imdb: "tt0495782", name: "Family Feud" },
   "family-feud-united-states-1999": { imdb: "tt0177440", name: "Family Feud" },
@@ -1724,14 +1722,14 @@ export const shows = {
   "family-feud-favorites": { imdb: "tt38588189", name: "Family Feud Favorites" },
   // Deal or No Deal
   "deal-or-no-deal-australia": { imdb: "tt0407380", name: "Deal or No Deal" },
-  "affari-tuoi": { imdb: "tt0976265", name: "Affari tuoi" },
+  "affari-tuoi": { imdb: "tt0976265", name: "Affari tuoi", title: "Deal or No Deal Italy" },
   "deal-or-no-deal-united-states": { imdb: "tt0493378", name: "Deal or No Deal" },
   "deal-or-no-deal-united-kingdom": { imdb: "tt0495250", name: "Deal or No Deal?" },
   "deal-no-deal": { imdb: "tt0847987", name: "Deal/No Deal" },
   "deal-or-no-deal-netherlands": { imdb: "tt0940628", name: "Deal or No Deal" },
   "deal-or-no-deal-sweden": { imdb: "tt6070824", name: "Deal or No Deal" },
   "deal-or-no-deal-canada": { imdb: "tt0891692", name: "Deal or No Deal" },
-  "le-banquier": { imdb: "tt7717924", name: "Le Banquier" },
+  "le-banquier": { imdb: "tt7717924", name: "Le Banquier", title: "Deal or No Deal Quebec" },
   "deal-or-no-deal-united-states-2008": { imdb: "tt5494602", name: "Deal or No Deal" },
   "celebrity-deal-or-no-deal": { imdb: "tt36811572", name: "Celebrity Deal or No Deal" },
   "deal-or-no-deal-united-kingdom-2023": { imdb: "tt30631008", name: "Deal Or No Deal" },
@@ -1740,20 +1738,20 @@ export const shows = {
   "the-price-is-right-united-states": { imdb: "tt0048894", name: "The Price Is Right" },
   "the-price-is-right-united-states-1972": { imdb: "tt0068120", name: "The Price Is Right" },
   "the-price-is-right-uk": { imdb: "tt0134258", name: "The Price Is Right" },
-  "le-juste-prix": { imdb: "tt8578136", name: "Le Juste Prix" },
-  "el-precio-justo-spain": { imdb: "tt0267208", name: "El precio justo" },
-  "der-preis-ist-hei": { imdb: "tt0495790", name: "Der Preis ist heiß" },
-  "o-preco-certo": { imdb: "tt3659340", name: "O Preço Certo" },
+  "le-juste-prix": { imdb: "tt8578136", name: "Le Juste Prix", title: "The Price Is Right France" },
+  "el-precio-justo-spain": { imdb: "tt0267208", name: "El precio justo", title: "The Price Is Right Spain" },
+  "der-preis-ist-hei": { imdb: "tt0495790", name: "Der Preis ist heiß", title: "The Price Is Right Germany" },
+  "o-preco-certo": { imdb: "tt3659340", name: "O Preço Certo", title: "The Price Is Right Portugal" },
   "the-new-price-is-right": { imdb: "tt2248598", name: "The New Price Is Right" },
   "bruce-s-price-is-right": { imdb: "tt0274243", name: "Bruce's Price Is Right" },
-  "o-preco-certo-em-euros": { imdb: "tt0498446", name: "O Preço Certo em Euros" },
+  "o-preco-certo-em-euros": { imdb: "tt0498446", name: "O Preço Certo em Euros", title: "The Price Is Right Portugal in Euros" },
   "the-price-is-right-1-000-000-spectacular": { imdb: "tt0363362", name: "The Price Is Right $1,000,000 Spectacular" },
   "the-price-is-right-australia": { imdb: "tt0484396", name: "The Price Is Right" },
-  "price-is-right-a-vous-de-jouer": { imdb: "tt12986618", name: "Price Is Right : À vous de jouer" },
+  "price-is-right-a-vous-de-jouer": { imdb: "tt12986618", name: "Price Is Right : À vous de jouer", title: "The Price Is Right Quebec" },
   "the-price-is-right-philippines": { imdb: "tt1842232", name: "The Price Is Right" },
   "the-price-is-right-at-night": { imdb: "tt13689618", name: "The Price Is Right at Night" },
-  "el-precio-justo-argentina": { imdb: "tt9745284", name: "El precio justo" },
-  "el-precio-justo-spain-2021": { imdb: "tt14358470", name: "El Precio Justo" },
+  "el-precio-justo-argentina": { imdb: "tt9745284", name: "El precio justo", title: "The Price Is Right Argentina" },
+  "el-precio-justo-spain-2021": { imdb: "tt14358470", name: "El Precio Justo", title: "The Price Is Right Spain" },
   "the-price-is-right-tonight": { imdb: "tt40548665", name: "The Price is Right Tonight" },
   // Late Night
   "late-night-with-david-letterman": { imdb: "tt0083441", name: "Late Night with David Letterman" },
@@ -1770,12 +1768,12 @@ export const shows = {
   "the-late-late-show-with-james-corden": { imdb: "tt4280606", name: "The Late Late Show with James Corden" },
   // Love Island
   "love-island-aftersun-uk": { imdb: "tt10477990", name: "Love Island: Aftersun" },
-  "love-island-germany": { imdb: "tt7304326", name: "Love Island: Heiße Flirts und wahre Liebe" },
-  "love-island-sverige": { imdb: "tt8877640", name: "Love Island Sverige" },
-  "love-island-suomi": { imdb: "tt9060298", name: "Love Island Suomi" },
-  "love-island-danmark": { imdb: "tt9192614", name: "Love Island Danmark" },
+  "love-island-germany": { imdb: "tt7304326", name: "Love Island: Heiße Flirts und wahre Liebe", title: "Love Island Germany" },
+  "love-island-sverige": { imdb: "tt8877640", name: "Love Island Sverige", title: "Love Island Sweden" },
+  "love-island-suomi": { imdb: "tt9060298", name: "Love Island Suomi", title: "Love Island Finland" },
+  "love-island-danmark": { imdb: "tt9192614", name: "Love Island Danmark", title: "Love Island Denmark" },
   "love-island-nl-be": { imdb: "tt10398358", name: "Love Island" },
-  "love-island-norge": { imdb: "tt10102930", name: "Love Island Norge" },
+  "love-island-norge": { imdb: "tt10102930", name: "Love Island Norge", title: "Love Island Norway" },
   "love-island-france": { imdb: "tt11269130", name: "Love Island France" },
   "love-island-aftersun-nl": { imdb: "tt13051444", name: "Love Island: Aftersun" },
   "love-island-spain": { imdb: "tt14230710", name: "Love Island Spain" },
@@ -1792,24 +1790,24 @@ export const shows = {
   "drag-race-secret-celebrity": { imdb: "tt11187480", name: "RuPaul's Secret Celebrity Drag Race" },
   "drag-race-vegas-revue": { imdb: "tt12937714", name: "RuPaul's Drag Race: Vegas Revue" },
   "drag-race-holland": { imdb: "tt13033136", name: "Drag Race Holland" },
-  "drag-race-espana": { imdb: "tt13606528", name: "Drag Race España" },
-  "drag-race-italia": { imdb: "tt15940712", name: "Drag Race Italia" },
+  "drag-race-espana": { imdb: "tt13606528", name: "Drag Race España", title: "Drag Race Spain" },
+  "drag-race-italia": { imdb: "tt15940712", name: "Drag Race Italia", title: "Drag Race Italy" },
   "drag-race-philippines": { imdb: "tt15245094", name: "Drag Race Philippines" },
   "drag-race-canada-vs-world": { imdb: "tt19357598", name: "Canada's Drag Race: Canada vs the World" },
   "drag-race-france": { imdb: "tt20871052", name: "Drag Race France" },
   "drag-race-philippines-untucked": { imdb: "tt21411166", name: "Drag Race Philippines Untucked!" },
   "drag-race-mexico": { imdb: "tt21650372", name: "Drag Race Mexico" },
   "drag-race-germany": { imdb: "tt24249928", name: "Drag Race Germany" },
-  "drag-race-brasil": { imdb: "tt24251630", name: "Drag Race Brasil" },
+  "drag-race-brasil": { imdb: "tt24251630", name: "Drag Race Brasil", title: "Drag Race Brazil" },
   "drag-race-belgique": { imdb: "tt26453283", name: "Drag Race Belgium" },
   "drag-race-sverige": { imdb: "tt26625008", name: "Drag Race Sweden" },
-  "drag-race-sweden-untucked": { imdb: "tt26625178", name: "Drag Race Sverige: Untucked!" },
-  "drag-race-espana-all-stars": { imdb: "tt28269636", name: "Drag Race España All Stars" },
+  "drag-race-sweden-untucked": { imdb: "tt26625178", name: "Drag Race Sverige: Untucked!", title: "Drag Race Sweden: Untucked!" },
+  "drag-race-espana-all-stars": { imdb: "tt28269636", name: "Drag Race España All Stars", title: "Drag Race Spain All Stars" },
   "drag-race-live-untucked": { imdb: "tt29464638", name: "RuPaul's Drag Race Live Untucked" },
   "drag-race-slaysian-royale": { imdb: "tt36156318", name: "Drag Race Philippines: Slaysian Royale" },
   "drag-race-france-all-stars": { imdb: "tt36282283", name: "Drag Race France All Stars" },
   "drag-race-down-under-vs-world": { imdb: "tt38061964", name: "Drag Race Down Under vs the World" },
-  "drag-race-latina-royale": { imdb: "tt38718126", name: "Drag Race México: Latina Royale" },
+  "drag-race-latina-royale": { imdb: "tt38718126", name: "Drag Race México: Latina Royale", title: "Drag Race Mexico: Latina Royale" },
   "drag-race-canada-all-stars": { imdb: "tt40011366", name: "Canada's Drag Race: All Stars" },
   "drag-race-uk-all-stars": { imdb: "tt45728427", name: "RuPaul's Drag Race UK: All Stars" },
   // The Real Housewives
@@ -1823,37 +1821,37 @@ export const shows = {
   "rh-toronto": { imdb: "tt6645412", name: "The Real Housewives of Toronto" },
   "rh-hungary": { imdb: "tt7241468", name: "The Real Housewives of Hungary" },
   "rh-johannesburg": { imdb: "tt21478880", name: "The Real Housewives of Johannesburg" },
-  "the-real-housewives-di-napoli": { imdb: "tt26628591", name: "The Real Housewives Di Napoli" },
+  "the-real-housewives-di-napoli": { imdb: "tt26628591", name: "The Real Housewives Di Napoli", title: "The Real Housewives of Naples" },
   "rh-jersey": { imdb: "tt12926306", name: "The Real Housewives of Jersey" },
   "rh-durban": { imdb: "tt15670026", name: "The Real Housewives of Durban" },
   "rh-atlanta-porshas-family-matters": { imdb: "tt15801944", name: "The Real Housewives of Atlanta: Porsha's Family Matters" },
   "rh-lagos": { imdb: "tt19858962", name: "The Real Housewives of Lagos" },
   "rh-amsterdam": { imdb: "tt21424426", name: "The Real Housewives of Amsterdam" },
   "rh-cape-town": { imdb: "tt21624940", name: "The Real Housewives of Cape Town" },
-  "rh-pretoria": { imdb: "tt22204984", name: "Die Real Housewives van Pretoria" },
+  "rh-pretoria": { imdb: "tt22204984", name: "Die Real Housewives van Pretoria", title: "The Real Housewives of Pretoria" },
   "rh-abuja": { imdb: "tt26628183", name: "The Real Housewives of Abuja" },
   "rh-nairobi": { imdb: "tt26628205", name: "The Real Housewives of Nairobi" },
-  "rh-winelands": { imdb: "tt27244043", name: "Die Real Housewives van die Wynlande" },
-  "rh-wives-of-warsaw": { imdb: "tt29242327", name: "The Real Housewives. Żony Warszawy" },
-  "rh-finland": { imdb: "tt31306807", name: "The Real Housewives Suomi" },
+  "rh-winelands": { imdb: "tt27244043", name: "Die Real Housewives van die Wynlande", title: "The Real Housewives of the Winelands" },
+  "rh-wives-of-warsaw": { imdb: "tt29242327", name: "The Real Housewives. Żony Warszawy", title: "The Real Housewives of Warsaw" },
+  "rh-finland": { imdb: "tt31306807", name: "The Real Housewives Suomi", title: "The Real Housewives of Finland" },
   "rh-ugt-south-africa": { imdb: "tt32467746", name: "The Real Housewives Ultimate Girls Trip - South Africa" },
   "rh-munich": { imdb: "tt32561103", name: "The Real Housewives of Munich" },
-  "the-real-housewives-di-roma": { imdb: "tt32881276", name: "The Real Housewives di Roma" },
-  "rh-van-het-zuiden": { imdb: "tt31531564", name: "The Real Housewives van het Zuiden" },
+  "the-real-housewives-di-roma": { imdb: "tt32881276", name: "The Real Housewives di Roma", title: "The Real Housewives of Rome" },
+  "rh-van-het-zuiden": { imdb: "tt31531564", name: "The Real Housewives van het Zuiden", title: "The Real Housewives of the South" },
   "rh-antwerp": { imdb: "tt33995190", name: "The Real Housewives of Antwerp" },
   "rh-london": { imdb: "tt34333196", name: "The Real Housewives of London" },
   "rh-ugt-africa": { imdb: "tt38682184", name: "The Real Housewives Ultimate Girls Trip: Africa" },
   "rh-rhode-island": { imdb: "tt36850092", name: "The Real Housewives of Rhode Island" },
   "rh-ugt-benelux": { imdb: "tt39730565", name: "The Real Housewives Ultimate Girls Trip: Benelux" },
   // The Bachelor
-  "bachelor-france": { imdb: "tt0364789", name: "Bachelor, le gentleman célibataire" },
-  "bachelor-de": { imdb: "tt0435558", name: "Der Bachelor" },
-  "bachelor-france-2": { imdb: "tt2078844", name: "Bachelor (France)" },
+  "bachelor-france": { imdb: "tt0364789", name: "Bachelor, le gentleman célibataire", title: "The Bachelor France" },
+  "bachelor-de": { imdb: "tt0435558", name: "Der Bachelor", title: "The Bachelor Germany" },
+  "bachelor-france-2": { imdb: "tt2078844", name: "Bachelor (France)", title: "The Bachelor France" },
   "bachelor-uk-2003": { imdb: "tt2364950", name: "The Bachelor" },
-  "bachelorette-de": { imdb: "tt1037281", name: "Die Bachelorette" },
+  "bachelorette-de": { imdb: "tt1037281", name: "Die Bachelorette", title: "The Bachelorette Germany" },
   "bachelor-pad-us": { imdb: "tt1583428", name: "Bachelor Pad" },
-  "bachelorette-sverige": { imdb: "tt17640068", name: "Bachelorette Sverige" },
-  "bachelor-nl": { imdb: "tt3831514", name: "De Bachelor" },
+  "bachelorette-sverige": { imdb: "tt17640068", name: "Bachelorette Sverige", title: "The Bachelorette Sweden" },
+  "bachelor-nl": { imdb: "tt3831514", name: "De Bachelor", title: "The Bachelor Netherlands" },
   "bachelor-china": { imdb: "tt10409030", name: "The Bachelor" },
   "bachelor-canada": { imdb: "tt2438750", name: "The Bachelor Canada" },
   "bachelor-au": { imdb: "tt3801442", name: "The Bachelor Australia" },
@@ -1872,39 +1870,39 @@ export const shows = {
   "bachelor-south-africa": { imdb: "tt9731464", name: "The Bachelor South Africa" },
   "bachelorette-nz": { imdb: "tt11576430", name: "The Bachelorette New Zealand" },
   "bachelor-listen-to-your-heart": { imdb: "tt11685264", name: "The Bachelor Presents: Listen to Your Heart" },
-  "bachelorette-nl": { imdb: "tt12373660", name: "De Bachelorette" },
+  "bachelorette-nl": { imdb: "tt12373660", name: "De Bachelorette", title: "The Bachelorette Netherlands" },
   "bachelor-greece": { imdb: "tt13072446", name: "The Bachelor" },
   "bachelorette-japan": { imdb: "tt13185290", name: "The Bachelorette Japan" },
   "bachelor-in-paradise-canada": { imdb: "tt14214528", name: "Bachelor in Paradise Canada" },
-  "bachelorette-estonia": { imdb: "tt23643792", name: "Vallaline kaunitar" },
-  "bachelorette-spain": { imdb: "tt24133118", name: "Para toda la vida. The Bachelorette" },
-  "bachelor-bulgaria": { imdb: "tt27077921", name: "The Bachelor (BG)" },
-  "bachelor-in-paradise-sverige": { imdb: "tt48170358", name: "Bachelor in Paradise Sverige" },
+  "bachelorette-estonia": { imdb: "tt23643792", name: "Vallaline kaunitar", title: "The Bachelorette Estonia" },
+  "bachelorette-spain": { imdb: "tt24133118", name: "Para toda la vida. The Bachelorette", title: "The Bachelorette Spain" },
+  "bachelor-bulgaria": { imdb: "tt27077921", name: "The Bachelor (BG)", title: "The Bachelor Bulgaria" },
+  "bachelor-in-paradise-sverige": { imdb: "tt48170358", name: "Bachelor in Paradise Sverige", title: "Bachelor in Paradise Sweden" },
   "golden-bachelor-de": { imdb: "tt32620244", name: "Golden Bachelor" },
   // Below Deck
   "below-deck-galley-talk": { imdb: "tt13750932", name: "Below Deck Galley Talk" },
   // MasterChef
-  "masterchef-uk-1990": { imdb: "tt0278218", name: "Masterchef" },
-  "junior-masterchef-united-kingdom": { imdb: "tt0981205", name: "Junior Masterchef" },
-  "masterchef-uk": { imdb: "tt0805418", name: "Masterchef Goes Large" },
+  "masterchef-uk-1990": { imdb: "tt0278218", name: "Masterchef", title: "MasterChef UK" },
+  "junior-masterchef-united-kingdom": { imdb: "tt0981205", name: "Junior Masterchef", title: "Junior MasterChef UK" },
+  "masterchef-uk": { imdb: "tt0805418", name: "Masterchef Goes Large", title: "MasterChef UK" },
   "masterchef-the-professionals": { imdb: "tt1281256", name: "MasterChef: The Professionals" },
   "celebrity-masterchef-australia": { imdb: "tt4164896", name: "Celebrity MasterChef Australia" },
   "masterchef-belgium": { imdb: "tt1671981", name: "MasterChef Belgium" },
   "masterchef-greece": { imdb: "tt1735674", name: "MasterChef" },
-  "junior-masterchef-australia": { imdb: "tt1809687", name: "Junior Masterchef Australia" },
-  "masterchef-france": { imdb: "tt2070311", name: "Masterchef" },
+  "junior-masterchef-australia": { imdb: "tt1809687", name: "Junior Masterchef Australia", title: "Junior MasterChef Australia" },
+  "masterchef-france": { imdb: "tt2070311", name: "Masterchef", title: "MasterChef France" },
   "masterchef-israel": { imdb: "tt3960178", name: "MasterChef Israel" },
-  "junior-masterchef-united-kingdom-2010": { imdb: "tt4199016", name: "Junior MasterChef" },
-  "masterchef-new-zealand": { imdb: "tt5013506", name: "Masterchef New Zealand" },
+  "junior-masterchef-united-kingdom-2010": { imdb: "tt4199016", name: "Junior MasterChef", title: "Junior MasterChef UK" },
+  "masterchef-new-zealand": { imdb: "tt5013506", name: "Masterchef New Zealand", title: "MasterChef New Zealand" },
   "masterchef-india": { imdb: "tt7822166", name: "MasterChef India" },
-  "masterchef-ukraine": { imdb: "tt11497734", name: "МастерШеф" },
+  "masterchef-ukraine": { imdb: "tt11497734", name: "МастерШеф", title: "MasterChef Ukraine" },
   "junior-masterchef-pinoy-edition": { imdb: "tt2016528", name: "Junior MasterChef: Pinoy Edition" },
   "masterchef-portugal": { imdb: "tt2060048", name: "MasterChef Portugal" },
   "junior-masterchef-greece": { imdb: "tt2121973", name: "Junior MasterChef Greece" },
   "masterchef-indonesia": { imdb: "tt2277854", name: "MasterChef Indonesia" },
-  "masterchef-italia": { imdb: "tt2352789", name: "Masterchef Italia" },
+  "masterchef-italia": { imdb: "tt2352789", name: "Masterchef Italia", title: "MasterChef Italy" },
   "masterchef-finland": { imdb: "tt2396120", name: "MasterChef Finland" },
-  "masterchef-hrvatska-croatia": { imdb: "tt2409790", name: "MasterChef Hrvatska" },
+  "masterchef-hrvatska-croatia": { imdb: "tt2409790", name: "MasterChef Hrvatska", title: "MasterChef Croatia" },
   "masterchef-australia-all-stars": { imdb: "tt10930008", name: "MasterChef Australia All-Stars" },
   "masterchef-romania": { imdb: "tt2342877", name: "MasterChef Romania" },
   "junior-masterchef-finland": { imdb: "tt2421704", name: "Junior MasterChef" },
@@ -1912,9 +1910,9 @@ export const shows = {
   "masterchef-pinoy-edition": { imdb: "tt2506750", name: "MasterChef: Pinoy Edition" },
   "masterchef-south-africa": { imdb: "tt2605196", name: "MasterChef South Africa" },
   "masterchef-poland": { imdb: "tt8606930", name: "MasterChef" },
-  "masterchef-australia-the-professionals": { imdb: "tt2766258", name: "Masterchef Australia: The Professionals" },
+  "masterchef-australia-the-professionals": { imdb: "tt2766258", name: "Masterchef Australia: The Professionals", title: "MasterChef Australia: The Professionals" },
   "masterchef-spain": { imdb: "tt2835906", name: "MasterChef" },
-  "masterchef-romania-proba-celebritatii": { imdb: "tt3712534", name: "MasterChef Romania - Proba celebritatii" },
+  "masterchef-romania-proba-celebritatii": { imdb: "tt3712534", name: "MasterChef Romania - Proba celebritatii", title: "MasterChef Romania: Celebrity Challenge" },
   "celebrity-masterchef-ireland": { imdb: "tt40433526", name: "Celebrity MasterChef Ireland" },
   "masterchef-junior-spain": { imdb: "tt6301684", name: "MasterChef Junior" },
   "masterchef-canada": { imdb: "tt3219166", name: "MasterChef Canada" },
@@ -1922,83 +1920,83 @@ export const shows = {
   "masterchef-brazil": { imdb: "tt5037502", name: "MasterChef Brazil" },
   "masterchef-hungary": { imdb: "tt5710120", name: "MasterChef" },
   "masterchef-chile": { imdb: "tt6151452", name: "MasterChef Chile" },
-  "masterchef-cesko": { imdb: "tt10117704", name: "MasterChef Cesko" },
+  "masterchef-cesko": { imdb: "tt10117704", name: "MasterChef Cesko", title: "MasterChef Czech Republic" },
   "masterchef-denmark": { imdb: "tt2772096", name: "MasterChef" },
   "masterchef-junior-argentina": { imdb: "tt40846028", name: "MasterChef Junior Argentina" },
-  "masterchef-mexico": { imdb: "tt4959092", name: "MasterChef México" },
+  "masterchef-mexico": { imdb: "tt4959092", name: "MasterChef México", title: "MasterChef Mexico" },
   "masterchef-colombia": { imdb: "tt5171638", name: "MasterChef Colombia" },
-  "masterchef-junior-brazil": { imdb: "tt5218980", name: "MasterChef Júnior" },
-  "masterchef-asia": { imdb: "tt5866016", name: "Masterchef Asia" },
+  "masterchef-junior-brazil": { imdb: "tt5218980", name: "MasterChef Júnior", title: "MasterChef Junior Brazil" },
+  "masterchef-asia": { imdb: "tt5866016", name: "Masterchef Asia", title: "MasterChef Asia" },
   "junior-masterchef-chile": { imdb: "tt10303908", name: "Junior MasterChef Chile" },
   "masterchef-junior-poland": { imdb: "tt29265843", name: "MasterChef Junior" },
-  "masterchef-junior-portugal": { imdb: "tt5783102", name: "MasterChef Júnior" },
-  "masterchef-junior-mexico": { imdb: "tt5804762", name: "MasterChef Junior México" },
-  "masterchef-deutschland": { imdb: "tt6154060", name: "MasterChef Deutschland" },
+  "masterchef-junior-portugal": { imdb: "tt5783102", name: "MasterChef Júnior", title: "MasterChef Junior Portugal" },
+  "masterchef-junior-mexico": { imdb: "tt5804762", name: "MasterChef Junior México", title: "MasterChef Junior Mexico" },
+  "masterchef-deutschland": { imdb: "tt6154060", name: "MasterChef Deutschland", title: "MasterChef Germany" },
   "masterchef-celebrity-spain": { imdb: "tt6301678", name: "MasterChef Celebrity" },
-  "masterchef-profissionais": { imdb: "tt6334758", name: "MasterChef Profissionais" },
+  "masterchef-profissionais": { imdb: "tt6334758", name: "MasterChef Profissionais", title: "MasterChef Brazil Professionals" },
   "masterchef-thailand": { imdb: "tt13458314", name: "MasterChef Thailand" },
-  "masterchef-all-stars-italia": { imdb: "tt13907172", name: "MasterChef All Stars Italia" },
-  "masterchef-celebrity-colombia": { imdb: "tt15048040", name: "Masterchef Celebrity: Colombia" },
+  "masterchef-all-stars-italia": { imdb: "tt13907172", name: "MasterChef All Stars Italia", title: "MasterChef Italy All Stars" },
+  "masterchef-celebrity-colombia": { imdb: "tt15048040", name: "Masterchef Celebrity: Colombia", title: "MasterChef Celebrity Colombia" },
   "masterchef-latino": { imdb: "tt7922846", name: "MasterChef Latino" },
   "masterchef-turkey": { imdb: "tt9035628", name: "MasterChef Turkey" },
-  "masterchef-junior-republica-dominicana": { imdb: "tt12350624", name: "MasterChef Junior República Dominicana" },
-  "masterchef-celebrity-republica-dominicana": { imdb: "tt12350778", name: "MasterChef Celebrity República Dominicana" },
+  "masterchef-junior-republica-dominicana": { imdb: "tt12350624", name: "MasterChef Junior República Dominicana", title: "MasterChef Junior Dominican Republic" },
+  "masterchef-celebrity-republica-dominicana": { imdb: "tt12350778", name: "MasterChef Celebrity República Dominicana", title: "MasterChef Celebrity Dominican Republic" },
   "masterchef-celebrity-germany": { imdb: "tt13093954", name: "MasterChef Celebrity" },
   "masterchef-celebrity-argentina": { imdb: "tt13398890", name: "MasterChef Celebrity Argentina" },
   "masterchef-celebrity-chile": { imdb: "tt14753076", name: "MasterChef Celebrity" },
   "masterchef-celebrity-uruguay": { imdb: "tt27608465", name: "MasterChef Celebrity Uruguay" },
-  "masterchef-norge": { imdb: "tt7054932", name: "MasterChef Norge" },
+  "masterchef-norge": { imdb: "tt7054932", name: "MasterChef Norge", title: "MasterChef Norway" },
   "masterchef-legends": { imdb: "tt10097594", name: "MasterChef Legends" },
   "masterchef-junior-turkey": { imdb: "tt13691634", name: "MasterChef Junior" },
   "masterchef-telugu": { imdb: "tt15079698", name: "MasterChef Telugu" },
-  "masterchef-celebrity-mexico": { imdb: "tt15280672", name: "MasterChef Celebrity México" },
-  "masterchef-hrvatska-croatia-2021": { imdb: "tt15727336", name: "MasterChef Hrvatska" },
+  "masterchef-celebrity-mexico": { imdb: "tt15280672", name: "MasterChef Celebrity México", title: "MasterChef Celebrity Mexico" },
+  "masterchef-hrvatska-croatia-2021": { imdb: "tt15727336", name: "MasterChef Hrvatska", title: "MasterChef Croatia" },
   "masterchef-tamil": { imdb: "tt33049400", name: "MasterChef Tamil" },
-  "masterchef-celebrity-argentina-la-revancha": { imdb: "tt19785248", name: "MasterChef Celebrity Argentina: La revancha" },
+  "masterchef-celebrity-argentina-la-revancha": { imdb: "tt19785248", name: "MasterChef Celebrity Argentina: La revancha", title: "MasterChef Celebrity Argentina: The Rematch" },
   "masterchef-estonia": { imdb: "tt26239638", name: "MasterChef Estonia" },
   "masterchef-brazil-dessert-masters": { imdb: "tt33225527", name: "MasterChef Brazil Dessert Masters" },
   "celebrity-masterchef-india": { imdb: "tt35256326", name: "Celebrity MasterChef India" },
-  "masterchef-celebridades": { imdb: "tt37113074", name: "MasterChef Celebridades" },
-  "masterchef-junior-quebec": { imdb: "tt38704141", name: "MasterChef Junior Québec" },
+  "masterchef-celebridades": { imdb: "tt37113074", name: "MasterChef Celebridades", title: "MasterChef Brazil Celebrity" },
+  "masterchef-junior-quebec": { imdb: "tt38704141", name: "MasterChef Junior Québec", title: "MasterChef Junior Quebec" },
   // Top Chef
   "top-chef-greece": { imdb: "tt1744561", name: "Top Chef" },
   "top-chef-2": { imdb: "tt3632140", name: "Top Chef" },
   "top-chef-canada": { imdb: "tt1784288", name: "Top Chef Canada" },
-  "top-chef-suomi": { imdb: "tt2396148", name: "Top Chef Suomi" },
+  "top-chef-suomi": { imdb: "tt2396148", name: "Top Chef Suomi", title: "Top Chef Finland" },
   "top-chef-life-after": { imdb: "tt2342847", name: "Life After Top Chef" },
   "top-chef-france": { imdb: "tt2474978", name: "Top Chef" },
-  "top-chef-espana": { imdb: "tt3266094", name: "Top Chef: España" },
+  "top-chef-espana": { imdb: "tt3266094", name: "Top Chef: España", title: "Top Chef Spain" },
   "top-chef-chile": { imdb: "tt14649794", name: "Top Chef Chile" },
   "objectif-top-chef": { imdb: "tt27763313", name: "Objectif Top Chef" },
   "top-chef-duels": { imdb: "tt3778478", name: "Top Chef Duels" },
   "top-chef-estrellas": { imdb: "tt4633854", name: "Top Chef Estrellas" },
   "top-chef-middle-east": { imdb: "tt13944898", name: "Top Chef Middle East" },
   "top-chef-mexico": { imdb: "tt5699966", name: "Top Chef Mexico" },
-  "top-chef-brasil": { imdb: "tt26245944", name: "Top Chef Brasil" },
+  "top-chef-brasil": { imdb: "tt26245944", name: "Top Chef Brasil", title: "Top Chef Brazil" },
   "top-chef-amateurs": { imdb: "tt13434040", name: "Top Chef Amateurs" },
   "top-chef-family-style": { imdb: "tt15274250", name: "Top Chef Family Style" },
   "top-chef-vip-us": { imdb: "tt21959284", name: "Top Chef VIP" },
-  "top-chef-france-chef-des-chefs": { imdb: "tt28750694", name: "Top chef : Le chef des chefs" },
+  "top-chef-france-chef-des-chefs": { imdb: "tt28750694", name: "Top chef : Le chef des chefs", title: "Top Chef France: Chef of Chefs" },
   "top-chef-vip-chile": { imdb: "tt32116840", name: "Top Chef VIP Chile" },
-  "top-chef-dulces-y-famosos": { imdb: "tt39367723", name: "Top Chef: Dulces y famosos" },
+  "top-chef-dulces-y-famosos": { imdb: "tt39367723", name: "Top Chef: Dulces y famosos", title: "Top Chef Spain: Desserts and Celebrities" },
   // Survivor
-  "expedition-robinson-sweden": { imdb: "tt0264245", name: "Expedition: Robinson" },
-  "expedition-robinson-denmark": { imdb: "tt0299375", name: "Robinson Ekspeditionen" },
-  "expedition-robinson-norway": { imdb: "tt0220735", name: "Robinsonekspedisjonen" },
-  "expedition-robinson-nl-be": { imdb: "tt0261470", name: "Expeditie Robinson" },
-  "expedition-robinson-de-at": { imdb: "tt11616884", name: "Expedition Robinson (Austria/Germany)" },
-  "survivor-expedicion-robinson-argentina": { imdb: "tt32881426", name: "Survivor: Expedición Robinson" },
-  "expedition-robinson-baltic": { imdb: "tt0482347", name: "Expedition Robinson" },
+  "expedition-robinson-sweden": { imdb: "tt0264245", name: "Expedition: Robinson", title: "Survivor Sweden" },
+  "expedition-robinson-denmark": { imdb: "tt0299375", name: "Robinson Ekspeditionen", title: "Survivor Denmark" },
+  "expedition-robinson-norway": { imdb: "tt0220735", name: "Robinsonekspedisjonen", title: "Survivor Norway" },
+  "expedition-robinson-nl-be": { imdb: "tt0261470", name: "Expeditie Robinson", title: "Survivor Netherlands" },
+  "expedition-robinson-de-at": { imdb: "tt11616884", name: "Expedition Robinson (Austria/Germany)", title: "Survivor Germany & Austria" },
+  "survivor-expedicion-robinson-argentina": { imdb: "tt32881426", name: "Survivor: Expedición Robinson", title: "Survivor Argentina" },
+  "expedition-robinson-baltic": { imdb: "tt0482347", name: "Expedition Robinson", title: "Survivor Baltic" },
   "survivor-portugal": { imdb: "tt1759419", name: "Survivor" },
   "survivor-au-2002": { imdb: "tt0310416", name: "Australian Survivor" },
-  "survivor-a-sziget": { imdb: "tt0380145", name: "Survivor - A sziget" },
+  "survivor-a-sziget": { imdb: "tt0380145", name: "Survivor - A sziget", title: "Survivor Hungary" },
   "survivor-turkey-main": { imdb: "tt13766114", name: "Survivor" },
   "survivor-greece-2003": { imdb: "tt7504196", name: "Survivor" },
-  "robinson-vip": { imdb: "tt0441944", name: "Robinson VIP" },
-  "survivor-turkiye": { imdb: "tt9089696", name: "Survivor Türkiye" },
+  "robinson-vip": { imdb: "tt0441944", name: "Robinson VIP", title: "Survivor VIP Scandinavia" },
+  "survivor-turkiye": { imdb: "tt9089696", name: "Survivor Türkiye", title: "Survivor Turkey" },
   "survivor-celebrity-au": { imdb: "tt0819740", name: "Celebrity Survivor" },
-  "survivor-bulgaria": { imdb: "tt1238038", name: "Survivor BG" },
-  "expedition-robinson-titans-nl": { imdb: "tt33084456", name: "Expeditie Robinson: Strijd der Titanen" },
+  "survivor-bulgaria": { imdb: "tt1238038", name: "Survivor BG", title: "Survivor Bulgaria" },
+  "expedition-robinson-titans-nl": { imdb: "tt33084456", name: "Expeditie Robinson: Strijd der Titanen", title: "Survivor Netherlands: Battle of the Titans" },
   "survivor-south-africa": { imdb: "tt5917270", name: "Survivor South Africa" },
   "survivor-israel": { imdb: "tt1796301", name: "Survivor Israel" },
   "survivor-philippines": { imdb: "tt1290482", name: "Survivor Philippines" },
@@ -2006,24 +2004,24 @@ export const shows = {
   "survivor-nz": { imdb: "tt5992438", name: "Survivor New Zealand" },
   "survivor-greece-2017": { imdb: "tt6665808", name: "Survivor 2017" },
   "survivor-turkey-2017": { imdb: "tt8501976", name: "Survivor 2017 Turkey" },
-  "expedition-robinson-belgium": { imdb: "tt33073986", name: "Expeditie Robinson: België" },
+  "expedition-robinson-belgium": { imdb: "tt33073986", name: "Expeditie Robinson: België", title: "Survivor Belgium" },
   "survivor-turkey-2018": { imdb: "tt7957172", name: "Survivor 2018" },
   "survivor-germany": { imdb: "tt10971210", name: "Survivor" },
   "survivor-turkey-greece": { imdb: "tt9668756", name: "Survivor: Turkey - Greece" },
   "survivor-turkey-2020": { imdb: "tt11559792", name: "Survivor 2020" },
-  "expedition-robinson-nl-vs-be": { imdb: "tt11792956", name: "Expeditie Robinson: Nederland vs België" },
-  "survivor-mexico": { imdb: "tt14403694", name: "Survivor México" },
+  "expedition-robinson-nl-vs-be": { imdb: "tt11792956", name: "Expeditie Robinson: Nederland vs België", title: "Survivor Netherlands vs Belgium" },
+  "survivor-mexico": { imdb: "tt14403694", name: "Survivor México", title: "Survivor Mexico" },
   "survivor-romania": { imdb: "tt21747100", name: "Survivor Romania" },
   "survivor-turkey-exxen-cup": { imdb: "tt13751478", name: "Survivor Exxen Cup" },
   "survivor-india-tamil": { imdb: "tt15195094", name: "Survivor" },
   "survivor-turkey-all-star-2022": { imdb: "tt16408756", name: "Survivor All Star" },
-  "survivor-cesko-slovensko": { imdb: "tt17509286", name: "Survivor Cesko Slovensko" },
-  "survivor-dominikanska-republika": { imdb: "tt19363172", name: "Survivor: Dominikanska Republika" },
+  "survivor-cesko-slovensko": { imdb: "tt17509286", name: "Survivor Cesko Slovensko", title: "Survivor Czech Republic & Slovakia" },
+  "survivor-dominikanska-republika": { imdb: "tt19363172", name: "Survivor: Dominikanska Republika", title: "Survivor: Dominican Republic" },
   "survivor-croatia": { imdb: "tt32103323", name: "Survivor Croatia" },
-  "expedition-robinson-all-stars-nl": { imdb: "tt33076275", name: "Expeditie Robinson: All Stars" },
+  "expedition-robinson-all-stars-nl": { imdb: "tt33076275", name: "Expeditie Robinson: All Stars", title: "Survivor Netherlands: All Stars" },
   "survivor-uk": { imdb: "tt0283799", name: "Survivor" },
   "survivor-turkey-all-star-2023": { imdb: "tt24243834", name: "Survivor All Star - 2023" },
-  "survivor-quebec": { imdb: "tt32636282", name: "Survivor Québec" },
+  "survivor-quebec": { imdb: "tt32636282", name: "Survivor Québec", title: "Survivor Quebec" },
   "survivor-turkey-all-star-2024": { imdb: "tt30361848", name: "Survivor 2024 All Star" },
   "survivor-turkey-2025": { imdb: "tt35042540", name: "Survivor 2025" },
   "survivor-turkey-2026": { imdb: "tt38990552", name: "Survivor Turkey 2026" },
@@ -2033,27 +2031,27 @@ export const shows = {
   "big-brother-uk": { imdb: "tt0257295", name: "Big Brother" },
   "grande-fratello": { imdb: "tt0261474", name: "Grande Fratello" },
   "big-brother-belgium": { imdb: "tt0262149", name: "Big Brother" },
-  "gran-hermano-spain": { imdb: "tt0262163", name: "Gran hermano" },
-  "big-brother-sweden": { imdb: "tt0273331", name: "Big Brother Sverige" },
+  "gran-hermano-spain": { imdb: "tt0262163", name: "Gran hermano", title: "Big Brother Spain" },
+  "big-brother-sweden": { imdb: "tt0273331", name: "Big Brother Sverige", title: "Big Brother Sweden" },
   "big-brother-portugal-2000": { imdb: "tt11872328", name: "Big Brother" },
-  "big-brother-schweiz": { imdb: "tt39090473", name: "Big Brother Schweiz" },
+  "big-brother-schweiz": { imdb: "tt39090473", name: "Big Brother Schweiz", title: "Big Brother Switzerland" },
   "celebrity-big-brother-uk": { imdb: "tt0279550", name: "Celebrity Big Brother" },
-  "big-brother-denmark": { imdb: "tt0280236", name: "Big Brother Danmark" },
+  "big-brother-denmark": { imdb: "tt0280236", name: "Big Brother Danmark", title: "Big Brother Denmark" },
   "big-brother-switzerland": { imdb: "tt0280238", name: "Big Brother" },
-  "gran-hermano-argentina": { imdb: "tt0281446", name: "Gran Hermano" },
+  "gran-hermano-argentina": { imdb: "tt0281446", name: "Gran Hermano", title: "Big Brother Argentina" },
   "loft-story-france": { imdb: "tt0283756", name: "Loft Story" },
   "big-brother-au": { imdb: "tt0287196", name: "Big Brother" },
   "big-brother-little-brother": { imdb: "tt0288918", name: "Big Brother's Little Brother" },
   "big-brother-greece-2001": { imdb: "tt0299266", name: "Big Brother" },
   "big-brother-south-africa-2001": { imdb: "tt1013862", name: "Big Brother South Africa" },
-  "big-brother-poland": { imdb: "tt1259255", name: "Big Brother Polska" },
+  "big-brother-poland": { imdb: "tt1259255", name: "Big Brother Polska", title: "Big Brother Poland" },
   "big-brother-brazil": { imdb: "tt0315288", name: "Big Brother Brazil" },
   "big-brother-mexico": { imdb: "tt0318212", name: "Big Brother Mexico" },
   "big-brother-vip-mexico": { imdb: "tt0326671", name: "Big Brother VIP Mexico" },
-  "big-brother-hungary": { imdb: "tt1246816", name: "Big brother - Nagy testvér" },
-  "gran-hermano-colombia": { imdb: "tt0380898", name: "Gran Hermano Colombia" },
+  "big-brother-hungary": { imdb: "tt1246816", name: "Big brother - Nagy testvér", title: "Big Brother Hungary" },
+  "gran-hermano-colombia": { imdb: "tt0380898", name: "Gran Hermano Colombia", title: "Big Brother Colombia" },
   "big-brother-africa": { imdb: "tt1013861", name: "Big Brother Africa" },
-  "gran-hermano-vip-spain": { imdb: "tt0396324", name: "Gran hermano VIP" },
+  "gran-hermano-vip-spain": { imdb: "tt0396324", name: "Gran hermano VIP", title: "Big Brother Spain VIP" },
   "big-brother-big-mouth": { imdb: "tt0413541", name: "Big Brother's Big Mouth" },
   "big-brother-croatia": { imdb: "tt0815041", name: "Big Brother" },
   "big-brother-bulgaria": { imdb: "tt1285043", name: "Big Brother Bulgaria" },
@@ -2065,41 +2063,41 @@ export const shows = {
   "big-brother-naija": { imdb: "tt0843319", name: "Big Brother Nigeria" },
   "pinoy-big-brother-teen": { imdb: "tt0856147", name: "Pinoy Big Brother Teen Edition" },
   "big-brother-serbia": { imdb: "tt0864307", name: "Big Brother" },
-  "gran-hermano-famosos-argentina": { imdb: "tt11067062", name: "Gran Hermano Famosos" },
+  "gran-hermano-famosos-argentina": { imdb: "tt11067062", name: "Gran Hermano Famosos", title: "Big Brother Argentina Celebrity" },
   "big-brother-albania": { imdb: "tt1242552", name: "Big Brother Albania" },
   "big-brother-israel": { imdb: "tt2331485", name: "Big Brother Israel" },
   "big-brother-vip-israel": { imdb: "tt4644486", name: "Big Brother VIP" },
   "big-brother-canada": { imdb: "tt10478124", name: "Big Brother" },
-  "gran-hermano-reencuentro": { imdb: "tt1634323", name: "Gran Hermano: El reencuentro" },
+  "gran-hermano-reencuentro": { imdb: "tt1634323", name: "Gran Hermano: El reencuentro", title: "Big Brother Spain: The Reunion" },
   "big-brother-bit-on-the-side": { imdb: "tt2033552", name: "Big Brother's Bit on the Side" },
   "big-brother-ukraine": { imdb: "tt2943116", name: "Big Brother" },
   "celebrity-big-brother-bit-on-the-side": { imdb: "tt35315508", name: "Celebrity Big Brother's Bit on the Side" },
   "big-brother-canada-2013": { imdb: "tt2776888", name: "Big Brother Canada" },
   "big-brother-vip-portugal": { imdb: "tt2872426", name: "Big Brother VIP" },
   "big-brother-bit-on-the-psych": { imdb: "tt2963662", name: "Big Brother's Bit on the Psych" },
-  "promi-big-brother": { imdb: "tt3174900", name: "Promi Big Brother" },
+  "promi-big-brother": { imdb: "tt3174900", name: "Promi Big Brother", title: "Celebrity Big Brother Germany" },
   "big-brother-south-africa-2015": { imdb: "tt11790136", name: "Big Brother South Africa" },
   "big-brother-china": { imdb: "tt7925322", name: "Big Brother China" },
   "grande-fratello-vip": { imdb: "tt6078678", name: "Grande Fratello VIP" },
   "big-brother-over-the-top": { imdb: "tt6146534", name: "Big Brother: Over the Top" },
-  "gran-hermano-us": { imdb: "tt6752796", name: "Gran Hermano US" },
-  "gran-hermano-duo": { imdb: "tt9473208", name: "Gran Hermano Dúo" },
+  "gran-hermano-us": { imdb: "tt6752796", name: "Gran Hermano US", title: "Big Brother US Spanish" },
+  "gran-hermano-duo": { imdb: "tt9473208", name: "Gran Hermano Dúo", title: "Big Brother Spain Duo" },
   "big-brother-portugal-2020": { imdb: "tt0280237", name: "Big Brother" },
   "big-brother-greece-2020": { imdb: "tt13179356", name: "Big Brother" },
   "big-brother-nl-be-2021": { imdb: "tt13784818", name: "Big Brother" },
-  "big-brother-celebrites-canada": { imdb: "tt14295890", name: "Big Brother Célébrités" },
+  "big-brother-celebrites-canada": { imdb: "tt14295890", name: "Big Brother Célébrités", title: "Celebrity Big Brother Quebec" },
   "big-brother-vip-au": { imdb: "tt15823476", name: "Big Brother VIP" },
   "big-brother-albania-vip": { imdb: "tt16293406", name: "Big Brother Albania VIP" },
-  "gran-hermano-chile": { imdb: "tt28374534", name: "Gran Hermano" },
+  "gran-hermano-chile": { imdb: "tt28374534", name: "Gran Hermano", title: "Big Brother Chile" },
   "big-brother-late-and-live": { imdb: "tt29292214", name: "Big Brother: Late & Live" },
   "big-brother-reindeer-games": { imdb: "tt29927728", name: "Big Brother Reindeer Games" },
-  "big-brother-cesko-and-slovensko": { imdb: "tt29954053", name: "Big Brother Česko & Slovensko" },
+  "big-brother-cesko-and-slovensko": { imdb: "tt29954053", name: "Big Brother Česko & Slovensko", title: "Big Brother Czech Republic & Slovakia" },
   "big-brother-knossi-edition": { imdb: "tt30222512", name: "Big Brother - Knossi Edition" },
   "big-brother-uk-2023": { imdb: "tt48436891", name: "Big Brother" },
   "celebrity-big-brother-late-and-live": { imdb: "tt31945871", name: "Celebrity Big Brother: Late and Live" },
   "big-brother-unlocked": { imdb: "tt36988423", name: "Big Brother: Unlocked" },
-  "big-brother-verao-portugal": { imdb: "tt37431529", name: "Big Brother Verão" },
-  "big-brother-le-piege-canada": { imdb: "tt38961491", name: "Big Brother: Le piège" },
+  "big-brother-verao-portugal": { imdb: "tt37431529", name: "Big Brother Verão", title: "Big Brother Portugal Summer" },
+  "big-brother-le-piege-canada": { imdb: "tt38961491", name: "Big Brother: Le piège", title: "Big Brother Quebec: The Trap" },
   "big-brother-all-stars-portugal": { imdb: "tt40902201", name: "Big Brother All Stars" },
   "big-brother-group-chat": { imdb: "tt47657517", name: "Big Brother: The Group Chat" },
   "bigg-boss-hindi": { imdb: "tt1281973", name: "Bigg Boss" },
@@ -3187,7 +3185,6 @@ export const movies = {
   // Hannah Montana
   "hannah-montana-movie": { imdb: "tt1114677", name: "Hannah Montana: The Movie" },
   // Buffy the Vampire Slayer
-  "buffy-1992": { imdb: "tt0103893", name: "Buffy the Vampire Slayer" },
   // Teen Wolf
   "teen-wolf-movie": { imdb: "tt15486810", name: "Teen Wolf: The Movie" },
   // The Last Kingdom
@@ -3863,39 +3860,50 @@ const dcau = [
   ["return-of-the-joker"], ["static-shock"], ["justice-league"], ["mystery-of-the-batwoman"], ["justice-league-unlimited"],
 ];
 const toyStory = [["toy-story"], ["toy-story-2"], ["toy-story-3"], ["toy-story-4"], ["lightyear"], ["toy-story-5"]];
+const titlesOf = (entries) => [...new Set(entries.map(([key]) => key))].map((key) => [key]);
 const showsOnly = (entries) => entries.filter(([key]) => !(key in movies)).map(([key]) => [key]);
 
 // Each collection:
 //   name         spelled out ("Marvel Cinematic Universe", not "MCU"). Use "Every …" only
 //                for collections whose titles mostly also belong to other collections
 //                ("Every Marvel Series", "Every Pixar Movie").
-//   genres       the genres it appears under in its catalog's filter, and shows as chips.
+//   genres       the genres it appears under in its catalogs' filters, and shows as chips.
 //                Letters, digits, spaces, ' & and - only.
 //   order        "release": a watch order sorted by release date. It goes in the
-//                Connected Storyline catalog and keeps its name.
+//                Storyline catalog and keeps its name. Titles belong in one only if they
+//                share continuity: a sequel, prequel or spin-off, or a reboot that reuses
+//                earlier titles 1:1 (the same performances, or the same events retold
+//                closely, as the Evangelion Rebuilds do). Remakes that reinterpret the
+//                story go in its Franchise copy instead.
 //                "timeline": a watch order kept in the order listed, following the story.
-//                Also Connected Storyline; the name gets " (Timeline)" and the description
-//                a standard sentence. Only worth it when the story jumps around a lot, as
-//                Star Wars does; most franchises' timelines are too close to release order.
-//                Left out: titles that share an IP but not one story. They go in the Other
-//                catalog, each listed once, by release date.
+//                Also Storyline; the name gets " (Timeline)" and the description a standard
+//                sentence. Only worth it when the story jumps around a lot, as Star Wars
+//                does; most franchises' timelines are too close to release order.
+//                Left out: a list of titles that share a franchise, person or studio but
+//                not one story, each listed once, newest first.
+//   catalogs     a list's catalogs: any of "franchise" (a game, character, brand, or a
+//                show with many regional versions), "person" (a director or
+//                personality), "studio", and "other" for anything else. Defaults to other.
+//   franchise    a release-order watch order with more than 3 titles also gets a copy in
+//                Franchise listing its titles. false opts out (when a list already covers
+//                it); { name, extra: [[key], …], description } renames it, adds the titles
+//                the story leaves out, and describes the whole franchise.
 //   description  up to three sentences on what the collection is and where its titles
 //                come from. The years and the movie, series and season counts are added
 //                for you.
 //   poster       optional image URL; defaults to the first title's poster.
-//   first        optional keys to list ahead of the release dates (not for timelines),
-//                for example so the poster comes from a title that has one.
 //   entries      [key] for a movie, or for every season of a show; [key, season] for one
 //                season (watch orders only).
 // Titles that aren't out yet are skipped until a build after their release. Each catalog
-// lists its most popular collections first (by its titles' popularity on Cinemeta), so
+// lists its best-loved collections first (by its titles' IMDb ratings and vote counts), so
 // the order below doesn't matter.
 export const collections = [
-  // ---- Connected Storyline -------------------------------------------------
+  // ---- Storyline -----------------------------------------------------------
   {
     name: "Marvel Cinematic Universe",
     genres: ["Superhero", "Action", "Adventure", "Sci-Fi"],
     order: "release",
+    franchise: false,
     description: "Marvel Studios' shared universe, which began with Iron Man in 2008, built for a decade to Avengers: Endgame, and carried on into the Multiverse Saga. It brings together every film, the Disney+ series, and the Netflix Defenders shows Marvel added to its official timeline in 2024. In release order, each story lands the way audiences first saw it, with every entry setting up the next.",
     entries: [...mcu, ],
   },
@@ -3903,6 +3911,7 @@ export const collections = [
     name: "Marvel Cinematic Universe (Unofficial)",
     genres: ["Superhero", "Action", "Adventure", "Sci-Fi"],
     order: "release",
+    franchise: false,
     description: "The Marvel Cinematic Universe as it was first sold to viewers, with the shows Marvel Television made for ABC, Hulu and Freeform under the same banner. Agents of S.H.I.E.L.D. picked up threads from The Avengers and kept answering the films for seven seasons, but Marvel Studios has never counted these shows on its timeline. In release order, you can see the two halves of Marvel running side by side.",
     entries: [...mcu, ...marvelTelevision],
   },
@@ -3920,6 +3929,7 @@ export const collections = [
     name: "Sony's Spider-Man Universe",
     genres: ["Superhero", "Action", "Horror"],
     order: "release",
+    franchise: false,
     description: "Every Spider-Man film Sony has made: Sam Raimi's trilogy, Marc Webb's Amazing Spider-Man films, Tom Holland's films co-produced with Marvel Studios, the animated Spider-Verse, and the villain films that began with Tom Hardy's Venom. No Way Home and the Spider-Verse films pull its separate universes together, and Venom and Morbius brush against them. Release order follows how Sony built it, through three Peter Parkers and a Miles Morales.",
     entries: [["venom"], ["venom-2"], ["morbius"], ["madame-web"], ["kraven"], ["venom-3"], ["spider-man-2002"], ["spider-man-2"], ["spider-man-3"], ["amazing-spider-man"], ["amazing-spider-man-2"], ["spider-man-homecoming"], ["into-the-spider-verse"], ["far-from-home"], ["no-way-home"], ["across-the-spider-verse"], ["brand-new-day"]],
   },
@@ -4021,10 +4031,11 @@ export const collections = [
     name: "Terminator",
     genres: ["Sci-Fi", "Action"],
     order: "release",
+    franchise: { extra: [["terminator-zero"]], description: "Every Terminator film and series, including the anime Terminator Zero." },
     description: "James Cameron's war between humanity and the machines of Skynet, fought by sending killers and protectors back through time. After the first two films, each sequel and series rewrites the future in its own way, from The Sarah Connor Chronicles to the anime Terminator Zero.",
     entries: [
       ["terminator"], ["terminator-2"], ["terminator-3"], ["sarah-connor-chronicles"], ["terminator-salvation"],
-      ["terminator-genisys"], ["terminator-dark-fate"], ["terminator-zero"],
+      ["terminator-genisys"], ["terminator-dark-fate"],
     ],
   },
   {
@@ -4048,8 +4059,17 @@ export const collections = [
     name: "Planet of the Apes",
     genres: ["Sci-Fi", "Action", "Drama"],
     order: "release",
+    franchise: { extra: [["planet-of-the-apes-1968"], ["beneath-the-planet-of-the-apes"], ["escape-from-the-planet-of-the-apes"], ["conquest-of-the-planet-of-the-apes"], ["battle-for-the-planet-of-the-apes"], ["planet-of-the-apes-1974"], ["return-to-the-planet-of-the-apes"], ["planet-of-the-apes-2001"]], description: "Every Planet of the Apes film and series: the five films from 1968, the live-action and animated series, Tim Burton's 2001 remake, and the reboot from Rise onwards." },
     description: "The modern Planet of the Apes saga, following Caesar from a lab chimpanzee to the leader of a new ape civilisation, and the generations after him in Kingdom. Andy Serkis's motion-capture performance carries the first three films.",
-    entries: [["rise-apes"], ["dawn-apes"], ["war-apes"], ["kingdom-apes"], ["planet-of-the-apes-1968"], ["beneath-the-planet-of-the-apes"], ["escape-from-the-planet-of-the-apes"], ["conquest-of-the-planet-of-the-apes"], ["battle-for-the-planet-of-the-apes"], ["planet-of-the-apes-1974"], ["return-to-the-planet-of-the-apes"], ["planet-of-the-apes-2001"]],
+    entries: [["rise-apes"], ["dawn-apes"], ["war-apes"], ["kingdom-apes"]],
+  },
+  {
+    name: "Planet of the Apes (Original Series)",
+    genres: ["Sci-Fi", "Action", "Drama"],
+    order: "release",
+    franchise: false,
+    description: "The five films that began with Charlton Heston crash-landing on a world ruled by apes in 1968. Its twist ending leads to a time loop, as the apes Cornelius and Zira escape to the 20th century and their son Caesar leads the uprising that began it all.",
+    entries: [["planet-of-the-apes-1968"], ["beneath-the-planet-of-the-apes"], ["escape-from-the-planet-of-the-apes"], ["conquest-of-the-planet-of-the-apes"], ["battle-for-the-planet-of-the-apes"]],
   },
   {
     name: "Doctor Who",
@@ -4151,8 +4171,9 @@ export const collections = [
     name: "Avatar: The Last Airbender",
     genres: ["Animation", "Fantasy", "Adventure", "Family"],
     order: "release",
+    franchise: { extra: [["last-airbender-2010"], ["atla-netflix"]], description: "Every Avatar: The Last Airbender title: Nickelodeon's series and The Legend of Korra, M. Night Shyamalan's 2010 film, and Netflix's live-action series." },
     description: "Nickelodeon's animated world of the four nations, where the Avatar alone can bend all four elements. Aang's journey to end the Hundred Year War is followed seventy years later by The Legend of Korra.",
-    entries: [["atla"], ["korra"], ["last-airbender-2010"], ["atla-netflix"]],
+    entries: [["atla"], ["korra"]],
   },
   {
     name: "Shrek",
@@ -4494,6 +4515,7 @@ export const collections = [
     name: "Batman Anthology",
     genres: ["Superhero", "Action", "Crime"],
     order: "release",
+    franchise: false,
     description: "The four Warner Bros. Batman films from 1989 to 1997, sharing one continuity as Michael Keaton, Val Kilmer and George Clooney take the cowl. Tim Burton's gothic first two films give way to Joel Schumacher's neon-lit sequels. Keaton's Batman returns in The Flash.",
     entries: [
       ["batman-1989"], ["batman-returns"], ["batman-forever"], ["batman-and-robin"],
@@ -4503,6 +4525,7 @@ export const collections = [
     name: "Superman (Christopher Reeve)",
     genres: ["Superhero", "Action", "Adventure"],
     order: "release",
+    franchise: false,
     description: "Christopher Reeve's four films as the Man of Steel, from Richard Donner's 1978 original to The Quest for Peace. Superman Returns picks up after Superman II, with Brandon Routh stepping into Reeve's role. Together they defined the hero for a generation.",
     entries: [
       ["superman-1978"], ["superman-2"], ["superman-3"], ["superman-4"], ["superman-returns"],
@@ -4521,6 +4544,7 @@ export const collections = [
     name: "Transformers (Michael Bay)",
     genres: ["Sci-Fi", "Action", "Adventure"],
     order: "release",
+    franchise: false,
     description: "Michael Bay's five live-action Transformers films, with Shia LaBeouf and later Mark Wahlberg caught in the war between Autobots and Decepticons. Explosive, loud and enormously successful, they ran a decade from 2007. Bumblebee later restarted the series on its own footing.",
     entries: [
       ["transformers-2007"], ["transformers-rotf"], ["transformers-dotm"], ["transformers-aoe"],
@@ -4594,18 +4618,20 @@ export const collections = [
     name: "Men in Black",
     genres: ["Sci-Fi", "Comedy", "Action"],
     order: "release",
-    description: "Will Smith and Tommy Lee Jones as Agents J and K, policing the aliens secretly living on Earth. The trilogy, an animated series and International, with Chris Hemsworth and Tessa Thompson, share one agency and one wiped-memory secret.",
+    franchise: { extra: [["mib-animated"]], description: "Every Men in Black title: the four films and the animated series, which reimagines the first film." },
+    description: "Will Smith and Tommy Lee Jones as Agents J and K, policing the aliens secretly living on Earth. The trilogy and International, with Chris Hemsworth and Tessa Thompson, share one agency and one wiped-memory secret.",
     entries: [
-      ["mib"], ["mib-animated"], ["mib-2"], ["mib-3"], ["mib-international"],
+      ["mib"], ["mib-2"], ["mib-3"], ["mib-international"],
     ],
   },
   {
     name: "Ghostbusters",
     genres: ["Comedy", "Fantasy", "Sci-Fi"],
     order: "release",
-    description: "Bill Murray, Dan Aykroyd, Harold Ramis and Ernie Hudson as New York's ghost-catching business, and the family that inherits their legacy. The animated Real Ghostbusters continues the 1980s story, while Afterlife and Frozen Empire bring the originals back. The 2016 film is a separate reboot.",
+    franchise: { extra: [["real-ghostbusters"], ["extreme-ghostbusters"]], description: "Every Ghostbusters title except the 2016 reboot: the four films, The Real Ghostbusters and Extreme Ghostbusters." },
+    description: "Bill Murray, Dan Aykroyd, Harold Ramis and Ernie Hudson as New York's ghost-catching business, and the family that inherits their legacy. Afterlife and Frozen Empire bring the originals back.",
     entries: [
-      ["ghostbusters-1984"], ["real-ghostbusters"], ["ghostbusters-2"], ["extreme-ghostbusters"],
+      ["ghostbusters-1984"], ["ghostbusters-2"],
       ["ghostbusters-afterlife"], ["ghostbusters-frozen-empire"],
     ],
   },
@@ -4687,6 +4713,7 @@ export const collections = [
     name: "Resident Evil",
     genres: ["Action", "Horror", "Sci-Fi"],
     order: "release",
+    franchise: { extra: [["re-degeneration"], ["re-damnation"], ["re-vendetta"], ["re-infinite-darkness"], ["re-death-island"]], description: "Every Resident Evil film and series: Paul W. S. Anderson's six live-action films with Milla Jovovich, and Capcom's computer-animated films and series with Leon S. Kennedy." },
     description: "Paul W. S. Anderson's six films, with Milla Jovovich as Alice fighting the Umbrella Corporation through a zombie apocalypse. Loosely based on Capcom's games, they ran from 2002 to The Final Chapter in 2016.",
     entries: [
       ["resident-evil"], ["resident-evil-apocalypse"], ["resident-evil-extinction"], ["resident-evil-afterlife"],
@@ -4697,6 +4724,7 @@ export const collections = [
     name: "Resident Evil (Animated)",
     genres: ["Animation", "Action", "Horror"],
     order: "release",
+    franchise: false,
     description: "Capcom's computer-animated Resident Evil stories, set alongside the games, with Leon S. Kennedy, Claire Redfield and Chris Redfield. Five films and a Netflix series follow the fight against bioterrorism from Raccoon City's aftermath onwards.",
     entries: [
       ["re-degeneration"], ["re-damnation"], ["re-vendetta"], ["re-infinite-darkness"], ["re-death-island"],
@@ -4897,9 +4925,9 @@ export const collections = [
     name: "Percy Jackson",
     genres: ["Fantasy", "Adventure", "Family"],
     order: "release",
-    description: "Rick Riordan's demigod son of Poseidon, at a camp for the children of Greek gods. Logan Lerman starred in two films; the Disney+ series retells the books from the start with Walker Scobell.",
+    description: "Rick Riordan's demigod son of Poseidon, at a camp for the children of Greek gods, played by Logan Lerman in two films.",
     entries: [
-      ["lightning-thief"], ["sea-of-monsters"], ["percy-jackson-series"],
+      ["lightning-thief"], ["sea-of-monsters"],
     ],
   },
   {
@@ -4987,10 +5015,11 @@ export const collections = [
     name: "Halloween",
     genres: ["Horror", "Thriller"],
     order: "release",
-    description: "Michael Myers, the masked killer who returns to Haddonfield on Halloween night, and Jamie Lee Curtis' Laurie Strode. Its sequels split into rival timelines: H20, Rob Zombie's remakes and David Gordon Green's trilogy each pick a different past. Season of the Witch is the one film without Michael.",
+    franchise: { extra: [["halloween-3"], ["halloween-2007"], ["halloween-2-2009"]], description: "Every Halloween film, from John Carpenter's 1978 original through its rival timelines, the Michael-less Season of the Witch and Rob Zombie's two remakes." },
+    description: "Michael Myers, the masked killer who returns to Haddonfield on Halloween night, and Jamie Lee Curtis' Laurie Strode. Its sequels split into rival timelines: the Thorn films, H20 and Resurrection, and David Gordon Green's trilogy each follow a different past from the 1978 original.",
     entries: [
-      ["halloween-1978"], ["halloween-2-1981"], ["halloween-3"], ["halloween-4"], ["halloween-5"], ["halloween-6"],
-      ["halloween-h20"], ["halloween-resurrection"], ["halloween-2007"], ["halloween-2-2009"], ["halloween-2018"],
+      ["halloween-1978"], ["halloween-2-1981"], ["halloween-4"], ["halloween-5"], ["halloween-6"],
+      ["halloween-h20"], ["halloween-resurrection"], ["halloween-2018"],
       ["halloween-kills"], ["halloween-ends"],
     ],
   },
@@ -4998,30 +5027,33 @@ export const collections = [
     name: "Friday the 13th",
     genres: ["Horror", "Thriller"],
     order: "release",
-    description: "Jason Voorhees and Camp Crystal Lake, where counsellors keep dying. Jason's mother starts it, and Jason goes on to New York, Hell, space and a showdown with Freddy Krueger. The 2009 film remakes the early ones.",
+    franchise: { extra: [["friday-13th-2009"]], description: "Every Friday the 13th film, from the 1980 original and Jason's long run to Freddy vs. Jason and the 2009 remake." },
+    description: "Jason Voorhees and Camp Crystal Lake, where counsellors keep dying. Jason's mother starts it, and Jason goes on to New York, Hell, space and a showdown with Freddy Krueger.",
     entries: [
       ["friday-13th"], ["friday-13th-2"], ["friday-13th-3"], ["friday-13th-4"], ["friday-13th-5"], ["friday-13th-6"],
       ["friday-13th-7"], ["friday-13th-8"], ["jason-goes-to-hell"], ["jason-x"], ["freddy-vs-jason"],
-      ["friday-13th-2009"],
+
     ],
   },
   {
     name: "A Nightmare on Elm Street",
     genres: ["Horror", "Fantasy"],
     order: "release",
-    description: "Freddy Krueger, the burned killer with a bladed glove who murders teenagers in their dreams. Wes Craven's 1984 original, its sequels, Craven's meta New Nightmare and the crossover with Jason. The 2010 film is a remake.",
+    franchise: { extra: [["nightmare-2010"]], description: "Every Nightmare on Elm Street film, from Wes Craven's 1984 original and its sequels to Freddy vs. Jason and the 2010 remake." },
+    description: "Freddy Krueger, the burned killer with a bladed glove who murders teenagers in their dreams. Wes Craven's 1984 original, its sequels, Craven's meta New Nightmare with Robert Englund and Heather Langenkamp playing themselves, and the crossover with Jason.",
     entries: [
       ["nightmare-elm-street"], ["nightmare-2"], ["nightmare-3"], ["nightmare-4"], ["nightmare-5"], ["freddys-dead"],
-      ["new-nightmare"], ["freddy-vs-jason"], ["nightmare-2010"],
+      ["new-nightmare"], ["freddy-vs-jason"],
     ],
   },
   {
     name: "The Texas Chain Saw Massacre",
     genres: ["Horror", "Thriller"],
     order: "release",
-    description: "Leatherface and his cannibal family, from Tobe Hooper's raw 1974 original through sequels, remakes and prequels that each retell the legend. The 2022 Netflix film is a direct sequel to the first.",
+    franchise: { extra: [["tcm-next-generation"], ["tcm-2003"], ["tcm-beginning"]], description: "Every Texas Chain Saw Massacre film: Tobe Hooper's 1974 original, its sequels, The Next Generation, and the 2003 remake and its prequel." },
+    description: "Leatherface and his cannibal family, from Tobe Hooper's raw 1974 original through its sequels. Texas Chainsaw 3D and Leatherface pick up from the original's ending, and the 2022 Netflix film is another direct sequel, with Sally Hardesty returning.",
     entries: [
-      ["tcm-1974"], ["tcm-2"], ["leatherface-3"], ["tcm-next-generation"], ["tcm-2003"], ["tcm-beginning"],
+      ["tcm-1974"], ["tcm-2"], ["leatherface-3"],
       ["texas-chainsaw-3d"], ["leatherface-2017"], ["tcm-2022"],
     ],
   },
@@ -5039,11 +5071,12 @@ export const collections = [
     name: "Hellraiser",
     genres: ["Horror", "Fantasy"],
     order: "release",
-    description: "Clive Barker's puzzle box that opens a door to the Cenobites, led by the pin-headed Pinhead. Barker's 1987 original leads to a long run of sequels and Hulu's 2022 reimagining.",
+    franchise: { extra: [["hellraiser-2022"]], description: "Every Hellraiser film, from Clive Barker's 1987 original and its sequels to Hulu's 2022 reimagining." },
+    description: "Clive Barker's puzzle box that opens a door to the Cenobites, led by the pin-headed Pinhead. Barker's 1987 original leads to a long run of sequels, Doug Bradley playing Pinhead in eight of them.",
     entries: [
       ["hellraiser"], ["hellbound"], ["hellraiser-3"], ["hellraiser-bloodline"], ["hellraiser-inferno"],
       ["hellraiser-hellseeker"], ["hellraiser-deader"], ["hellraiser-hellworld"], ["hellraiser-revelations"],
-      ["hellraiser-judgment"], ["hellraiser-2022"],
+      ["hellraiser-judgment"],
     ],
   },
   {
@@ -5396,21 +5429,30 @@ export const collections = [
     ],
   },
   {
-    name: "Mortal Kombat",
+    name: "Mortal Kombat (1995)",
     genres: ["Action", "Fantasy"],
     order: "release",
-    description: "The tournament that decides Earth's fate against Outworld, with Liu Kang, Sub-Zero, Scorpion and Raiden. The 1995 film and its sequel were followed by a 2021 reboot and its own sequel, telling the story again with new casts.",
+    description: "The tournament that decides Earth's fate against Outworld, with Liu Kang, Sub-Zero, Scorpion and Raiden, in the 1995 film and its sequel Annihilation.",
     entries: [
-      ["mortal-kombat-1995"], ["mortal-kombat-annihilation"], ["mortal-kombat-2021"], ["mortal-kombat-2"],
+      ["mortal-kombat-1995"], ["mortal-kombat-annihilation"],
     ],
   },
   {
-    name: "Tomb Raider",
+    name: "Mortal Kombat (2021)",
+    genres: ["Action", "Fantasy"],
+    order: "release",
+    franchise: { name: "Mortal Kombat", extra: [["mortal-kombat-1995"], ["mortal-kombat-annihilation"]], description: "Every Mortal Kombat film: the 1995 film and Annihilation, and the 2021 reboot and its sequel." },
+    description: "Simon McQuoid's reboot of the tournament between Earthrealm and Outworld, with Lewis Tan's new hero Cole Young alongside Sub-Zero, Scorpion and Liu Kang. Mortal Kombat II brings in Karl Urban's Johnny Cage.",
+    entries: [["mortal-kombat-2021"], ["mortal-kombat-2"]],
+  },
+  {
+    name: "Lara Croft: Tomb Raider",
     genres: ["Action", "Adventure"],
     order: "release",
-    description: "Lara Croft, the archaeologist adventurer of the games, played by Angelina Jolie, then Alicia Vikander in a 2018 origin story. The anime Legend of Lara Croft follows the games' own continuity.",
+    franchise: { name: "Tomb Raider", extra: [["tomb-raider-2018"], ["legend-of-lara-croft"]], description: "Every Tomb Raider film and series: Angelina Jolie's two films, Alicia Vikander's 2018 origin story and the anime The Legend of Lara Croft." },
+    description: "Angelina Jolie as Lara Croft, the archaeologist adventurer of the games, in two films from 2001 and 2003.",
     entries: [
-      ["lara-croft"], ["cradle-of-life"], ["tomb-raider-2018"], ["legend-of-lara-croft"],
+      ["lara-croft"], ["cradle-of-life"],
     ],
   },
   {
@@ -5543,6 +5585,7 @@ export const collections = [
     name: "High School Musical",
     genres: ["Musical", "Family", "Romance"],
     order: "release",
+    franchise: false,
     description: "Troy and Gabriella at East High, in the Disney Channel musicals that became a phenomenon, and the theatrical Senior Year. Sharpay's Fabulous Adventure takes Ashley Tisdale's diva to New York.",
     entries: [
       ["hsm"], ["hsm-2"], ["hsm-3"], ["sharpay"],
@@ -5598,9 +5641,10 @@ export const collections = [
     name: "Pretty Little Liars",
     genres: ["Mystery", "Drama", "Thriller"],
     order: "release",
-    description: "Four friends in Rosewood stalked by an anonymous tormentor called A after their leader vanishes. Ravenswood and The Perfectionists spin off, and Original Sin starts again in a new town.",
+    franchise: { extra: [["pll-original-sin"]], description: "Every Pretty Little Liars series, including Original Sin, which starts again with a new set of girls in Millwood." },
+    description: "Four friends in Rosewood stalked by an anonymous tormentor called A after their leader vanishes. Ravenswood spins off from it, and The Perfectionists follows Alison and Mona to a new town.",
     entries: [
-      ["pll"], ["ravenswood"], ["perfectionists"], ["pll-original-sin"],
+      ["pll"], ["ravenswood"], ["perfectionists"],
     ],
   },
   {
@@ -5751,9 +5795,9 @@ export const collections = [
     name: "Buffy the Vampire Slayer",
     genres: ["Fantasy", "Action", "Drama", "Horror"],
     order: "release",
-    description: "Joss Whedon's teenage vampire slayer, Buffy Summers, in a town built on a Hellmouth. Angel follows her vampire ex to Los Angeles; the 1992 film is an earlier, campier take.",
+    description: "Joss Whedon's teenage vampire slayer, Buffy Summers, in a town built on a Hellmouth. Angel follows her vampire ex, David Boreanaz's Angel, to Los Angeles.",
     entries: [
-      ["buffy-1992"], ["buffy"], ["angel"],
+      ["buffy"], ["angel"],
     ],
   },
   {
@@ -5796,9 +5840,9 @@ export const collections = [
     name: "Money Heist",
     genres: ["Crime", "Thriller", "Drama"],
     order: "release",
-    description: "The Professor and his crew of robbers named after cities, pulling off audacious heists in Spain. Berlin goes back to one of them in his prime, and Korea remakes the story on the Korean peninsula.",
+    description: "The Professor and his crew of robbers named after cities, pulling off audacious heists in Spain. Berlin goes back to one of them, Pedro Alonso's Berlin, in his prime.",
     entries: [
-      ["money-heist"], ["money-heist-korea"], ["berlin"],
+      ["money-heist"], ["berlin"],
     ],
   },
   {
@@ -5868,28 +5912,31 @@ export const collections = [
     name: "Westworld",
     genres: ["Sci-Fi", "Western", "Drama"],
     order: "release",
-    description: "A theme park where guests live out fantasies among lifelike android hosts, until the hosts rebel. Michael Crichton's 1973 film led to Futureworld and a short-lived series before HBO's reimagining.",
+    franchise: { extra: [["westworld-hbo"]], description: "Every Westworld title: Michael Crichton's 1973 film, Futureworld, Beyond Westworld, and HBO's reimagining, where the hosts become aware." },
+    description: "Michael Crichton's 1973 theme park where guests live out fantasies among lifelike android hosts, until the hosts malfunction. Futureworld and the short-lived Beyond Westworld follow the Delos corporation's next schemes.",
     entries: [
-      ["westworld-1973"], ["futureworld"], ["beyond-westworld"], ["westworld-hbo"],
+      ["westworld-1973"], ["futureworld"], ["beyond-westworld"],
     ],
   },
   {
     name: "Hannibal Lecter",
     genres: ["Crime", "Thriller", "Horror"],
     order: "release",
-    description: "Thomas Harris' cannibal psychiatrist and the investigators who need him. Brian Cox plays him first in Manhunter, Anthony Hopkins in three films, Gaspard Ulliel as a young man and Mads Mikkelsen in the series. Clarice follows Agent Starling after The Silence of the Lambs.",
+    franchise: { extra: [["manhunter"], ["hannibal-series"]], description: "Every adaptation of Thomas Harris' Hannibal Lecter: Brian Cox in Manhunter, Anthony Hopkins' three films, Hannibal Rising, Mads Mikkelsen in the series Hannibal, and Clarice." },
+    description: "Thomas Harris' cannibal psychiatrist and the investigators who need him. Anthony Hopkins plays him in three films, Gaspard Ulliel shows his youth in Hannibal Rising, and Clarice follows Agent Starling a year after The Silence of the Lambs.",
     entries: [
-      ["manhunter"], ["silence-of-the-lambs"], ["hannibal-2001"], ["red-dragon"], ["hannibal-rising"],
-      ["hannibal-series"], ["clarice"],
+      ["silence-of-the-lambs"], ["hannibal-2001"], ["red-dragon"], ["hannibal-rising"],
+      ["clarice"],
     ],
   },
   {
     name: "Psycho",
     genres: ["Horror", "Thriller", "Mystery"],
     order: "release",
-    description: "Norman Bates and the Bates Motel, from Alfred Hitchcock's 1960 masterpiece through its sequels. Bates Motel reimagines Norman's teenage years with his mother in the present day.",
+    franchise: { extra: [["bates-motel"]], description: "Every Psycho title: Alfred Hitchcock's 1960 original, its three sequels with Anthony Perkins, and Bates Motel, which reimagines Norman's teenage years in the present day." },
+    description: "Norman Bates and the Bates Motel, from Alfred Hitchcock's 1960 masterpiece through three sequels, Anthony Perkins playing Norman in every one.",
     entries: [
-      ["psycho"], ["psycho-2"], ["psycho-3"], ["psycho-4"], ["bates-motel"],
+      ["psycho"], ["psycho-2"], ["psycho-3"], ["psycho-4"],
     ],
   },
   {
@@ -5969,11 +6016,12 @@ export const collections = [
     name: "The Pink Panther",
     genres: ["Comedy", "Crime", "Mystery"],
     order: "release",
-    description: "Inspector Jacques Clouseau, the bumbling French detective forever hunting the Pink Panther diamond, played by Peter Sellers in Blake Edwards' films. Alan Arkin, Roberto Benigni's son of Clouseau and Steve Martin each had a turn.",
+    franchise: { extra: [["pink-panther-2006"], ["pink-panther-2"]], description: "Every Pink Panther film, from Peter Sellers' Clouseau to Steve Martin's two remakes." },
+    description: "Inspector Jacques Clouseau, the bumbling French detective forever hunting the Pink Panther diamond, played by Peter Sellers in Blake Edwards' films. Alan Arkin and Roberto Benigni's son of Clouseau each had a turn.",
     entries: [
       ["pink-panther-1963"], ["shot-in-the-dark"], ["inspector-clouseau"], ["return-of-the-pink-panther"],
       ["pink-panther-strikes-again"], ["revenge-of-the-pink-panther"], ["trail-of-the-pink-panther"],
-      ["curse-of-the-pink-panther"], ["son-of-the-pink-panther"], ["pink-panther-2006"], ["pink-panther-2"],
+      ["curse-of-the-pink-panther"], ["son-of-the-pink-panther"],
     ],
   },
   {
@@ -6172,10 +6220,11 @@ export const collections = [
     name: "Fullmetal Alchemist",
     genres: ["Anime", "Fantasy", "Action", "Adventure"],
     order: "release",
-    description: "Brothers Edward and Alphonse Elric searching for the Philosopher's Stone after an alchemy experiment costs them their bodies. The 2003 series goes its own way and ends in Conqueror of Shamballa; Brotherhood retells Hiromu Arakawa's manga faithfully, and the live-action films adapt it again.",
+    franchise: { extra: [["fma-live-action"], ["fma-revenge-of-scar"], ["fma-final-alchemy"]], description: "Every Fullmetal Alchemist series and film: the 2003 series and Conqueror of Shamballa, Brotherhood and The Sacred Star of Milos, and the live-action trilogy." },
+    description: "Brothers Edward and Alphonse Elric searching for the Philosopher's Stone after an alchemy experiment costs them their bodies. The 2003 series goes its own way and ends in Conqueror of Shamballa; Brotherhood retells Hiromu Arakawa's manga faithfully with the same voice cast.",
     entries: [
-      ["fma"], ["conqueror-of-shamballa"], ["fma-brotherhood"], ["sacred-star"], ["fma-live-action"],
-      ["fma-revenge-of-scar"], ["fma-final-alchemy"],
+      ["fma"], ["conqueror-of-shamballa"], ["fma-brotherhood"], ["sacred-star"],
+
     ],
   },
   {
@@ -6237,19 +6286,21 @@ export const collections = [
     name: "One Piece",
     genres: ["Anime", "Adventure", "Action", "Comedy"],
     order: "release",
-    description: "Monkey D. Luffy, a rubber-bodied pirate, and his Straw Hat crew searching for the legendary One Piece treasure. Alongside the 1999 series run films like Strong World and Film: Red, and Netflix's live-action retelling.",
+    franchise: { extra: [["one-piece-live-action"]], description: "Every One Piece series and film: the 1999 anime, its films from Strong World to Film: Red, and Netflix's live-action retelling." },
+    description: "Monkey D. Luffy, a rubber-bodied pirate, and his Straw Hat crew searching for the legendary One Piece treasure. Alongside the 1999 series run films like Strong World and Film: Red, with the same voice cast.",
     entries: [
       ["one-piece"], ["strong-world"], ["one-piece-z"], ["one-piece-gold"], ["stampede"], ["film-red"],
-      ["one-piece-live-action"],
+
     ],
   },
   {
     name: "Hunter x Hunter",
     genres: ["Anime", "Adventure", "Action", "Fantasy"],
     order: "release",
-    description: "Gon Freecss, a boy who sets out to become a Hunter and find the father who left to be one. The 1999 series and the 2011 series both adapt Yoshihiro Togashi's manga, the second going much further.",
+    franchise: { extra: [["hxh-1999"]], description: "Every Hunter x Hunter series and film: Nippon Animation's 1999 series and Madhouse's 2011 series, each adapting Yoshihiro Togashi's manga, and the two films." },
+    description: "Gon Freecss, a boy who sets out to become a Hunter and find the father who left to be one. Madhouse's 2011 series adapts Yoshihiro Togashi's manga up to the Election arc, and two films are set alongside it.",
     entries: [
-      ["hxh-1999"], ["hxh-2011"], ["hxh-phantom-rouge"], ["hxh-last-mission"],
+      ["hxh-2011"], ["hxh-phantom-rouge"], ["hxh-last-mission"],
     ],
   },
   {
@@ -6274,18 +6325,19 @@ export const collections = [
     name: "Cowboy Bebop",
     genres: ["Anime", "Sci-Fi", "Action", "Crime"],
     order: "release",
-    description: "Spike Spiegel and his crew of bounty hunters drifting through the solar system in 2071. Shinichirō Watanabe's series and film are anime landmarks, and Netflix made a live-action version.",
+    description: "Spike Spiegel and his crew of bounty hunters drifting through the solar system in 2071. Shinichirō Watanabe's series and its film, set between episodes, are anime landmarks.",
     entries: [
-      ["cowboy-bebop"], ["cowboy-bebop-movie"], ["cowboy-bebop-netflix"],
+      ["cowboy-bebop"], ["cowboy-bebop-movie"],
     ],
   },
   {
     name: "Ghost in the Shell",
     genres: ["Anime", "Sci-Fi", "Action", "Crime"],
     order: "release",
-    description: "Major Motoko Kusanagi and Public Security Section 9, fighting cybercrime in a future where minds can be hacked. Mamoru Oshii's films, Stand Alone Complex, Arise and SAC_2045 each retell Masamune Shirow's manga, as does the 2017 live-action film.",
+    franchise: { extra: [["gits-arise"], ["gits-2017"]], description: "Every Ghost in the Shell film and series: Mamoru Oshii's films, Stand Alone Complex, Arise, SAC_2045 and the 2017 live-action film." },
+    description: "Major Motoko Kusanagi and Public Security Section 9, fighting cybercrime in a future where minds can be hacked, with Atsuko Tanaka voicing the Major throughout. Mamoru Oshii's two films, Stand Alone Complex and SAC_2045 adapt Masamune Shirow's manga.",
     entries: [
-      ["gits-1995"], ["gits-sac"], ["gits-innocence"], ["gits-sss"], ["gits-arise"], ["gits-2017"], ["gits-2045"],
+      ["gits-1995"], ["gits-sac"], ["gits-innocence"], ["gits-sss"], ["gits-2045"],
     ],
   },
   {
@@ -6327,12 +6379,26 @@ export const collections = [
       ["cars"], ["cars-2"], ["cars-3"], ["wall-e"], ["a-bugs-life"], ["monsters-university"], ["monsters-inc"],
     ],
   },
-  // ---- Other ---------------------------------------------------------------
+  // ---- Lists: Franchise, Person, Studio and Other ---------------------------
+  {
+    name: "Marvel Cinematic Universe (Multiverse)",
+    genres: ["Superhero", "Action", "Adventure", "Sci-Fi"],
+    catalogs: ["franchise"],
+    description: "Every title tied to the Marvel Cinematic Universe, directly or through the multiverse: the films and series, the ABC, Hulu and Freeform shows, and the films whose actors returned in their roles. No Way Home brings in Sam Raimi's and Marc Webb's Spider-Man films, The Marvels and Deadpool & Wolverine bring in Fox's X-Men and the heroes of Blade, Daredevil, Elektra and Fantastic Four, and Venom and Morbius cross over with Spider-Man.",
+    entries: titlesOf([
+      ...mcu, ...marvelTelevision,
+      ["x-men"], ["x2"], ["x-men-last-stand"], ["x-men-origins-wolverine"], ["x-men-first-class"], ["the-wolverine"],
+      ["days-of-future-past"], ["deadpool"], ["x-men-apocalypse"], ["logan"], ["deadpool-2"], ["dark-phoenix"], ["new-mutants"],
+      ["spider-man-2002"], ["spider-man-2"], ["spider-man-3"], ["amazing-spider-man"], ["amazing-spider-man-2"],
+      ["venom"], ["venom-2"], ["venom-3"], ["morbius"], ["into-the-spider-verse"], ["across-the-spider-verse"],
+      ["blade-1998"], ["blade-2"], ["blade-trinity"], ["daredevil-2003"], ["elektra"],
+      ["fantastic-four-2005"], ["rise-of-the-silver-surfer"],
+    ]),
+  },
   {
     name: "Every Marvel Series",
     genres: ["Superhero", "Animation", "Action"],
-    // The Marvel Super Heroes has no poster, and the collection's poster is its first title's.
-    first: ["spider-man-1967"],
+    catalogs: ["franchise", "studio"],
     description: "Every Marvel series across all of its universes: the MCU, the Netflix and ABC shows, Fox's X-Men series, and six decades of animation from the 1966 Marvel Super Heroes to X-Men '97. They don't share one story, so they're listed by premiere rather than as a watch order.",
     entries: [
       ...showsOnly(mcu), ...marvelTelevision,
@@ -6349,6 +6415,7 @@ export const collections = [
   {
     name: "Every DC Series",
     genres: ["Superhero", "Animation", "Action"],
+    catalogs: ["franchise", "studio"],
     description: "Every DC series, from 1952's Adventures of Superman and the 1966 Batman to the new DC Universe. Smallville, the Arrowverse, the DC Animated Universe, Gotham, Titans and the rest each tell their own version of the DC heroes, so they're listed by premiere rather than as a watch order.",
     entries: [
       ...arrowverse, ...showsOnly(dcau),
@@ -6364,6 +6431,7 @@ export const collections = [
   {
     name: "Every Spider-Man Movie",
     genres: ["Superhero", "Action"],
+    catalogs: ["franchise"],
     description: "Every Spider-Man film across his universes: Sam Raimi's trilogy with Tobey Maguire, Marc Webb's Amazing Spider-Man films with Andrew Garfield, Tom Holland's MCU films, and Miles Morales in the Spider-Verse.",
     entries: [
       ["spider-man-2002"], ["spider-man-2"], ["spider-man-3"], ["amazing-spider-man"], ["amazing-spider-man-2"], ["spider-man-homecoming"],
@@ -6373,6 +6441,7 @@ export const collections = [
   {
     name: "Every Batman Movie",
     genres: ["Superhero", "Action", "Crime"],
+    catalogs: ["franchise"],
     description: "Every Batman film since Adam West's in 1966: Tim Burton's and Joel Schumacher's films, the DC Animated Universe's movies, Christopher Nolan's trilogy, Ben Affleck's DC Extended Universe Batman, The Lego Batman Movie and Matt Reeves's The Batman.",
     entries: [
       ["batman-1966"], ["batman-1989"], ["batman-returns"], ["mask-of-the-phantasm"], ["batman-forever"], ["batman-and-robin"],
@@ -6383,6 +6452,7 @@ export const collections = [
   {
     name: "James Bond",
     genres: ["Action", "Thriller", "Adventure"],
+    catalogs: ["franchise"],
     description: "Eon Productions' 007 films, from Sean Connery in Dr. No to Daniel Craig in No Time to Die. Each actor's era mostly stands alone, so they're listed by release rather than as one story.",
     entries: [
       ["dr-no"], ["from-russia"], ["goldfinger"], ["thunderball"], ["you-only-live-twice"], ["ohmss"], ["diamonds-are-forever"],
@@ -6394,12 +6464,14 @@ export const collections = [
   {
     name: "Knives Out",
     genres: ["Mystery", "Comedy", "Crime"],
+    catalogs: ["franchise"],
     description: "Rian Johnson's whodunits starring Daniel Craig as the Southern detective Benoit Blanc. Each film is a new, self-contained mystery with a new cast of suspects.",
     entries: [["knives-out"], ["glass-onion"], ["wake-up-dead-man"]],
   },
   {
     name: "Love Island",
     genres: ["Reality-TV", "Romance"],
+    catalogs: ["franchise"],
     description: "ITV's dating show, in which singles couple up in a villa and the public votes on who stays. Its UK original has been remade from Australia and the US to France, Germany, Sweden and South Africa, with All Stars and Games bringing back favourite islanders.",
     entries: [
       ["love-island-uk"], ["love-island-au"], ["love-island-us"], ["love-island-games"], ["love-island-all-stars"], ["love-island-beyond-the-villa"],
@@ -6413,6 +6485,7 @@ export const collections = [
   {
     name: "RuPaul's Drag Race",
     genres: ["Reality-TV"],
+    catalogs: ["franchise"],
     description: "RuPaul's search for the next drag superstar, which brought drag into the mainstream. Its US original is joined by All Stars returns, Untucked's backstage drama, and versions from the UK and Canada to Thailand, Spain, France, the Philippines and Brazil.",
     entries: [
       ["drag-race"], ["drag-race-untucked"], ["drag-race-all-stars"], ["drag-race-uk"], ["canadas-drag-race"], ["drag-race-down-under"],
@@ -6430,6 +6503,7 @@ export const collections = [
   {
     name: "The Real Housewives",
     genres: ["Reality-TV"],
+    catalogs: ["franchise"],
     description: "Bravo's franchise following wealthy women and their feuds, which began in Orange County in 2006 and spread across America and abroad, from Cheshire and Melbourne to Lagos and Dubai. Ultimate Girls Trip brings housewives from different cities together.",
     entries: [
       ["rh-oc"], ["rh-ny"], ["rh-atlanta"], ["rh-nj"], ["rh-bh"], ["rh-miami"], ["rh-potomac"], ["rh-dallas"], ["rh-slc"], ["rh-ugt"], ["rh-dubai"],
@@ -6444,24 +6518,28 @@ export const collections = [
   {
     name: "The Bachelor",
     genres: ["Reality-TV", "Romance"],
+    catalogs: ["franchise"],
     description: "ABC's dating franchise, in which one single picks a partner from a house full of suitors, handing out roses each week. The Bachelorette flips it, Bachelor in Paradise sends former contestants to a beach, and The Golden Bachelor brings it to older singles. Versions in the UK, Australia, Canada and beyond follow the same rose ceremonies.",
     entries: [["bachelor"], ["bachelorette"], ["bachelor-in-paradise"], ["golden-bachelor"], ["golden-bachelorette"], ["bachelor-france"], ["bachelor-de"], ["bachelor-france-2"], ["bachelor-uk-2003"], ["bachelorette-de"], ["bachelor-pad-us"], ["bachelorette-sverige"], ["bachelor-nl"], ["bachelor-china"], ["bachelor-canada"], ["bachelor-au"], ["bachelor-pad-nz"], ["bachelor-sweden"], ["bachelorette-switzerland"], ["bachelor-nz"], ["after-paradise"], ["bachelorette-au"], ["bachelorette-canada"], ["bachelor-japan"], ["bachelor-winter-games"], ["bachelor-in-paradise-au"], ["bachelor-in-paradise-de"], ["bachelor-uk-2019"], ["bachelor-south-africa"], ["bachelorette-nz"], ["bachelor-listen-to-your-heart"], ["bachelorette-nl"], ["bachelor-greece"], ["bachelorette-japan"], ["bachelor-in-paradise-canada"], ["bachelorette-estonia"], ["bachelorette-spain"], ["bachelor-bulgaria"], ["bachelor-in-paradise-sverige"], ["golden-bachelor-de"]],
   },
   {
     name: "Below Deck",
     genres: ["Reality-TV"],
+    catalogs: ["franchise"],
     description: "Bravo's look at the crews of luxury superyachts, serving demanding charter guests while living together below deck. Its spin-offs set sail in the Mediterranean, on a sailing yacht, Down Under and in Adventure's cold waters.",
     entries: [["below-deck"], ["below-deck-med"], ["below-deck-sailing"], ["below-deck-down-under"], ["below-deck-adventure"], ["below-deck-galley-talk"]],
   },
   {
     name: "MasterChef",
     genres: ["Reality-TV", "Game-Show"],
+    catalogs: ["franchise"],
     description: "The cooking competition in which home cooks battle through mystery boxes and pressure tests for the MasterChef title. It began in Britain in 1990, the US version is judged by Gordon Ramsay, Australia's runs nightly, and dozens of countries have their own, with Junior, Celebrity and Professionals editions.",
     entries: [["celebrity-masterchef"], ["masterchef-au"], ["masterchef-us"], ["masterchef-junior"], ["masterchef-uk-1990"], ["junior-masterchef-united-kingdom"], ["masterchef-uk"], ["masterchef-the-professionals"], ["celebrity-masterchef-australia"], ["masterchef-belgium"], ["masterchef-greece"], ["junior-masterchef-australia"], ["masterchef-france"], ["masterchef-israel"], ["junior-masterchef-united-kingdom-2010"], ["masterchef-new-zealand"], ["masterchef-india"], ["masterchef-ukraine"], ["junior-masterchef-pinoy-edition"], ["masterchef-portugal"], ["junior-masterchef-greece"], ["masterchef-indonesia"], ["masterchef-italia"], ["masterchef-finland"], ["masterchef-hrvatska-croatia"], ["masterchef-australia-all-stars"], ["masterchef-romania"], ["junior-masterchef-finland"], ["masterchef-china"], ["masterchef-pinoy-edition"], ["masterchef-south-africa"], ["masterchef-poland"], ["masterchef-australia-the-professionals"], ["masterchef-spain"], ["masterchef-romania-proba-celebritatii"], ["celebrity-masterchef-ireland"], ["masterchef-junior-spain"], ["masterchef-canada"], ["masterchef-argentina"], ["masterchef-brazil"], ["masterchef-hungary"], ["masterchef-chile"], ["masterchef-cesko"], ["masterchef-denmark"], ["masterchef-junior-argentina"], ["masterchef-mexico"], ["masterchef-colombia"], ["masterchef-junior-brazil"], ["masterchef-asia"], ["junior-masterchef-chile"], ["masterchef-junior-poland"], ["masterchef-junior-portugal"], ["masterchef-junior-mexico"], ["masterchef-deutschland"], ["masterchef-celebrity-spain"], ["masterchef-profissionais"], ["masterchef-thailand"], ["masterchef-all-stars-italia"], ["masterchef-celebrity-colombia"], ["masterchef-latino"], ["masterchef-turkey"], ["masterchef-junior-republica-dominicana"], ["masterchef-celebrity-republica-dominicana"], ["masterchef-celebrity-germany"], ["masterchef-celebrity-argentina"], ["masterchef-celebrity-chile"], ["masterchef-celebrity-uruguay"], ["masterchef-norge"], ["masterchef-legends"], ["masterchef-junior-turkey"], ["masterchef-telugu"], ["masterchef-celebrity-mexico"], ["masterchef-hrvatska-croatia-2021"], ["masterchef-tamil"], ["masterchef-celebrity-argentina-la-revancha"], ["masterchef-estonia"], ["masterchef-brazil-dessert-masters"], ["celebrity-masterchef-india"], ["masterchef-celebridades"], ["masterchef-junior-quebec"]],
   },
   {
     name: "Every Gordon Ramsay Series",
     genres: ["Reality-TV", "Game-Show"],
+    catalogs: ["person"],
     description: "Every series fronted by the British chef Gordon Ramsay, from Hell's Kitchen and Kitchen Nightmares to MasterChef and Next Level Chef. Kitchens get rescued, cooks get tested, and Uncharted takes him around the world.",
     entries: [
       ["hells-kitchen-uk"], ["ramsays-kitchen-nightmares"], ["hells-kitchen-us"], ["the-f-word"], ["kitchen-nightmares"], ["masterchef-us"],
@@ -6471,36 +6549,42 @@ export const collections = [
   {
     name: "Top Chef",
     genres: ["Reality-TV", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Bravo's competition for professional chefs, judged by Tom Colicchio and Padma Lakshmi. Masters, Just Desserts and Junior bring in celebrated chefs, pastry chefs and young cooks, and versions from Canada to France have their own.",
     entries: [["top-chef"], ["top-chef-masters"], ["top-chef-just-desserts"], ["top-chef-junior"], ["top-chef-greece"], ["top-chef-2"], ["top-chef-canada"], ["top-chef-suomi"], ["top-chef-life-after"], ["top-chef-france"], ["top-chef-espana"], ["top-chef-chile"], ["objectif-top-chef"], ["top-chef-duels"], ["top-chef-estrellas"], ["top-chef-middle-east"], ["top-chef-mexico"], ["top-chef-brasil"], ["top-chef-amateurs"], ["top-chef-family-style"], ["top-chef-vip-us"], ["top-chef-france-chef-des-chefs"], ["top-chef-vip-chile"], ["top-chef-dulces-y-famosos"]],
   },
   {
     name: "Survivor",
     genres: ["Reality-TV", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Castaways marooned in remote locations who vote each other out until one Sole Survivor remains. It began as Sweden's Expedition Robinson in 1997; the US Survivor with Jeff Probst has run since 2000, and versions from Australia to South Africa, Québec and Turkey follow.",
     entries: [["survivor"], ["australian-survivor"], ["expedition-robinson-sweden"], ["expedition-robinson-denmark"], ["expedition-robinson-norway"], ["expedition-robinson-nl-be"], ["expedition-robinson-de-at"], ["survivor-expedicion-robinson-argentina"], ["expedition-robinson-baltic"], ["survivor-portugal"], ["survivor-au-2002"], ["survivor-a-sziget"], ["survivor-turkey-main"], ["survivor-greece-2003"], ["robinson-vip"], ["survivor-turkiye"], ["survivor-celebrity-au"], ["survivor-bulgaria"], ["expedition-robinson-titans-nl"], ["survivor-south-africa"], ["survivor-israel"], ["survivor-philippines"], ["survivor-turkey-all-star-2015"], ["survivor-nz"], ["survivor-greece-2017"], ["survivor-turkey-2017"], ["expedition-robinson-belgium"], ["survivor-turkey-2018"], ["survivor-germany"], ["survivor-turkey-greece"], ["survivor-turkey-2020"], ["expedition-robinson-nl-vs-be"], ["survivor-mexico"], ["survivor-romania"], ["survivor-turkey-exxen-cup"], ["survivor-india-tamil"], ["survivor-turkey-all-star-2022"], ["survivor-cesko-slovensko"], ["survivor-dominikanska-republika"], ["survivor-croatia"], ["expedition-robinson-all-stars-nl"], ["survivor-uk"], ["survivor-turkey-all-star-2023"], ["survivor-quebec"], ["survivor-turkey-all-star-2024"], ["survivor-turkey-2025"], ["survivor-turkey-2026"]],
   },
   {
     name: "Big Brother",
     genres: ["Reality-TV", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Houseguests living together under constant surveillance, evicting each other week by week. It began in the Netherlands in 1999 and became a worldwide phenomenon, from the US and UK to Brazil's Big Brother Brasil and India's Bigg Boss.",
     entries: [["big-brother-us"], ["celebrity-big-brother-us"], ["big-brother-nl-1999"], ["big-brother-germany"], ["big-brother-uk"], ["grande-fratello"], ["big-brother-belgium"], ["gran-hermano-spain"], ["big-brother-sweden"], ["big-brother-portugal-2000"], ["big-brother-schweiz"], ["celebrity-big-brother-uk"], ["big-brother-denmark"], ["big-brother-switzerland"], ["gran-hermano-argentina"], ["loft-story-france"], ["big-brother-au"], ["big-brother-little-brother"], ["big-brother-greece-2001"], ["big-brother-south-africa-2001"], ["big-brother-poland"], ["big-brother-brazil"], ["big-brother-mexico"], ["big-brother-vip-mexico"], ["big-brother-hungary"], ["gran-hermano-colombia"], ["big-brother-africa"], ["gran-hermano-vip-spain"], ["big-brother-big-mouth"], ["big-brother-croatia"], ["big-brother-bulgaria"], ["pinoy-big-brother"], ["big-brother-finland"], ["big-brother-czech-republic"], ["celebrity-big-brother-big-mouth"], ["pinoy-big-brother-celebrity"], ["big-brother-naija"], ["pinoy-big-brother-teen"], ["big-brother-serbia"], ["gran-hermano-famosos-argentina"], ["big-brother-albania"], ["big-brother-israel"], ["big-brother-vip-israel"], ["big-brother-canada"], ["gran-hermano-reencuentro"], ["big-brother-bit-on-the-side"], ["big-brother-ukraine"], ["celebrity-big-brother-bit-on-the-side"], ["big-brother-canada-2013"], ["big-brother-vip-portugal"], ["big-brother-bit-on-the-psych"], ["promi-big-brother"], ["big-brother-south-africa-2015"], ["big-brother-china"], ["grande-fratello-vip"], ["big-brother-over-the-top"], ["gran-hermano-us"], ["gran-hermano-duo"], ["big-brother-portugal-2020"], ["big-brother-greece-2020"], ["big-brother-nl-be-2021"], ["big-brother-celebrites-canada"], ["big-brother-vip-au"], ["big-brother-albania-vip"], ["gran-hermano-chile"], ["big-brother-late-and-live"], ["big-brother-reindeer-games"], ["big-brother-cesko-and-slovensko"], ["big-brother-knossi-edition"], ["big-brother-uk-2023"], ["celebrity-big-brother-late-and-live"], ["big-brother-unlocked"], ["big-brother-verao-portugal"], ["big-brother-le-piege-canada"], ["big-brother-all-stars-portugal"], ["big-brother-group-chat"], ["bigg-boss-hindi"], ["bigg-boss-bangla"], ["bigg-boss-kannada"], ["bigg-boss-tamil"], ["bigg-boss-telugu"], ["bigg-boss-malayalam"], ["bigg-boss-marathi"], ["bigg-boss-jodigal"], ["bigg-boss-ott"], ["bigg-boss-ultimate"], ["bigg-boss-malayalam-agnipareeksha"]],
   },
   {
     name: "Jeopardy!",
     genres: ["Game-Show"],
+    catalogs: ["franchise"],
     description: "The quiz show in which contestants are given the answers and must phrase their responses as questions, on the air since 1984 in its current form. Celebrity, Masters and Pop Culture editions bring in famous faces, past champions and pop-culture categories.",
     entries: [["jeopardy"], ["celebrity-jeopardy"], ["jeopardy-masters"], ["pop-culture-jeopardy"]],
   },
   {
     name: "The Tonight Show",
     genres: ["Talk-Show", "Comedy"],
+    catalogs: ["franchise"],
     description: "NBC's late-night institution, the longest-running talk show in the world. Each host made it their own, from Steve Allen and Jack Paar to Johnny Carson's thirty years, Jay Leno, Conan O'Brien and Jimmy Fallon.",
     entries: [["tonight-carson"], ["tonight-leno"], ["tonight-conan"], ["tonight-fallon"], ["tonight-starring-steve-allen"], ["tonight-starring-jack-paar"]],
   },
   {
     name: "Planet Earth",
     genres: ["Documentary"],
+    catalogs: ["franchise"],
     description: "The BBC Natural History Unit's landmark Planet series, narrated by David Attenborough, which set new standards for filming the natural world. Planet Earth and Blue Planet are joined by Frozen Planet, Seven Worlds, One Planet and The Green Planet.",
     entries: [
       ["blue-planet"], ["planet-earth"], ["frozen-planet"], ["planet-earth-2"], ["blue-planet-2"], ["seven-worlds"], ["green-planet"],
@@ -6510,6 +6594,7 @@ export const collections = [
   {
     name: "Every David Attenborough Movie and Series",
     genres: ["Documentary"],
+    catalogs: ["person"],
     description: "Every natural history series and film presented or narrated by Sir David Attenborough, from Life on Earth in 1979 to Ocean in 2025. Together they span almost five decades of filming life on Earth, and his own witness statement in A Life on Our Planet.",
     entries: [
       ["life-on-earth"], ["the-living-planet"], ["trials-of-life"], ["life-of-birds"], ["blue-planet"], ["life-of-mammals"],
@@ -6521,6 +6606,7 @@ export const collections = [
   {
     name: "Every Pixar Movie",
     genres: ["Animation", "Family", "Comedy"],
+    catalogs: ["studio"],
     description: "Every feature from Pixar Animation Studios, which made the first computer-animated film with Toy Story in 1995. Its original stories sit alongside sequels to Toy Story, Cars, The Incredibles and Inside Out.",
     entries: [
       ...toyStory, ["a-bugs-life"], ["monsters-inc"], ["finding-nemo"], ["the-incredibles"], ["cars"], ["ratatouille"], ["wall-e"], ["up"],
@@ -6531,6 +6617,7 @@ export const collections = [
   {
     name: "Every Studio Ghibli Movie",
     genres: ["Anime", "Animation", "Fantasy", "Family"],
+    catalogs: ["studio"],
     description: "Every feature from Studio Ghibli, the Japanese studio founded by Hayao Miyazaki and Isao Takahata, plus Nausicaä, the film that led to its founding. Spirited Away won the Oscar, and The Boy and the Heron won a second.",
     entries: [
       ["nausicaa"], ["castle-in-the-sky"], ["totoro"], ["grave-of-the-fireflies"], ["kikis-delivery"], ["only-yesterday"], ["porco-rosso"],
@@ -6542,6 +6629,7 @@ export const collections = [
   {
     name: "Pokémon",
     genres: ["Anime", "Animation", "Family", "Adventure"],
+    catalogs: ["franchise"],
     description: "The Pokémon anime, which followed Ash Ketchum and Pikachu for 25 years before Horizons handed over to new heroes. Its shorter series retell the games' stories and explore their regions.",
     entries: [
       ["pokemon"], ["pokemon-origins"], ["pokemon-generations"], ["twilight-wings"], ["pokemon-evolutions"], ["pokemon-horizons"],
@@ -6551,18 +6639,21 @@ export const collections = [
   {
     name: "The Office",
     genres: ["Comedy"],
+    catalogs: ["franchise"],
     description: "Ricky Gervais and Stephen Merchant's mockumentary about a cringe-inducing boss and his long-suffering employees. The US remake with Steve Carell ran for nine seasons, and Australia made its own in 2024.",
     entries: [["the-office-uk"], ["the-office-us"], ["the-office-au"]],
   },
   {
     name: "Shameless",
     genres: ["Comedy", "Drama"],
+    catalogs: ["franchise"],
     description: "The chaotic Gallagher family, held together by the eldest children while their father drinks. Paul Abbott's Manchester original was remade in Chicago with William H. Macy.",
     entries: [["shameless-uk"], ["shameless-us"]],
   },
   {
     name: "The Muppets",
     genres: ["Family", "Comedy", "Musical"],
+    catalogs: ["franchise"],
     description: "Jim Henson's Kermit the Frog, Miss Piggy and friends, from The Muppet Show's variety stage to their films and the shows that followed. Muppet Babies reimagines them as toddlers.",
     entries: [
       ["muppet-show"], ["muppet-movie"], ["great-muppet-caper"], ["muppets-take-manhattan"], ["muppet-babies"], ["muppet-christmas-carol"],
@@ -6573,12 +6664,14 @@ export const collections = [
   {
     name: "HBO's World War II Trilogy",
     genres: ["War", "History", "Drama"],
+    catalogs: ["other"],
     description: "Tom Hanks and Steven Spielberg's World War II miniseries for HBO. Band of Brothers follows Easy Company across Europe, The Pacific follows three Marines, and Masters of the Air follows the bomber crews of the 100th Bomb Group.",
     entries: [["band-of-brothers"], ["the-pacific"], ["masters-of-the-air"]],
   },
   {
     name: "Every High School Musical Movie and Series",
     genres: ["Musical", "Family", "Comedy"],
+    catalogs: ["franchise"],
     description: "Every High School Musical title: the Disney Channel trilogy, Sharpay's spin-off, and High School Musical: The Musical: The Series, a meta mockumentary about East High students staging the original as their school musical.",
     entries: [
       ["hsm"], ["hsm-2"], ["hsm-3"], ["sharpay"], ["hsmtmts"],
@@ -6587,6 +6680,7 @@ export const collections = [
   {
     name: "Every Superman Movie",
     genres: ["Superhero", "Action", "Adventure"],
+    catalogs: ["franchise"],
     description: "Every Superman film, from the 1951 serial-era Superman and the Mole Men through Christopher Reeve, Brandon Routh and Henry Cavill to David Corenswet in James Gunn's Superman.",
     entries: [
       ["superman-mole-men"], ["superman-1978"], ["superman-2"], ["superman-3"], ["supergirl-1984"], ["superman-4"],
@@ -6597,6 +6691,7 @@ export const collections = [
   {
     name: "Every Marvel Movie",
     genres: ["Superhero", "Action", "Adventure"],
+    catalogs: ["franchise", "studio"],
     description: "Every live-action and theatrical animated Marvel film: the Marvel Cinematic Universe, Fox's X-Men and Fantastic Four, Sony's Spider-Man films, and earlier efforts from Howard the Duck to Blade and Ghost Rider.",
     entries: [
       ["howard-the-duck"], ["punisher-1989"], ["captain-america-1990"], ["blade-1998"], ["x-men"], ["blade-2"],
@@ -6619,6 +6714,7 @@ export const collections = [
   {
     name: "Every DC Movie",
     genres: ["Superhero", "Action", "Adventure"],
+    catalogs: ["franchise", "studio"],
     description: "Every live-action and theatrical animated DC film, from 1951's Superman and the Mole Men and the 1966 Batman through Superman, Batman and the DC Extended Universe to James Gunn's DC Universe.",
     entries: [
       ["superman-mole-men"], ["batman-1966"], ["superman-1978"], ["superman-2"], ["swamp-thing-1982"], ["superman-3"],
@@ -6635,6 +6731,7 @@ export const collections = [
   {
     name: "Every Transformers Movie",
     genres: ["Sci-Fi", "Action", "Adventure"],
+    catalogs: ["franchise"],
     description: "Every Transformers film, from the 1986 animated movie through Michael Bay's live-action series to Bumblebee, Rise of the Beasts and the animated origin story Transformers One.",
     entries: [
       ["transformers-1986"], ["transformers-2007"], ["transformers-rotf"], ["transformers-dotm"],
@@ -6644,6 +6741,7 @@ export const collections = [
   {
     name: "Teenage Mutant Ninja Turtles",
     genres: ["Action", "Comedy", "Animation", "Family"],
+    catalogs: ["franchise"],
     description: "Leonardo, Donatello, Raphael and Michelangelo, four turtles trained in ninjutsu by their rat sensei in New York's sewers. Every animated series and film from the 1987 cartoon to Mutant Mayhem, each its own take on the heroes in a half shell.",
     entries: [
       ["tmnt-1987"], ["tmnt-1990"], ["tmnt-2-1991"], ["tmnt-3"], ["tmnt-next-mutation"], ["tmnt-2003"], ["tmnt-2007"],
@@ -6654,6 +6752,7 @@ export const collections = [
   {
     name: "Every DreamWorks Animation Movie",
     genres: ["Animation", "Family", "Comedy"],
+    catalogs: ["studio"],
     description: "Every feature from DreamWorks Animation, the studio behind Shrek, Kung Fu Panda and How to Train Your Dragon. It began in 1998 with Antz and The Prince of Egypt and made its name with irreverent, pop-culture-savvy comedy.",
     entries: [
       ["antz"], ["prince-of-egypt"], ["road-to-el-dorado"], ["chicken-run"], ["shrek"], ["spirit"], ["sinbad"],
@@ -6669,6 +6768,7 @@ export const collections = [
   {
     name: "Every Walt Disney Animation Studios Movie",
     genres: ["Animation", "Family", "Musical", "Fantasy"],
+    catalogs: ["studio"],
     description: "Every feature in the Walt Disney Animation Studios canon, from Snow White and the Seven Dwarfs in 1937, the first full-length cel-animated film, through the renaissance of The Little Mermaid and The Lion King to Frozen and Zootopia.",
     entries: [
       ["snow-white-1937"], ["pinocchio-1940"], ["fantasia"], ["dumbo"], ["bambi"], ["saludos-amigos"],
@@ -6688,6 +6788,7 @@ export const collections = [
   {
     name: "Every Illumination Movie",
     genres: ["Animation", "Family", "Comedy"],
+    catalogs: ["studio"],
     description: "Every feature from Illumination, Chris Meledandri's studio behind the Minions, which grew from Despicable Me in 2010 into one of the biggest names in animation.",
     entries: [
       ["despicable-me"], ["hop"], ["the-lorax"], ["despicable-me-2"], ["minions"], ["secret-life-of-pets"], ["sing"],
@@ -6698,6 +6799,7 @@ export const collections = [
   {
     name: "Every Sony Pictures Animation Movie",
     genres: ["Animation", "Family", "Comedy"],
+    catalogs: ["studio"],
     description: "Every feature from Sony Pictures Animation, from Open Season and Cloudy with a Chance of Meatballs to the Spider-Verse films and KPop Demon Hunters.",
     entries: [
       ["open-season"], ["surfs-up"], ["cloudy"], ["arthur-christmas"], ["the-smurfs"], ["pirates-band-of-misfits"],
@@ -6709,6 +6811,7 @@ export const collections = [
   {
     name: "Every Laika Movie",
     genres: ["Animation", "Fantasy", "Family"],
+    catalogs: ["studio"],
     description: "Every stop-motion feature from Laika, the Oregon studio known for handmade, often eerie fairy tales, beginning with Coraline in 2009.",
     entries: [
       ["coraline"], ["paranorman"], ["boxtrolls"], ["kubo"], ["missing-link"], ["wildwood"],
@@ -6717,6 +6820,7 @@ export const collections = [
   {
     name: "Every Aardman Movie",
     genres: ["Animation", "Family", "Comedy"],
+    catalogs: ["studio"],
     description: "Every feature from Aardman, the Bristol studio behind Wallace & Gromit, Shaun the Sheep and Chicken Run, famous for its thumbprinted clay animation and very British humour.",
     entries: [
       ["chicken-run"], ["were-rabbit"], ["flushed-away"], ["arthur-christmas"], ["pirates-band-of-misfits"],
@@ -6726,6 +6830,7 @@ export const collections = [
   {
     name: "Every Blue Sky Movie",
     genres: ["Animation", "Family", "Comedy"],
+    catalogs: ["studio"],
     description: "Every feature from Blue Sky Studios, the Ice Age studio, from 2002 until Disney closed it in 2021.",
     entries: [
       ["ice-age"], ["robots"], ["ice-age-2"], ["horton"], ["ice-age-3"], ["rio"], ["ice-age-4"], ["epic"], ["rio-2"],
@@ -6735,6 +6840,7 @@ export const collections = [
   {
     name: "Every Quentin Tarantino Movie",
     genres: ["Crime", "Drama", "Action"],
+    catalogs: ["person"],
     description: "Every film Quentin Tarantino has directed, from Reservoir Dogs to Once Upon a Time in Hollywood: pop-culture-soaked dialogue, chapters out of order and sudden bursts of violence.",
     entries: [
       ["reservoir-dogs"], ["pulp-fiction"], ["jackie-brown"], ["kill-bill-1"], ["kill-bill-2"], ["death-proof"],
@@ -6744,6 +6850,7 @@ export const collections = [
   {
     name: "Every Christopher Nolan Movie",
     genres: ["Thriller", "Sci-Fi", "Drama"],
+    catalogs: ["person"],
     description: "Every film Christopher Nolan has directed, from the backwards-told Memento to The Dark Knight, Inception, the Oscar-winning Oppenheimer and his take on The Odyssey. His films bend time and favour practical effects shot on film.",
     entries: [
       ["following"], ["memento"], ["insomnia"], ["batman-begins"], ["the-prestige"], ["the-dark-knight"],
@@ -6754,6 +6861,7 @@ export const collections = [
   {
     name: "Every Stanley Kubrick Movie",
     genres: ["Drama", "Sci-Fi", "War"],
+    catalogs: ["person"],
     description: "Every feature Stanley Kubrick directed, from his low-budget noirs to 2001: A Space Odyssey, A Clockwork Orange, The Shining and Eyes Wide Shut, each in a different genre and each meticulous.",
     entries: [
       ["fear-and-desire"], ["killers-kiss"], ["the-killing"], ["paths-of-glory"], ["spartacus-1960"], ["lolita-1962"],
@@ -6764,6 +6872,7 @@ export const collections = [
   {
     name: "Every Wes Anderson Movie",
     genres: ["Comedy", "Drama"],
+    catalogs: ["person"],
     description: "Every feature Wes Anderson has directed, with their symmetrical frames, pastel palettes and deadpan ensembles, from Bottle Rocket to The Phoenician Scheme.",
     entries: [
       ["bottle-rocket"], ["rushmore"], ["royal-tenenbaums"], ["life-aquatic"], ["darjeeling-limited"],
@@ -6774,6 +6883,7 @@ export const collections = [
   {
     name: "Every Denis Villeneuve Movie",
     genres: ["Sci-Fi", "Thriller", "Drama"],
+    catalogs: ["person"],
     description: "Every feature Denis Villeneuve has directed, from his Québec dramas to Prisoners, Sicario, Arrival, Blade Runner 2049 and Dune.",
     entries: [
       ["incendies"], ["prisoners"], ["enemy"], ["sicario"], ["arrival"], ["blade-runner-2049"], ["dune"], ["dune-2"],
@@ -6782,6 +6892,7 @@ export const collections = [
   {
     name: "Every David Fincher Movie",
     genres: ["Thriller", "Crime", "Mystery"],
+    catalogs: ["person"],
     description: "Every feature David Fincher has directed, precise and dark, from Se7en and Fight Club to The Social Network and Gone Girl.",
     entries: [
       ["alien-3"], ["se7en"], ["the-game"], ["fight-club"], ["panic-room"], ["zodiac"], ["benjamin-button"],
@@ -6791,6 +6902,7 @@ export const collections = [
   {
     name: "Every Steven Spielberg Movie",
     genres: ["Adventure", "Drama", "Sci-Fi"],
+    catalogs: ["person"],
     description: "Every feature Steven Spielberg has directed, the most commercially successful director in history, from Jaws and E.T. to Schindler's List and Jurassic Park.",
     entries: [
       ["duel"], ["sugarland-express"], ["jaws"], ["close-encounters"], ["1941"], ["raiders"], ["et"],
@@ -6804,6 +6916,7 @@ export const collections = [
   {
     name: "Every Martin Scorsese Movie",
     genres: ["Crime", "Drama", "Biography"],
+    catalogs: ["person"],
     description: "Every narrative feature Martin Scorsese has directed, from Mean Streets and Taxi Driver to Goodfellas, The Departed and Killers of the Flower Moon.",
     entries: [
       ["mean-streets"], ["alice-doesnt-live-here"], ["taxi-driver"], ["new-york-new-york"], ["raging-bull"],
@@ -6816,6 +6929,7 @@ export const collections = [
   {
     name: "Every Jordan Peele Movie",
     genres: ["Horror", "Thriller", "Mystery"],
+    catalogs: ["person"],
     description: "Every feature Jordan Peele has directed: social horror that won him an Oscar for his first screenplay, Get Out.",
     entries: [
       ["get-out"], ["us"], ["nope"],
@@ -6824,6 +6938,7 @@ export const collections = [
   {
     name: "Every James Cameron Movie",
     genres: ["Sci-Fi", "Action", "Adventure"],
+    catalogs: ["person"],
     description: "Every feature James Cameron has directed, the filmmaker behind three of the highest-grossing films ever, from The Terminator and Aliens to Titanic and Avatar.",
     entries: [
       ["piranha-2"], ["terminator"], ["aliens"], ["the-abyss"], ["terminator-2"], ["true-lies"], ["titanic"],
@@ -6833,6 +6948,7 @@ export const collections = [
   {
     name: "Every Guillermo del Toro Movie",
     genres: ["Fantasy", "Horror", "Drama"],
+    catalogs: ["person"],
     description: "Every feature Guillermo del Toro has directed, a lifelong love of monsters running from Cronos and Pan's Labyrinth to the Oscar-winning The Shape of Water and Frankenstein.",
     entries: [
       ["cronos"], ["mimic"], ["devils-backbone"], ["blade-2"], ["hellboy-2004"], ["pans-labyrinth"], ["hellboy-2"],
@@ -6843,6 +6959,7 @@ export const collections = [
   {
     name: "Every Coen Brothers Movie",
     genres: ["Crime", "Comedy", "Drama"],
+    catalogs: ["person"],
     description: "Every film Joel and Ethan Coen directed together, from Blood Simple and Fargo to The Big Lebowski and No Country for Old Men, plus their later solo films.",
     entries: [
       ["blood-simple"], ["raising-arizona"], ["millers-crossing"], ["barton-fink"], ["hudsucker-proxy"],
@@ -6854,6 +6971,7 @@ export const collections = [
   {
     name: "Every Edgar Wright Movie",
     genres: ["Comedy", "Action"],
+    catalogs: ["person"],
     description: "Every feature Edgar Wright has directed, kinetic genre comedies cut to music, from Shaun of the Dead and Hot Fuzz to Baby Driver and The Running Man.",
     entries: [
       ["shaun-of-the-dead"], ["hot-fuzz"], ["scott-pilgrim"], ["worlds-end"], ["baby-driver"], ["last-night-in-soho"],
@@ -6863,6 +6981,7 @@ export const collections = [
   {
     name: "Three Flavours Cornetto",
     genres: ["Comedy", "Action", "Sci-Fi"],
+    catalogs: ["franchise"],
     description: "Edgar Wright, Simon Pegg and Nick Frost's three British genre comedies, each a different flavour of Cornetto ice cream: zombies, a cop thriller and an alien invasion at a pub crawl. They share cast and themes rather than a story.",
     entries: [
       ["shaun-of-the-dead"], ["hot-fuzz"], ["worlds-end"],
@@ -6871,6 +6990,7 @@ export const collections = [
   {
     name: "Every Tim Burton Movie",
     genres: ["Fantasy", "Comedy", "Horror"],
+    catalogs: ["person"],
     description: "Every feature Tim Burton has directed, gothic fairy tales full of misfits, from Beetlejuice and Edward Scissorhands to Batman and Beetlejuice Beetlejuice.",
     entries: [
       ["pee-wees-big-adventure"], ["beetlejuice"], ["batman-1989"], ["edward-scissorhands"], ["batman-returns"],
@@ -6882,6 +7002,7 @@ export const collections = [
   {
     name: "Every Ridley Scott Movie",
     genres: ["Sci-Fi", "Drama", "History"],
+    catalogs: ["person"],
     description: "Every feature Ridley Scott has directed, from Alien and Blade Runner to Thelma & Louise, Gladiator and The Martian, almost fifty years of epics.",
     entries: [
       ["the-duellists"], ["alien"], ["blade-runner"], ["legend"], ["someone-to-watch-over-me"], ["black-rain"],
@@ -6894,6 +7015,7 @@ export const collections = [
   {
     name: "Every Hayao Miyazaki Movie",
     genres: ["Anime", "Animation", "Fantasy", "Family"],
+    catalogs: ["person"],
     description: "Every feature Hayao Miyazaki has directed, from The Castle of Cagliostro to Spirited Away, which won the Oscar, and The Boy and the Heron, which won another.",
     entries: [
       ["castle-of-cagliostro"], ["nausicaa"], ["castle-in-the-sky"], ["totoro"], ["kikis-delivery"], ["porco-rosso"],
@@ -6904,6 +7026,7 @@ export const collections = [
   {
     name: "Every Makoto Shinkai Movie",
     genres: ["Anime", "Animation", "Romance", "Drama"],
+    catalogs: ["person"],
     description: "Every feature Makoto Shinkai has directed: luminous skies, lovers kept apart by time and distance, and Your Name, once the highest-grossing anime film ever.",
     entries: [
       ["place-promised"], ["5-centimeters"], ["children-who-chase"], ["garden-of-words"], ["your-name"],
@@ -6913,6 +7036,7 @@ export const collections = [
   {
     name: "Every Mamoru Hosoda Movie",
     genres: ["Anime", "Animation", "Fantasy", "Family"],
+    catalogs: ["person"],
     description: "Every feature Mamoru Hosoda has directed, family stories that cross into digital and magical worlds, from The Girl Who Leapt Through Time to Belle and Scarlet.",
     entries: [
       ["girl-who-leapt"], ["summer-wars"], ["wolf-children"], ["boy-and-the-beast"], ["mirai"], ["belle"],
@@ -6922,6 +7046,7 @@ export const collections = [
   {
     name: "Every Satoshi Kon Movie and Series",
     genres: ["Anime", "Animation", "Thriller", "Drama"],
+    catalogs: ["person"],
     description: "Everything Satoshi Kon directed before his death at 46: four films and a series that blur dreams, film and reality, and influenced filmmakers from Darren Aronofsky to Christopher Nolan.",
     entries: [
       ["perfect-blue"], ["millennium-actress"], ["tokyo-godfathers"], ["paranoia-agent"], ["paprika"],
@@ -6930,6 +7055,7 @@ export const collections = [
   {
     name: "Every Mike Flanagan Movie and Series",
     genres: ["Horror", "Drama", "Mystery"],
+    catalogs: ["person"],
     description: "Everything Mike Flanagan has directed, horror built on grief and family, from Oculus and Doctor Sleep to his Netflix series The Haunting of Hill House and Midnight Mass.",
     entries: [
       ["absentia"], ["oculus"], ["hush"], ["before-i-wake"], ["ouija-origin"], ["geralds-game"], ["hill-house"],
@@ -6940,6 +7066,7 @@ export const collections = [
   {
     name: "Every Ryan Murphy Series",
     genres: ["Drama", "Horror", "Crime"],
+    catalogs: ["person"],
     description: "Every series Ryan Murphy has created or co-created, from Nip/Tuck and Glee to the anthologies American Horror Story, American Crime Story and Monster, and the 9-1-1 franchise.",
     entries: [
       ["popular"], ["nip-tuck"], ["glee"], ["ahs"], ["the-new-normal"], ["scream-queens"], ["american-crime-story"],
@@ -6951,6 +7078,7 @@ export const collections = [
   {
     name: "Every Taylor Sheridan Series",
     genres: ["Drama", "Western", "Crime"],
+    catalogs: ["person"],
     description: "Every series Taylor Sheridan has created, from Yellowstone and its prequels to Mayor of Kingstown, Tulsa King, Lioness and Landman, gritty dramas about power on America's frontiers.",
     entries: [
       ["yellowstone"], ["1883"], ["mayor-of-kingstown"], ["tulsa-king"], ["1923"], ["lioness"], ["landman"],
@@ -6960,6 +7088,7 @@ export const collections = [
   {
     name: "Every Chuck Lorre Series",
     genres: ["Comedy"],
+    catalogs: ["person"],
     description: "Every sitcom Chuck Lorre has created or co-created, the most successful producer of multi-camera comedy, from Dharma & Greg and Two and a Half Men to The Big Bang Theory and Young Sheldon.",
     entries: [
       ["grace-under-fire"], ["cybill"], ["dharma-and-greg"], ["two-and-a-half-men"], ["big-bang-theory"],
@@ -6970,6 +7099,7 @@ export const collections = [
   {
     name: "Every Shonda Rhimes Series",
     genres: ["Drama", "Romance"],
+    catalogs: ["person"],
     description: "Every series from Shondaland, Shonda Rhimes' production company, from Grey's Anatomy and Scandal to How to Get Away with Murder and Bridgerton.",
     entries: [
       ["greys-anatomy"], ["private-practice"], ["off-the-map"], ["scandal"], ["how-to-get-away-with-murder"],
@@ -6980,6 +7110,7 @@ export const collections = [
   {
     name: "Every Michael Schur Series",
     genres: ["Comedy"],
+    catalogs: ["person"],
     description: "Every series Michael Schur has created or co-created, warm workplace comedies from Parks and Recreation and Brooklyn Nine-Nine to The Good Place and A Man on the Inside.",
     entries: [
       ["parks-and-rec"], ["brooklyn-99"], ["the-good-place"], ["rutherford-falls"], ["man-on-the-inside"],
@@ -6988,6 +7119,7 @@ export const collections = [
   {
     name: "Every David Simon Series",
     genres: ["Crime", "Drama"],
+    catalogs: ["person"],
     description: "Every series David Simon has created or co-created, novelistic portraits of American cities and institutions, from The Wire to The Deuce.",
     entries: [
       ["the-corner"], ["the-wire"], ["generation-kill"], ["treme"], ["show-me-a-hero"], ["the-deuce"],
@@ -6997,6 +7129,7 @@ export const collections = [
   {
     name: "Every Aaron Sorkin Series",
     genres: ["Drama", "Comedy"],
+    catalogs: ["person"],
     description: "Every series Aaron Sorkin has created, fast-talking, walk-and-talk dramas about people who believe in their work, from Sports Night to The West Wing and The Newsroom.",
     entries: [
       ["sports-night"], ["west-wing"], ["studio-60"], ["the-newsroom"],
@@ -7005,6 +7138,7 @@ export const collections = [
   {
     name: "Every Ken Burns Series",
     genres: ["Documentary", "History"],
+    catalogs: ["person"],
     description: "Every documentary series from Ken Burns, whose slow pans across archival photographs became a style of their own, from The Civil War to The American Revolution.",
     entries: [
       ["the-civil-war"], ["baseball"], ["jazz"], ["the-war"], ["national-parks"], ["prohibition"], ["dust-bowl"],
@@ -7015,6 +7149,7 @@ export const collections = [
   {
     name: "Cosmos",
     genres: ["Documentary", "Sci-Fi"],
+    catalogs: ["franchise"],
     description: "Carl Sagan's landmark 1980 series on the universe and our place in it, and its two sequels hosted by Neil deGrasse Tyson, A Spacetime Odyssey and Possible Worlds.",
     entries: [
       ["cosmos-1980"], ["cosmos-2014"], ["cosmos-2020"],
@@ -7023,6 +7158,7 @@ export const collections = [
   {
     name: "Scooby-Doo",
     genres: ["Animation", "Family", "Mystery", "Comedy"],
+    catalogs: ["franchise"],
     description: "Scooby-Doo, the cowardly Great Dane, and Mystery Inc., unmasking villains in every series since Where Are You! in 1969. Each takes the gang somewhere new, from Scrappy-Doo's arrival to the reboots What's New and Mystery Incorporated.",
     entries: [
       ["scooby-where-are-you"], ["new-scooby-doo-movies"], ["scooby-doo-show"], ["scooby-and-scrappy"], ["13-ghosts"],
@@ -7033,6 +7169,7 @@ export const collections = [
   {
     name: "Every Gundam Series",
     genres: ["Anime", "Sci-Fi", "Action", "War"],
+    catalogs: ["franchise"],
     description: "Every Mobile Suit Gundam TV series, Sunrise's war saga of giant robots, from the 1979 original and the Universal Century to its many separate universes. It reshaped anime by treating giant robots as weapons of war.",
     entries: [
       ["gundam-0079"], ["zeta-gundam"], ["gundam-zz"], ["victory-gundam"], ["g-gundam"], ["gundam-wing"],
@@ -7044,6 +7181,7 @@ export const collections = [
   {
     name: "Love Is Blind",
     genres: ["Reality-TV", "Romance"],
+    catalogs: ["franchise"],
     description: "Netflix's dating experiment where singles get engaged before ever seeing each other, talking only through a wall in the pods. It began in the US in 2020 and has been remade from Japan and Brazil to Sweden, Germany and the Arab world.",
     entries: [
       ["love-is-blind-us"], ["love-is-blind-brazil"], ["love-is-blind-japan"], ["love-is-blind-sweden"],
@@ -7055,6 +7193,7 @@ export const collections = [
   {
     name: "Physical: 100",
     genres: ["Reality-TV", "Game-Show", "Sport"],
+    catalogs: ["franchise"],
     description: "Netflix's Korean competition that pits 100 of the fittest people, from athletes to soldiers, against each other in brutal physical challenges. Its success led to Physical: Asia, fought between national teams, and versions elsewhere.",
     entries: [
       ["physical-100"], ["physical-asia"], ["physical-100-usa"], ["physical-italia"], ["physical-100-sweden"],
@@ -7064,6 +7203,7 @@ export const collections = [
   {
     name: "The Voice",
     genres: ["Reality-TV", "Music", "Game-Show"],
+    catalogs: ["franchise"],
     description: "The singing competition that starts with blind auditions, the coaches turning their chairs for a voice alone. It began as The Voice of Holland in 2010 and spread to dozens of countries, with Kids, Teens and Senior versions.",
     entries: [
       ["the-voice-of-holland"], ["the-voice-us"], ["glasat-na-bulgaria"], ["the-voice-of-germany"],
@@ -7091,6 +7231,7 @@ export const collections = [
   {
     name: "Terrace House",
     genres: ["Reality-TV", "Romance"],
+    catalogs: ["franchise"],
     description: "Japan's low-key reality series about six strangers sharing a stylish house, while a panel of comedians comments from the studio. Its seasons moved from Shonan to Hawaii, Karuizawa and Tokyo.",
     entries: [
       ["terrace-house-boys-girls-next-door"], ["terrace-house-boys-girls-in-the-city"], ["terrace-house-aloha-state"],
@@ -7100,6 +7241,7 @@ export const collections = [
   {
     name: "Got Talent",
     genres: ["Reality-TV", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Simon Cowell's open talent show, where singers, dancers, magicians and every act imaginable try to win over the judges and the public. America's Got Talent aired first in 2006, Britain's Got Talent followed, and dozens of countries made their own.",
     entries: [
       ["agt"], ["la-france-a-un-incroyable-talent-ca-continue"], ["la-france-a-un-incroyable-talent"],
@@ -7120,6 +7262,7 @@ export const collections = [
   {
     name: "Idol",
     genres: ["Reality-TV", "Music", "Game-Show"],
+    catalogs: ["franchise"],
     description: "The singing contest that began as Pop Idol in Britain in 2001 and became American Idol, launching Kelly Clarkson and Carrie Underwood. Its format has run in dozens of countries as Idol, Idols and Indian Idol.",
     entries: [
       ["pop-idol"], ["american-idol"], ["deutschland-sucht-den-superstar"], ["idols-netherlands"], ["idool-2003"],
@@ -7136,6 +7279,7 @@ export const collections = [
   {
     name: "The X Factor",
     genres: ["Reality-TV", "Music", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Simon Cowell's singing competition that replaced Pop Idol in Britain, with the judges mentoring their acts through the live shows. It launched One Direction and Leona Lewis, and ran in dozens of countries.",
     entries: [
       ["x-factor-uk"], ["the-xtra-factor-united-kingdom"], ["x-factor-au"], ["the-xtra-factor-australia"],
@@ -7151,6 +7295,7 @@ export const collections = [
   {
     name: "Dancing with the Stars",
     genres: ["Reality-TV", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Celebrities paired with professional dancers in a weekly ballroom competition. It began as the BBC's Strictly Come Dancing in 2004 and became Dancing with the Stars, Let's Dance and Bailando around the world.",
     entries: [
       ["strictly-come-dancing"], ["dwts-au"], ["strictly-it-takes-two"],
@@ -7170,6 +7315,7 @@ export const collections = [
   {
     name: "The Masked Singer",
     genres: ["Reality-TV", "Music", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Celebrities singing in elaborate full-body costumes while a panel guesses who's inside. It began in South Korea as King of Mask Singer and became a hit around the world.",
     entries: [
       ["king-of-mask-singer"], ["the-masked-singer-germany"], ["the-masked-singer-bulgaria"],
@@ -7188,6 +7334,7 @@ export const collections = [
   {
     name: "The Great British Bake Off",
     genres: ["Reality-TV", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Amateur bakers in a tent in the English countryside, competing in signature, technical and showstopper challenges. Its gentle format spread from Britain to versions in America, Canada, Australia and beyond.",
     entries: [
       ["gbbo"], ["junior-bake-off"], ["the-great-sport-relief-bake-off"], ["le-meilleur-patissier"],
@@ -7212,6 +7359,7 @@ export const collections = [
   {
     name: "Too Hot to Handle",
     genres: ["Reality-TV", "Romance"],
+    catalogs: ["franchise"],
     description: "Netflix's dating show that lures attractive singles to a tropical villa, then bans all sexual contact and docks the prize money for every slip.",
     entries: [
       ["too-hot-to-handle"], ["too-hot-to-handle-brazil"], ["too-hot-to-handle-latino"],
@@ -7221,6 +7369,7 @@ export const collections = [
   {
     name: "The Circle",
     genres: ["Reality-TV", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Players in separate apartments who only meet through a social-media app, so anyone could be a catfish. It began in Britain and was remade by Netflix in the US, Brazil and France.",
     entries: [
       ["the-circle-australia"], ["the-circle-united-kingdom"], ["the-circle-united-kingdom-2020"],
@@ -7230,6 +7379,7 @@ export const collections = [
   {
     name: "Married at First Sight",
     genres: ["Reality-TV", "Romance"],
+    catalogs: ["franchise"],
     description: "Strangers matched by experts who meet for the first time at the altar. It began in Denmark in 2013 and has been remade around the world, the Australian version most famously.",
     entries: [
       ["gift-ved-f-rste-blik"], ["hochzeit-auf-den-ersten-blick"], ["married-at-first-sight-sweden"],
@@ -7248,6 +7398,7 @@ export const collections = [
   {
     name: "The Ultimatum",
     genres: ["Reality-TV", "Romance"],
+    catalogs: ["franchise"],
     description: "Couples where one partner wants to marry and the other isn't sure, who swap partners for a trial marriage before deciding whether to propose or leave.",
     entries: [
       ["the-ultimatum-marry-or-move-on"], ["the-ultimatum-france"], ["the-ultimatum-queer-love"],
@@ -7257,6 +7408,7 @@ export const collections = [
   {
     name: "Temptation Island",
     genres: ["Reality-TV", "Romance"],
+    catalogs: ["franchise"],
     description: "Couples who agree to live apart on an island full of attractive singles, to test their relationships. It began in the US in 2001 and has been made in many countries.",
     entries: [
       ["temptation-island-united-states"], ["temptation-island-belgium"], ["temptation-island-denmark"],
@@ -7271,6 +7423,7 @@ export const collections = [
   {
     name: "Are You the One?",
     genres: ["Reality-TV", "Romance", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Singles in a house trying to work out who their algorithm-chosen perfect match is, to win a shared prize.",
     entries: [
       ["are-you-the-one-united-states"], ["are-you-the-one-the-aftermatch-live"], ["are-you-the-one-brasil"],
@@ -7282,6 +7435,7 @@ export const collections = [
   {
     name: "Ex on the Beach",
     genres: ["Reality-TV", "Romance"],
+    catalogs: ["franchise"],
     description: "Singles on a beach holiday whose exes keep turning up, one by one. It began in Britain in 2014 and has been made in many countries.",
     entries: [
       ["ex-on-the-beach-united-kingdom"], ["ex-on-the-beach-sverige"], ["ex-on-the-beach-double-dutch"],
@@ -7295,6 +7449,7 @@ export const collections = [
   {
     name: "Selling Sunset",
     genres: ["Reality-TV"],
+    catalogs: ["franchise"],
     description: "The Oppenheim Group's agents selling luxury homes in Los Angeles, and the office drama between them. Selling Tampa, Selling the OC and Selling the City follow other offices.",
     entries: [
       ["selling-sunset"], ["selling-tampa"], ["selling-the-oc"], ["selling-the-city"],
@@ -7303,6 +7458,7 @@ export const collections = [
   {
     name: "Queer Eye",
     genres: ["Reality-TV"],
+    catalogs: ["franchise"],
     description: "Five experts making over the lives of people who need it. The original Queer Eye for the Straight Guy ran from 2003, and Netflix's revival with a new Fab Five led to versions in Germany, Brazil and Japan.",
     entries: [
       ["queer-eye-united-states"], ["queer-eye-for-the-straight-guy-uk"], ["queer-eye-for-the-straight-girl"],
@@ -7312,6 +7468,7 @@ export const collections = [
   {
     name: "The Kardashians",
     genres: ["Reality-TV"],
+    catalogs: ["franchise"],
     description: "The Kardashian-Jenner family, from Keeping Up with the Kardashians in 2007 to The Kardashians on Hulu, and the spin-offs that followed each sister.",
     entries: [
       ["keeping-up-with-the-kardashians"], ["kourtney-and-kim-take-miami"], ["khloe-and-lamar"],
@@ -7323,6 +7480,7 @@ export const collections = [
   {
     name: "Shore",
     genres: ["Reality-TV", "Comedy"],
+    catalogs: ["franchise"],
     description: "MTV's party-house franchise, from the guidos and guidettes of Jersey Shore to Geordie Shore, Acapulco Shore and Jersey Shore: Family Vacation.",
     entries: [
       ["jersey-shore"], ["geordie-shore"], ["snooki-and-jwoww"], ["gandia-shore"], ["warsaw-shore-ekipa-z-warszawy"],
@@ -7334,6 +7492,7 @@ export const collections = [
   {
     name: "Teen Mom",
     genres: ["Reality-TV", "Documentary"],
+    catalogs: ["franchise"],
     description: "MTV's franchise following teenage mothers, from 16 and Pregnant to Teen Mom and its many continuations.",
     entries: [
       ["16-and-pregnant"], ["teen-mom-og"], ["teen-mom-2"], ["teen-mom-3"], ["teen-mom-uk"], ["16-and-awesome"],
@@ -7345,6 +7504,7 @@ export const collections = [
   {
     name: "Top Model",
     genres: ["Reality-TV", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Tyra Banks' America's Next Top Model and its international versions, where aspiring models compete in photo shoots and runway challenges.",
     entries: [
       ["america-s-next-top-model"], ["sweden-s-next-top-model-sweden"], ["britain-s-next-top-model"],
@@ -7363,6 +7523,7 @@ export const collections = [
   {
     name: "Project Runway",
     genres: ["Reality-TV", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Fashion designers making a garment each week to the judges' brief, in the show that made Tim Gunn's \"make it work\" a catchphrase. All Stars, Junior and versions abroad followed.",
     entries: [
       ["project-runway"], ["project-runway-canada"], ["project-runway-philippines"], ["project-runway-australia"],
@@ -7374,6 +7535,7 @@ export const collections = [
   {
     name: "Ninja Warrior",
     genres: ["Reality-TV", "Game-Show", "Sport"],
+    catalogs: ["franchise"],
     description: "Japan's Sasuke, the obstacle course where few ever finish Mount Midoriyama, and the versions it inspired, from American Ninja Warrior to Ninja Warrior UK and Australia.",
     entries: [
       ["sasuke"], ["ninja-warrior-japan"], ["american-ninja-warrior"], ["ninja-warrior-turkiye"],
@@ -7390,6 +7552,7 @@ export const collections = [
   {
     name: "The Traitors",
     genres: ["Reality-TV", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Contestants at a castle completing missions for a prize, while a few secret traitors murder the faithful one by one. It began in the Netherlands as De Verraders and became a hit in Britain, America and beyond.",
     entries: [
       ["traitor"], ["de-verraders"], ["les-traitres-belgium"], ["de-verraders-videoland-editie"],
@@ -7407,6 +7570,7 @@ export const collections = [
   {
     name: "Lego Masters",
     genres: ["Reality-TV", "Game-Show", "Family"],
+    catalogs: ["franchise"],
     description: "Teams of Lego builders competing in epic, timed build challenges. It began in Britain and became a hit in Australia and the US.",
     entries: [
       ["lego-masters-united-kingdom"], ["lego-masters-germany"], ["lego-masters-australia"], ["lego-masters-dutch"],
@@ -7420,6 +7584,7 @@ export const collections = [
   {
     name: "The Amazing Race",
     genres: ["Reality-TV", "Game-Show", "Adventure"],
+    catalogs: ["franchise"],
     description: "Teams of two racing around the world for a cash prize, solving clues and completing tasks along the way. The US original has won more Emmys than any other reality competition.",
     entries: [
       ["the-amazing-race-united-states"], ["the-amazing-race-asia"], ["the-amazing-race-a-corrida-milionaria"],
@@ -7432,6 +7597,7 @@ export const collections = [
   {
     name: "Nailed It!",
     genres: ["Reality-TV", "Comedy", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Netflix's baking competition for hopeless home bakers trying to recreate elaborate cakes, with predictable results. Versions followed in Mexico, Spain, France and Germany.",
     entries: [
       ["nailed-it"], ["nailed-it-holiday"], ["nailed-it-spain"], ["nailed-it-france"], ["nailed-it-mexico"],
@@ -7441,6 +7607,7 @@ export const collections = [
   {
     name: "Taskmaster",
     genres: ["Comedy", "Game-Show"],
+    catalogs: ["franchise"],
     description: "Comedians completing absurd tasks set by Greg Davies and his assistant Alex Horne, judged entirely on his whims. The British original has been remade in New Zealand, Australia and elsewhere.",
     entries: [
       ["taskmaster-united-kingdom"], ["taskmaster-champion-of-champions"], ["taskmaster-united-states"],
@@ -7451,6 +7618,7 @@ export const collections = [
   {
     name: "Love on the Spectrum",
     genres: ["Documentary", "Reality-TV", "Romance"],
+    catalogs: ["franchise"],
     description: "Autistic young adults navigating dating and relationships, in the Australian series and its American version.",
     entries: [
       ["love-on-the-spectrum-australia"], ["love-on-the-spectrum-u-s"],
@@ -7459,6 +7627,7 @@ export const collections = [
   {
     name: "Shark Tank and Dragons' Den",
     genres: ["Reality-TV"],
+    catalogs: ["franchise"],
     description: "Entrepreneurs pitching their businesses to wealthy investors, who decide whether to put in their own money. It began in Japan as Money Tigers and became Dragons' Den and Shark Tank around the world.",
     entries: [
       ["dragons-den-united-kingdom"], ["dragons-den-australia"], ["dragons-den-canada"], ["dragons-den-ireland"],
@@ -7472,6 +7641,7 @@ export const collections = [
   {
     name: "Who Wants to Be a Millionaire",
     genres: ["Game-Show"],
+    catalogs: ["franchise"],
     description: "Contestants answering fifteen multiple-choice questions for a million-pound prize, with three lifelines. It began in Britain in 1998 and became one of the most widely remade game shows in history.",
     entries: [
       ["who-wants-to-be-a-millionaire-united-kingdom"], ["who-wants-to-be-a-millionaire-australia"],
@@ -7490,6 +7660,7 @@ export const collections = [
   {
     name: "The Chase",
     genres: ["Game-Show"],
+    catalogs: ["franchise"],
     description: "Contestants trying to outrun a quizzing genius, the Chaser, to bank their prize money. It began in Britain in 2009, with versions in the US and Australia.",
     entries: [
       ["the-chase-united-kingdom"], ["the-chase-celebrity-special"], ["gefragt-gejagt"], ["the-chase-united-states"],
@@ -7501,6 +7672,7 @@ export const collections = [
   {
     name: "Wheel of Fortune",
     genres: ["Game-Show"],
+    catalogs: ["franchise"],
     description: "Contestants spinning a giant wheel and solving word puzzles in America's longest-running syndicated game show, and its versions abroad.",
     entries: [
       ["wheel-of-fortune-united-states"], ["wheel-of-fortune-australia"], ["les-roues-de-la-fortune"],
@@ -7514,6 +7686,7 @@ export const collections = [
   {
     name: "Family Feud",
     genres: ["Game-Show", "Comedy"],
+    catalogs: ["franchise"],
     description: "Two families guessing the most popular answers to survey questions. In Britain it's Family Fortunes.",
     entries: [
       ["family-feud-united-states"], ["family-feud-australia"], ["family-fortunes-united-kingdom"],
@@ -7528,6 +7701,7 @@ export const collections = [
   {
     name: "Deal or No Deal",
     genres: ["Game-Show"],
+    catalogs: ["franchise"],
     description: "Contestants choosing sealed boxes of cash and bargaining with a mysterious Banker over what's inside. It began in the Netherlands and has been remade around the world.",
     entries: [
       ["deal-or-no-deal-australia"], ["affari-tuoi"], ["deal-or-no-deal-united-states"],
@@ -7539,6 +7713,7 @@ export const collections = [
   {
     name: "The Price Is Right",
     genres: ["Game-Show"],
+    catalogs: ["franchise"],
     description: "Contestants guessing the prices of prizes to win them, in America's longest-running game show and its versions abroad.",
     entries: [
       ["the-price-is-right-united-states"], ["the-price-is-right-united-states-1972"], ["the-price-is-right-uk"],
@@ -7552,6 +7727,7 @@ export const collections = [
   {
     name: "Late Night",
     genres: ["Talk-Show", "Comedy"],
+    catalogs: ["franchise"],
     description: "NBC's talk show after The Tonight Show, hosted by David Letterman, Conan O'Brien, Jimmy Fallon and Seth Meyers.",
     entries: [
       ["late-night-with-david-letterman"], ["late-night-with-conan-o-brien"], ["late-night-with-jimmy-fallon"],
@@ -7561,6 +7737,7 @@ export const collections = [
   {
     name: "The Late Show",
     genres: ["Talk-Show", "Comedy"],
+    catalogs: ["franchise"],
     description: "CBS's Late Show, created for David Letterman in 1993 and hosted by Stephen Colbert from 2015.",
     entries: [
       ["late-show-with-david-letterman"], ["the-late-show-with-stephen-colbert"],
@@ -7569,6 +7746,7 @@ export const collections = [
   {
     name: "The Late Late Show",
     genres: ["Talk-Show", "Comedy"],
+    catalogs: ["franchise"],
     description: "CBS's late-late talk show after The Late Show, hosted by Tom Snyder, Craig Kilborn, Craig Ferguson and James Corden.",
     entries: [
       ["the-late-late-show-with-tom-snyder"], ["the-late-late-show-with-craig-kilborn"],
