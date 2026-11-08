@@ -16,13 +16,14 @@ const shows = {
 const movies = {
   "iron-man": { imdb: "tt5", name: "Iron Man" },
   doomsday: { imdb: "tt6", name: "Avengers: Doomsday" },
+  animatrix: { imdb: "tt7", name: "The Animatrix", released: "2003-06-03" },
 };
 const marvel = [["iron-man"], ["daredevil", 1], ["loki", 1], ["daredevil", 2], ["born-again", 1], ["doomsday"]];
 const collections = [
-  { group: "Heroes", name: "Marvel", order: "release", entries: marvel },
-  { group: "Heroes", name: "Marvel", order: "timeline", entries: marvel },
-  { group: ["Sci-Fi", "Heroes"], name: "Trek", order: "release", entries: [["trek"]] },
-  { group: "Heroes", name: "Daredevil", entries: [["born-again"], ["daredevil"]] },
+  { genres: ["Superhero", "Action"], name: "Marvel", order: "release", entries: marvel },
+  { genres: ["Superhero"], name: "Marvel", order: "timeline", entries: marvel },
+  { genres: ["Sci-Fi"], name: "Trek", order: "release", entries: [["trek"], ["animatrix"]] },
+  { genres: ["Superhero", "Crime"], name: "Every Daredevil Series", entries: [["born-again"], ["daredevil"]] },
 ];
 const ep = (imdb, season, episode, released) => ({ id: `${imdb}:${season}:${episode}`, season, episode, released });
 const cinemetaData = {
@@ -35,6 +36,7 @@ const cinemetaData = {
   movie: {
     tt5: { name: "Iron Man", poster: "p5", released: "2008-05-02" },
     tt6: { name: "Avengers: Doomsday", released: "2099-12-18" },
+    tt7: { name: "The Animatrix" },
   },
 };
 
@@ -55,41 +57,43 @@ const opts = (outDir, fetchImpl, c = collections) => ({
 });
 const urls = (meta, category = "Watch order") => meta.links.filter((l) => l.category === category).map((l) => l.url.replace(/^stremio:\/\/\/detail\//, ""));
 
-test("builds one Genre catalog with a genre per group, a poster per collection", async () => {
+test("builds Connected Storyline and Other, each with a genre filter", async () => {
   const outDir = await mkdtemp(join(tmpdir(), "movie-series-collections-"));
   const { fetchImpl, seen } = fakeFetch();
   const report = await build(opts(outDir, fetchImpl));
-  assert.equal(seen.length, 6, "each title is looked up once");
-  assert.ok(seen.includes("https://fake.test/meta/movie/tt5.json") && seen.includes("https://fake.test/meta/series/tt1.json"));
+  assert.equal(seen.length, 7, "each title is looked up once");
 
-  const heroes = await read(outDir, "catalog/collections/collections/genre=Heroes.json");
-  const ids = ["mscol-marvel", "mscol-marvel-timeline", "mscol-trek", "mscol-every-daredevil-series"];
-  assert.deepEqual(heroes.metas.map((m) => m.id), ids);
-  assert.deepEqual((await read(outDir, "catalog/collections/collections/genre=Sci-Fi.json")).metas.map((m) => m.name), ["Trek"]);
-  const all = await read(outDir, "catalog/collections/collections.json");
-  assert.deepEqual(all.metas.map((m) => m.id), ids, "None lists every collection once");
+  const connected = await read(outDir, "catalog/collections/connected.json");
+  assert.deepEqual(connected.metas.map((m) => m.id), ["mscol-marvel", "mscol-marvel-timeline", "mscol-trek"], "None lists the catalog's collections");
+  const other = await read(outDir, "catalog/collections/other.json");
+  assert.deepEqual(other.metas.map((m) => m.name), ["Every Daredevil Series"]);
+  assert.deepEqual((await read(outDir, "catalog/collections/connected/genre=Superhero.json")).metas.map((m) => m.id), ["mscol-marvel", "mscol-marvel-timeline"]);
+  assert.deepEqual((await read(outDir, "catalog/collections/connected/genre=Sci-Fi.json")).metas.map((m) => m.id), ["mscol-trek"]);
+  assert.deepEqual((await read(outDir, "catalog/collections/other/genre=Crime.json")).metas.map((m) => m.id), ["mscol-every-daredevil-series"]);
+  assert.ok(!existsSync(join(outDir, "catalog/collections/other/genre=Sci-Fi.json")), "a catalog only gets the genres it uses");
 
-  const [release, timeline, , daredevil] = heroes.metas;
-  assert.equal(release.name, "Marvel");
+  const [release, timeline, trek] = connected.metas;
   assert.deepEqual(urls(release), ["movie/tt5", "series/tt2?season=1", "series/tt2?season=2", "series/tt1?season=1", "series/tt3?season=1"]);
-  assert.equal(timeline.name, "Marvel (Timeline)");
   assert.deepEqual(urls(timeline), ["movie/tt5", "series/tt2?season=1", "series/tt1?season=1", "series/tt2?season=2", "series/tt3?season=1"]);
+  assert.equal(timeline.name, "Marvel (Timeline)");
   assert.deepEqual(release.links.filter((l) => l.category === "Contents").map((l) => l.name), ["1 Movie", "3 Series", "4 Seasons"]);
-  assert.equal(daredevil.name, "Every Daredevil Series");
-  assert.deepEqual(urls(daredevil, "Titles"), ["series/tt2", "series/tt3"]);
+  assert.deepEqual(urls(trek), ["series/tt4?season=1", "movie/tt7"], "the config's date fills in for The Animatrix");
+  assert.deepEqual(urls(other.metas[0], "Titles"), ["series/tt2", "series/tt3"]);
   assert.deepEqual(report.upcoming.Marvel, ["Avengers: Doomsday"]);
   assert.deepEqual(report.upcoming["Every Daredevil Series"], ["Daredevil: Born Again season 2"]);
 
   const meta = (await read(outDir, "meta/collections/mscol-marvel-timeline.json")).meta;
   assert.deepEqual(urls(meta), urls(timeline), "the detail page has the same links");
-  assert.deepEqual(meta.videos.map((v) => v.title), ["Iron Man", "Daredevil S1", "Loki S1", "Daredevil S2", "Daredevil: Born Again S1"]);
   const stream = await read(outDir, "stream/collections/mscol-marvel-timeline-3.json");
   assert.equal(stream.streams[0].externalUrl, "stremio:///detail/series/tt1?season=1");
 
   const manifest = await read(outDir, "manifest.json");
-  assert.deepEqual(manifest.catalogs[0].extra[0].options, ["Heroes", "Sci-Fi"]);
-  assert.deepEqual(report.groups.Heroes, { Marvel: 5, "Marvel (Timeline)": 5, Trek: 1, "Every Daredevil Series": 3 });
-  assert.equal(report.movies, 2);
+  assert.deepEqual(manifest.catalogs.map((c) => [c.id, c.genres]), [
+    ["connected", ["Action", "Sci-Fi", "Superhero"]],
+    ["other", ["Crime", "Superhero"]],
+  ]);
+  assert.deepEqual(Object.keys(report.catalogs), ["Connected Storyline", "Other"]);
+  assert.equal(report.movies, 3);
   assert.ok(existsSync(join(outDir, "index.html")));
 });
 
@@ -99,13 +103,13 @@ test("refuses to publish when an id points at another title or a season is missi
   await assert.rejects(build(opts(outDir, fetchImpl)), /iron-man: tt5 is "Box 21" on Cinemeta, not "Iron Man"/);
 
   const { fetchImpl: ok } = fakeFetch();
-  const missing = [{ group: "Heroes", name: "Marvel", order: "release", entries: [["daredevil", 9]] }];
+  const missing = [{ genres: ["Superhero"], name: "Marvel", order: "release", entries: [["daredevil", 9]] }];
   await assert.rejects(build(opts(outDir, ok, missing)), /Marvel: Daredevil has no season 9 on Cinemeta/);
 });
 
 test("refuses a broken config before fetching anything", async () => {
   const outDir = await mkdtemp(join(tmpdir(), "movie-series-collections-"));
   const { fetchImpl, seen } = fakeFetch();
-  await assert.rejects(build(opts(outDir, fetchImpl, [{ group: "G", name: "X", entries: [["thor"]] }])), /no show or movie called "thor"/);
+  await assert.rejects(build(opts(outDir, fetchImpl, [{ genres: ["G"], name: "X", entries: [["thor"]] }])), /no show or movie called "thor"/);
   assert.equal(seen.length, 0);
 });

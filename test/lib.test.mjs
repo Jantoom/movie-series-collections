@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  TIMELINE_NOTE, arrange, buildManifest, catalogPaths, collectionDescription, collectionId, configProblems, contentKinds, displayName,
-  entryStreams, expandEntries, firstSentence, groupLink, groupNames, groupsOf, listItems, sameTitle, toCollectionMeta, toCollectionPreview,
+  CATALOGS, TIMELINE_NOTE, arrange, buildManifest, catalogOf, catalogPaths, collectionDescription, collectionId, configProblems, displayName,
+  entryStreams, expandEntries, firstSentence, genreLink, genreNames, listItems, sameTitle, toCollectionMeta, toCollectionPreview,
   toMovie, toShow, valueSpellings, yearSpan,
 } from "../src/lib.mjs";
 
@@ -23,13 +23,15 @@ const loki = toShow("tt9140554", {
   ],
 });
 const wanda = toShow("tt9140560", { name: "WandaVision", poster: "wp", releaseInfo: "2021", videos: [ep("tt9140560", 1, 1, "2021-01-15T00:00:00.000Z")] });
+const oldShow = toShow("tt0060000", { name: "Old Show", releaseInfo: "1966", videos: [ep("tt0060000", 1, 1, undefined)] });
+const noEpisodes = toShow("tt0070000", { name: "No Episodes", releaseInfo: "1999–2004" });
 const ironMan = toMovie("tt0371746", { name: "Iron Man", poster: "https://images.metahub.space/poster/small/tt0371746/img", background: "im-bg", description: "A billionaire builds a suit. Then more.", released: "2008-05-02T00:00:00.000Z" });
 const doomsday = toMovie("tt21357150", { name: "Avengers: Doomsday", released: "2099-12-18T00:00:00.000Z" });
-const shows = new Map([["loki", loki], ["wandavision", wanda]]);
+const shows = new Map([["loki", loki], ["wandavision", wanda], ["old-show", oldShow], ["no-episodes", noEpisodes]]);
 const movies = new Map([["iron-man", ironMan], ["doomsday", doomsday]]);
 const NOW = "2026-11-08T00:00:00.000Z";
 const MANIFEST = "https://example.test/addon/manifest.json";
-const label = (e) => (e.kind === "movie" ? e.movie.name : `${e.show.name} ${e.season.number}`);
+const label = (e) => (e.kind === "movie" ? e.movie.name : e.kind === "show" ? e.show.name : `${e.show.name} ${e.season.number}`);
 const arranged = (c) => arrange(expandEntries(c, shows, movies, NOW).entries, c.order);
 
 test("sameTitle tolerates punctuation but not a different title", () => {
@@ -44,21 +46,26 @@ test("toShow groups episodes into seasons, without specials; toMovie keeps the r
   assert.deepEqual(loki.seasons.get(2), { number: 2, episodes: 2, premiere: "2023-10-05T00:00:00.000Z", finale: "2023-10-12T00:00:00.000Z" });
   assert.match(loki.poster, /\/poster\/medium\//);
   assert.equal(loki.ongoing, false);
+  assert.equal(noEpisodes.released, "1999-01-01T00:00:00.000Z", "a show's own start year stands in for its premiere");
   assert.equal(toShow("tt1", { name: "X", releaseInfo: "2025–" }).ongoing, true);
   assert.equal(toShow("tt1", { name: "X", status: "Continuing", releaseInfo: "2025" }).ongoing, true);
   assert.equal(ironMan.released, "2008-05-02T00:00:00.000Z");
-  assert.match(ironMan.poster, /\/poster\/medium\//);
 });
 
-test("names: release order as is, timeline marked, plain lists say what they hold", () => {
+test("watch orders go in Connected Storyline, everything else in Other", () => {
+  assert.deepEqual(CATALOGS.map((c) => c.name), ["Connected Storyline", "Other"]);
+  assert.equal(catalogOf({ order: "release" }), "connected");
+  assert.equal(catalogOf({ order: "timeline" }), "connected");
+  assert.equal(catalogOf({}), "other");
+});
+
+test("names: a timeline is marked, everything else keeps its own name", () => {
   assert.equal(displayName({ name: "Star Wars", order: "release" }), "Star Wars");
   assert.equal(displayName({ name: "Star Wars", order: "timeline" }), "Star Wars (Timeline)");
-  assert.equal(displayName({ name: "Marvel" }, { series: true }), "Every Marvel Series");
-  assert.equal(displayName({ name: "Marvel" }, { movies: true }), "Every Marvel Movie");
-  assert.equal(displayName({ name: "Marvel" }, { movies: true, series: true }), "Every Marvel Movie and Series");
-  assert.deepEqual(contentKinds({ entries: [["loki"], ["iron-man"]] }, { loki: {} }, { "iron-man": {} }), { movies: true, series: true });
+  assert.equal(displayName({ name: "Love Island" }), "Love Island");
   assert.equal(collectionId("Star Wars (Timeline)"), "mscol-star-wars-timeline");
-  assert.equal(collectionId("Marvel Cinematic Universe (Unofficial)"), "mscol-marvel-cinematic-universe-unofficial");
+  assert.equal(collectionId("Pokémon"), "mscol-pokemon");
+  assert.equal(collectionId("Sony's Spider-Man Universe"), "mscol-sony-s-spider-man-universe");
 });
 
 test("only timelines add the standard sentence", () => {
@@ -68,39 +75,43 @@ test("only timelines add the standard sentence", () => {
   assert.equal(collectionDescription({ name: "X" }), undefined);
 });
 
-test("configProblems catches unknown titles, bad seasons, names, groups and order", () => {
+test("configProblems catches unknown titles, bad seasons, names, genres and order", () => {
   const s = { loki: { imdb: "tt9140554", name: "Loki" } };
   const m = { "iron-man": { imdb: "tt0371746", name: "Iron Man" } };
   assert.deepEqual(configProblems(s, m, [
-    { group: "Heroes", name: "Fine (Unofficial)", order: "release", entries: [["loki"], ["loki", 2], ["iron-man"]] },
-    { group: ["Heroes", "Gods"], name: "Fine (Unofficial)", order: "timeline", entries: [["loki"]] },
-    { group: "Heroes", name: "Fine", entries: [["loki"], ["iron-man"]] },
+    { genres: ["Action"], name: "Fine (Unofficial)", order: "release", entries: [["loki"], ["loki", 2], ["iron-man"]] },
+    { genres: ["Action", "Sci-Fi"], name: "Fine (Unofficial)", order: "timeline", entries: [["loki"]] },
+    { genres: ["Reality-TV"], name: "Pokémon", entries: [["loki"], ["iron-man"]] },
   ]), []);
   assert.deepEqual(configProblems({ ...s, "iron-man": {} }, m, [
-    { group: "G", name: "A", order: "release", entries: [["loki"]] },
-    { group: "G", name: "A", order: "random", entries: [["thor"], ["loki", 0], ["iron-man", 1]] },
-    { group: "G", name: "List", entries: [["loki", 2]] },
-    { group: ["Bad/Group"], name: "Bad/Name", entries: [] },
+    { genres: ["G"], name: "A", order: "release", entries: [["loki"]] },
+    { genres: ["G"], name: "A", order: "random", entries: [["thor"], ["loki", 0], ["iron-man", 1]] },
+    { genres: ["G"], name: "List", entries: [["loki", 2]] },
+    { genres: ["Bad/Genre"], name: "Bad/Name", entries: [] },
     { name: "Lost", entries: [["loki"]] },
   ]), [
     '"iron-man" is both a show and a movie; keys must be unique',
-    'A: order must be "release", "timeline" or left out, not "random"',
     'collection "A" is used twice',
+    'A: order must be "release", "timeline" or left out, not "random"',
     'A: no show or movie called "thor"',
     'A: "loki" season must be a whole number from 1, not 0',
     'A: "iron-man" is a movie, so it takes no season',
-    'List: a list without an order takes whole shows, so ["loki"], not ["loki", 2]',
+    'List: a collection without an order takes whole shows, so ["loki"], not ["loki", 2]',
     "collection name \"Bad/Name\" can only use letters, digits, spaces and ' & : ( ) . , ! -",
-    'Bad/Name: group "Bad/Group" can only use letters, digits, spaces, \' & and -',
+    'Bad/Name: genre "Bad/Genre" can only use letters, digits, spaces, \' & and -',
     "Bad/Name has no entries",
-    "Lost has no group",
+    "Lost has no genres",
   ]);
 });
 
-test("groups can be one or several, and keep the order collections first use them", () => {
-  assert.deepEqual(groupsOf({ group: "Sci-Fi" }), ["Sci-Fi"]);
-  assert.deepEqual(groupsOf({ group: ["Sci-Fi", "Fantasy"] }), ["Sci-Fi", "Fantasy"]);
-  assert.deepEqual(groupNames([{ group: "Superheroes" }, { group: ["Sci-Fi", "Superheroes"] }, { group: "Fantasy" }]), ["Superheroes", "Sci-Fi", "Fantasy"]);
+test("each catalog's genres are the ones its collections use, alphabetically", () => {
+  const cs = [
+    { order: "release", genres: ["Sci-Fi", "Action"] },
+    { order: "timeline", genres: ["Fantasy", "Action"] },
+    { genres: ["Reality-TV"] },
+  ];
+  assert.deepEqual(genreNames(cs, "connected"), ["Action", "Fantasy", "Sci-Fi"]);
+  assert.deepEqual(genreNames(cs, "other"), ["Reality-TV"]);
 });
 
 test("expandEntries takes movies, whole shows and single seasons, and holds back what isn't out", () => {
@@ -109,6 +120,14 @@ test("expandEntries takes movies, whole shows and single seasons, and holds back
   assert.deepEqual(entries.map(label), ["Loki 1", "Loki 2", "Iron Man", "WandaVision 1"]);
   assert.deepEqual(upcoming, ["Loki season 3", "Avengers: Doomsday"]);
   assert.deepEqual(problems, ["C: WandaVision has no season 4 on Cinemeta"]);
+});
+
+test("shows without episode dates or episodes still count once they've aired", () => {
+  const { entries } = expandEntries({ name: "C", entries: [["old-show"], ["no-episodes"]] }, shows, movies, NOW);
+  assert.deepEqual(entries.map((e) => [e.kind, label(e), e.date]), [
+    ["season", "Old Show 1", "1966-01-01T00:00:00.000Z"],
+    ["show", "No Episodes", "1999-01-01T00:00:00.000Z"],
+  ]);
 });
 
 test("release order sorts movies and seasons by date; timeline keeps the config's order", () => {
@@ -124,7 +143,7 @@ test("firstSentence keeps an entry's blurb short", () => {
 });
 
 test("a watch order lists each season and movie, each with a link and a blurb", () => {
-  const c = { group: "G", name: "C", order: "release", entries: [["loki"], ["iron-man"]] };
+  const c = { name: "C", order: "release", entries: [["loki"], ["iron-man"]] };
   const items = listItems(c, arranged(c));
   assert.deepEqual(items.map(({ title, url }) => [title, url]), [
     ["Iron Man", "stremio:///detail/movie/tt0371746"],
@@ -133,18 +152,19 @@ test("a watch order lists each season and movie, each with a link and a blurb", 
   ]);
   assert.equal(items[0].overview, "Iron Man (2008 movie). A billionaire builds a suit.");
   assert.equal(items[1].overview, "Season 1 of Loki (2021, 2 episodes). The god of mischief steps out of his brother's shadow.");
-  assert.equal(items[2].overview, "Season 2 of Loki (2023, 2 episodes). The god of mischief steps out of his brother's shadow.");
 });
 
-test("a plain list lists each show and movie once, by release, opening the title", () => {
-  const c = { group: "G", name: "C", entries: [["loki"], ["wandavision"], ["iron-man"]] };
+test("an Other collection lists each show and movie once, by release, opening the title", () => {
+  const c = { name: "C", entries: [["loki"], ["wandavision"], ["iron-man"], ["no-episodes"]] };
   const items = listItems(c, arranged(c));
   assert.deepEqual(items.map(({ title, url }) => [title, url]), [
+    ["No Episodes", "stremio:///detail/series/tt0070000"],
     ["Iron Man", "stremio:///detail/movie/tt0371746"],
     ["WandaVision", "stremio:///detail/series/tt9140560"],
     ["Loki", "stremio:///detail/series/tt9140554"],
   ]);
-  assert.equal(items[2].overview, "Loki (2021–2023, 3 seasons). The god of mischief steps out of his brother's shadow.");
+  assert.equal(items[3].overview, "Loki (2021–2023, 3 seasons). The god of mischief steps out of his brother's shadow.");
+  assert.equal(items[0].overview, "No Episodes (1999–2004).");
 });
 
 test("yearSpan runs from the first release to the last finale, open while a show runs", () => {
@@ -158,7 +178,7 @@ test("yearSpan runs from the first release to the last finale, open while a show
 });
 
 test("a collection's poster carries its genres, contents (movies first) and list", () => {
-  const c = { group: ["Heroes", "Gods"], name: "Marvel", order: "timeline", description: "Heroes.", entries: [["iron-man"], ["loki", 1], ["wandavision", 1], ["loki", 2]] };
+  const c = { genres: ["Superhero", "Sci-Fi"], name: "Marvel", order: "timeline", description: "Heroes.", entries: [["iron-man"], ["loki", 1], ["wandavision", 1], ["loki", 2]] };
   const name = displayName(c);
   const p = toCollectionPreview(c, name, arranged(c), MANIFEST);
   assert.equal(p.id, "mscol-marvel-timeline");
@@ -168,8 +188,8 @@ test("a collection's poster carries its genres, contents (movies first) and list
   assert.equal(p.releaseInfo, "2008–2023");
   assert.equal(p.description, `Heroes. ${TIMELINE_NOTE}`);
   assert.deepEqual(p.links.map((l) => `${l.category}: ${l.name}`), [
-    "Genres: Heroes",
-    "Genres: Gods",
+    "Genres: Superhero",
+    "Genres: Sci-Fi",
     "Contents: 1 Movie",
     "Contents: 2 Series",
     "Contents: 3 Seasons",
@@ -178,15 +198,16 @@ test("a collection's poster carries its genres, contents (movies first) and list
     "Watch order: WandaVision S1",
     "Watch order: Loki S2",
   ]);
-  assert.equal(p.links[0].url, "stremio:///discover/https%3A%2F%2Fexample.test%2Faddon%2Fmanifest.json/collections/collections?genre=Heroes");
+  assert.equal(p.links[0].url, "stremio:///discover/https%3A%2F%2Fexample.test%2Faddon%2Fmanifest.json/collections/connected?genre=Superhero");
   assert.equal(p.links[2].url, "stremio:///detail/collections/mscol-marvel-timeline", "contents chips stay on the collection");
   assert.ok(!toCollectionPreview(c, name, arranged(c)).links.some((l) => l.category === "Genres"), "no genre chips without the addon's URL");
 });
 
-test("a plain list's poster lists titles, with no movie count when it has none", () => {
-  const c = { group: "Heroes", name: "Marvel", entries: [["loki"], ["wandavision"]] };
-  const p = toCollectionPreview(c, displayName(c, { series: true }), arranged(c), MANIFEST);
+test("an Other collection's poster lists titles, links genres to Other, and has no movie count without movies", () => {
+  const c = { genres: ["Superhero"], name: "Every Marvel Series", entries: [["loki"], ["wandavision"]] };
+  const p = toCollectionPreview(c, displayName(c), arranged(c), MANIFEST);
   assert.equal(p.name, "Every Marvel Series");
+  assert.match(p.links[0].url, /\/collections\/other\?genre=Superhero$/);
   assert.deepEqual(p.links.slice(1).map((l) => `${l.category}: ${l.name}`), [
     "Contents: 2 Series",
     "Contents: 3 Seasons",
@@ -196,7 +217,7 @@ test("a plain list's poster lists titles, with no movie count when it has none",
 });
 
 test("the detail page lists the entries with blurbs, and each entry's stream is its link", () => {
-  const c = { group: "G", name: "C", order: "timeline", entries: [["loki", 1], ["iron-man"]] };
+  const c = { genres: ["G"], name: "C", order: "timeline", entries: [["loki", 1], ["iron-man"]] };
   const name = displayName(c);
   const meta = toCollectionMeta(c, name, arranged(c), MANIFEST);
   assert.deepEqual(meta.videos.map((v) => [v.id, v.title, v.season, v.episode]), [
@@ -210,8 +231,8 @@ test("the detail page lists the entries with blurbs, and each entry's stream is 
   ]);
 });
 
-test("groupLink opens this addon's Genre catalog, filtered to the group", () => {
-  assert.equal(groupLink(MANIFEST, "Sci-Fi & Fantasy"), "stremio:///discover/https%3A%2F%2Fexample.test%2Faddon%2Fmanifest.json/collections/collections?genre=Sci-Fi%20%26%20Fantasy");
+test("genreLink opens one of this addon's catalogs, filtered to the genre", () => {
+  assert.equal(genreLink(MANIFEST, "other", "Reality-TV"), "stremio:///discover/https%3A%2F%2Fexample.test%2Faddon%2Fmanifest.json/collections/other?genre=Reality-TV");
 });
 
 test("catalogPaths writes every genre spelling, pages of 100, and the no-genre list", () => {
@@ -219,30 +240,31 @@ test("catalogPaths writes every genre spelling, pages of 100, and the no-genre l
   assert.deepEqual(valueSpellings("Crime & Drama"), ["Crime & Drama", "Crime+&+Drama", "Crime%20%26%20Drama", "Crime+%26+Drama"]);
   assert.ok(valueSpellings("Kids' Shows").includes("Kids%27%20Shows"), "strict encoding for ' ( ) too");
   const metas = Array.from({ length: 150 }, (_, i) => ({ id: `mscol-${i}` }));
-  const files = catalogPaths("Sci-Fi", metas);
+  const files = catalogPaths("connected", "Sci-Fi", metas);
   assert.deepEqual(files.map((f) => f.rel), [
-    "catalog/collections/collections/genre=Sci-Fi.json",
-    "catalog/collections/collections/genre=Sci-Fi&skip=100.json",
+    "catalog/collections/connected/genre=Sci-Fi.json",
+    "catalog/collections/connected/genre=Sci-Fi&skip=100.json",
   ]);
   assert.equal(files[0].metas.length, 100);
   assert.equal(files.at(-1).metas.length, 50);
-  assert.deepEqual(catalogPaths(undefined, metas).map((f) => f.rel), [
-    "catalog/collections/collections.json",
-    "catalog/collections/collections/skip=100.json",
+  assert.deepEqual(catalogPaths("other", undefined, metas).map((f) => f.rel), [
+    "catalog/collections/other.json",
+    "catalog/collections/other/skip=100.json",
   ]);
 });
 
-test("manifest is one Genre catalog in the collections type, with streams for entries", () => {
-  const m = buildManifest([{ group: "Superheroes" }, { group: ["Superheroes", "Sci-Fi"] }]);
+test("manifest has Connected Storyline and Other, each with its own genres", () => {
+  const m = buildManifest([{ order: "release", genres: ["Sci-Fi"] }, { genres: ["Reality-TV", "Romance"] }]);
   assert.deepEqual(m.types, ["collections"]);
   assert.deepEqual(m.resources, [
     "catalog",
     { name: "meta", types: ["collections"], idPrefixes: ["mscol-"] },
     { name: "stream", types: ["collections"], idPrefixes: ["mscol-"] },
   ]);
-  assert.equal(m.catalogs.length, 1);
-  const [c] = m.catalogs;
-  assert.deepEqual([c.type, c.id, c.name], ["collections", "collections", "Genre"]);
-  assert.deepEqual(c.extra, [{ name: "genre", options: ["Superheroes", "Sci-Fi"] }, { name: "skip" }], "not required, so it starts on None");
-  assert.deepEqual(c.genres, ["Superheroes", "Sci-Fi"]);
+  assert.deepEqual(m.catalogs.map((c) => [c.type, c.id, c.name]), [
+    ["collections", "connected", "Connected Storyline"],
+    ["collections", "other", "Other"],
+  ]);
+  assert.deepEqual(m.catalogs[0].extra, [{ name: "genre", options: ["Sci-Fi"] }, { name: "skip" }], "not required, so it starts on None");
+  assert.deepEqual(m.catalogs[1].genres, ["Reality-TV", "Romance"]);
 });

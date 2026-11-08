@@ -8,8 +8,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { shows as defaultShows, movies as defaultMovies, collections as defaultCollections } from "../collections.config.mjs";
 import {
-  ADDON_NAME, TYPE, arrange, buildManifest, catalogPaths, collectionDescription, collectionId, configProblems, contentKinds, displayName,
-  entryStreams, expandEntries, groupNames, groupsOf, sameTitle, toCollectionMeta, toCollectionPreview, toMovie, toShow,
+  ADDON_NAME, CATALOGS, TYPE, arrange, buildManifest, catalogOf, catalogPaths, collectionDescription, collectionId, configProblems, displayName,
+  entryStreams, expandEntries, genreNames, genresOf, sameTitle, toCollectionMeta, toCollectionPreview, toMovie, toShow,
 } from "../src/lib.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -46,15 +46,23 @@ export async function build({
   if (configErrors.length) throw fix(configErrors);
   const shows = new Map(), movies = new Map();
   const problems = [];
-  for (const key of new Set(collections.flatMap((c) => c.entries.map(([k]) => k)))) {
+  const lookup = async (key) => {
     const isMovie = Boolean(moviesConfig[key]);
-    const { imdb, name } = isMovie ? moviesConfig[key] : showsConfig[key];
-    const cm = (await getJson(`${cinemeta}/meta/${isMovie ? "movie" : "series"}/${imdb}.json`)).meta;
+    const { imdb, name, released } = isMovie ? moviesConfig[key] : showsConfig[key];
+    const found = (await getJson(`${cinemeta}/meta/${isMovie ? "movie" : "series"}/${imdb}.json`)).meta;
+    // The config's `released` fills in for titles Cinemeta has no date for.
+    const cm = found && { ...found, released: found.released ?? released };
     if (!cm?.name) problems.push(`${key}: ${imdb} ("${name}") isn't on Cinemeta as a ${isMovie ? "movie" : "series"}`);
     else if (!sameTitle(name, cm.name)) problems.push(`${key}: ${imdb} is "${cm.name}" on Cinemeta, not "${name}"`);
     else if (isMovie) movies.set(key, toMovie(imdb, cm));
     else shows.set(key, toShow(imdb, cm));
-  }
+  };
+  // Hundreds of titles, so a few lookups at a time.
+  const queue = [...new Set(collections.flatMap((c) => c.entries.map(([k]) => k)))];
+  await Promise.all(Array.from({ length: 8 }, async () => {
+    while (queue.length) await lookup(queue.shift());
+  }));
+  problems.sort();
   // Failing stops the workflow from replacing the last good deployment.
   if (problems.length) throw fix(problems);
 
@@ -62,7 +70,7 @@ export async function build({
   const lists = [];
   const upcoming = {};
   for (const c of collections) {
-    const name = displayName(c, contentKinds(c, showsConfig, moviesConfig));
+    const name = displayName(c);
     const expanded = expandEntries(c, shows, movies, now);
     problems.push(...expanded.problems);
     if (expanded.upcoming.length) upcoming[name] = expanded.upcoming;
@@ -81,7 +89,7 @@ export async function build({
 
   // Genre chips link to Discover, which needs the URL the addon is installed from.
   const manifestUrl = siteUrl ? `${siteUrl.replace(/\/$/, "")}/manifest.json` : undefined;
-  const report = { builtAt: now, groups: {}, upcoming };
+  const report = { builtAt: now, catalogs: {}, upcoming };
   const previews = new Map();
   for (const { c, name, entries } of lists) {
     previews.set(c, toCollectionPreview(c, name, entries, manifestUrl));
@@ -90,22 +98,22 @@ export async function build({
       await writeJson(`stream/${TYPE}/${id}.json`, { streams });
     }
   }
-  const everything = new Set();
-  for (const group of groupNames(collections)) {
-    const members = lists.filter(({ c }) => groupsOf(c).includes(group));
-    const metas = members.map(({ c }) => previews.get(c));
-    metas.forEach((m) => everything.add(m));
-    for (const { rel, metas: page } of catalogPaths(group, metas)) {
-      await writeJson(rel, { metas: page });
+  for (const catalog of CATALOGS) {
+    const members = lists.filter(({ c }) => catalogOf(c) === catalog.id);
+    // No genre ("None"): all of the catalog's collections. Also its home-screen row.
+    for (const { rel, metas } of catalogPaths(catalog.id, undefined, members.map(({ c }) => previews.get(c)))) {
+      await writeJson(rel, { metas });
     }
-    report.groups[group] = Object.fromEntries(members.map(({ name, entries }) => [name, entries.length]));
+    for (const genre of genreNames(collections, catalog.id)) {
+      const inGenre = members.filter(({ c }) => genresOf(c).includes(genre)).map(({ c }) => previews.get(c));
+      for (const { rel, metas } of catalogPaths(catalog.id, genre, inGenre)) {
+        await writeJson(rel, { metas });
+      }
+    }
+    report.catalogs[catalog.name] = Object.fromEntries(members.map(({ name, entries }) => [name, entries.length]));
     for (const { name, entries } of members) {
-      log(`${group} / ${name}: ${entries.length} entries${upcoming[name] ? ` (not out yet: ${upcoming[name].join(", ")})` : ""}`);
+      log(`${catalog.name} / ${name}: ${entries.length} entries${upcoming[name] ? ` (not out yet: ${upcoming[name].join(", ")})` : ""}`);
     }
-  }
-  // No genre ("None"): every collection once, group by group. Also the home-screen row.
-  for (const { rel, metas: page } of catalogPaths(undefined, [...everything])) {
-    await writeJson(rel, { metas: page });
   }
 
   await writeJson("manifest.json", buildManifest(collections));
@@ -123,9 +131,9 @@ function installPage(siteUrl, lists) {
   const manifest = base ? `${base}/manifest.json` : "manifest.json";
   const stremio = base ? manifest.replace(/^https?:\/\//, "stremio://") : "#";
   const escape = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-  const item = ({ c, name }) => `<li><b>${escape(name)}</b>${collectionDescription(c) ? ` — ${escape(collectionDescription(c))}` : ""}</li>`;
-  const list = groupNames(lists.map(({ c }) => c))
-    .map((g) => `<h2>${escape(g)}</h2><ul>${lists.filter(({ c }) => groupsOf(c).includes(g)).map(item).join("")}</ul>`)
+  const item = ({ c, name }) => `<li><b>${escape(name)}</b> <small>(${escape(genresOf(c).join(", "))})</small>${collectionDescription(c) ? ` — ${escape(collectionDescription(c))}` : ""}</li>`;
+  const list = CATALOGS
+    .map(({ id, name }) => `<h2>${escape(name)}</h2><ul>${lists.filter(({ c }) => catalogOf(c) === id).map(item).join("")}</ul>`)
     .join("");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${ADDON_NAME}</title><style>
@@ -136,7 +144,7 @@ main{max-width:520px}h1{margin:0 0 8px}h2{font-size:18px;margin:24px 0 0}p,li{co
 a.btn{display:inline-block;background:var(--accent);color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;margin-right:8px}
 code{word-break:break-all;font-size:14px}</style></head><body><main>
 <h1>${ADDON_NAME}</h1>
-<p>Collections of movies and TV series: watch orders, by release or by the story's timeline, and lists of every title in a franchise. Find them under Discover → Collections, optionally pick a group from the genre filter, then select a collection. Each movie or season in it opens that title.</p>
+<p>Collections of movies and TV series, under Discover → Collections. <b>Connected Storyline</b> has watch orders for stories told across many titles; <b>Other</b> gathers titles that share a franchise, character or brand. Each catalog's genre filter starts on None, showing all of its collections. Each movie, season or show in a collection opens that title.</p>
 <p><a class="btn" href="${stremio}">Install in Stremio</a><a href="report.json">Build report</a></p>
 <p>Or paste this into Stremio's addon search:<br><code>${manifest}</code></p>
 ${list}
