@@ -46,7 +46,7 @@ export async function build({
   const configErrors = configProblems(showsConfig, moviesConfig, collections);
   if (configErrors.length) throw fix(configErrors);
   const shows = new Map(), movies = new Map();
-  const problems = [];
+  const problems = [], skipped = [];
   const lookup = async (key) => {
     const isMovie = Boolean(moviesConfig[key]);
     const { imdb, name, released } = isMovie ? moviesConfig[key] : showsConfig[key];
@@ -54,8 +54,11 @@ export async function build({
     // The config's `released` wins: Cinemeta has no date for some titles, and dates others
     // by a later release (a US or anniversary release of a Japanese film).
     const cm = found && { ...found, released: released ?? found.released };
-    if (!cm?.name) problems.push(`${key}: ${imdb} ("${name}") isn't on Cinemeta as a ${isMovie ? "movie" : "series"}`);
-    else if (!sameTitle(name, cm.name)) problems.push(`${key}: ${imdb} is "${cm.name}" on Cinemeta, not "${name}"`);
+    // A title Cinemeta doesn't have, or has under another name (a typo'd id, or a regional
+    // show it renamed), is left out rather than holding up the whole build. Cinemeta's
+    // servers don't always agree on these, so the build log and report.json list them.
+    if (!cm?.name) skipped.push(`${key}: ${imdb} ("${name}") isn't on Cinemeta as a ${isMovie ? "movie" : "series"}`);
+    else if (!sameTitle(name, cm.name)) skipped.push(`${key}: ${imdb} is "${cm.name}" on Cinemeta, not "${name}"`);
     else if (isMovie) movies.set(key, toMovie(imdb, cm));
     else shows.set(key, toShow(imdb, cm));
   };
@@ -72,13 +75,15 @@ export async function build({
   const ranks = popularityRanks([shows.values(), movies.values()]);
   const lists = [];
   const upcoming = {};
-  for (const c of collections) {
-    const name = displayName(c);
+  for (const config of collections) {
+    const name = displayName(config);
+    const c = { ...config, entries: config.entries.filter(([k]) => shows.has(k) || movies.has(k)) };
+    if (!c.entries.length) { problems.push(`${name}: none of its titles are on Cinemeta`); continue; }
     const expanded = expandEntries(c, shows, movies, now);
     problems.push(...expanded.problems);
     if (expanded.upcoming.length) upcoming[name] = expanded.upcoming;
     const entries = arrange(expanded.entries, c.order, c.first);
-    lists.push({ c, name, entries, popularity: collectionPopularity(entries, ranks) });
+    lists.push({ c: config, name, entries, popularity: collectionPopularity(entries, ranks) });
   }
   // Sorting keeps the config's order between equals, so a release order stays ahead of its timeline.
   lists.sort((a, b) => b.popularity - a.popularity);
@@ -95,7 +100,7 @@ export async function build({
 
   // Genre chips link to Discover, which needs the URL the addon is installed from.
   const manifestUrl = siteUrl ? `${siteUrl.replace(/\/$/, "")}/manifest.json` : undefined;
-  const report = { builtAt: now, catalogs: {}, upcoming };
+  const report = { builtAt: now, catalogs: {}, upcoming, skipped: skipped.sort() };
   const previews = new Map();
   for (const { c, name, entries } of lists) {
     previews.set(c, toCollectionPreview(c, name, entries, manifestUrl));
@@ -129,6 +134,7 @@ export async function build({
   report.series = shows.size;
   report.movies = movies.size;
   await writeJson("report.json", report);
+  for (const m of skipped) log(`Skipped ${m}`);
   log(`Done: ${collections.length} collections, ${movies.size} movies, ${shows.size} series.`);
   return report;
 }

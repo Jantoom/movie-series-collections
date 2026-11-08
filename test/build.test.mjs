@@ -97,10 +97,16 @@ test("builds Connected Storyline and Other, each with a genre filter", async () 
   assert.ok(existsSync(join(outDir, "index.html")));
 });
 
-test("refuses to publish when an id points at another title or a season is missing", async () => {
+test("leaves out titles Cinemeta lacks or has under another name, and refuses a missing season", async () => {
   const outDir = await mkdtemp(join(tmpdir(), "movie-series-collections-"));
-  const { fetchImpl } = fakeFetch({ ...cinemetaData, movie: { ...cinemetaData.movie, tt5: { name: "Box 21" } } });
-  await assert.rejects(build(opts(outDir, fetchImpl)), /iron-man: tt5 is "Box 21" on Cinemeta, not "Iron Man"/);
+  const { tt1, ...series } = cinemetaData.series;
+  const { fetchImpl } = fakeFetch({ series, movie: { ...cinemetaData.movie, tt5: { name: "Box 21" } } });
+  const report = await build(opts(outDir, fetchImpl));
+  assert.deepEqual(report.skipped, ['iron-man: tt5 is "Box 21" on Cinemeta, not "Iron Man"', `loki: tt1 ("Loki") isn't on Cinemeta as a series`]);
+  const marvel = (await read(outDir, "catalog/collections/connected.json")).metas.find((m) => m.id === "mscol-marvel");
+  assert.deepEqual(urls(marvel), ["series/tt2?season=1", "series/tt2?season=2", "series/tt3?season=1"], "the rest of the collection still builds");
+  const allGone = [{ genres: ["G"], name: "Gone", entries: [["loki"]] }];
+  await assert.rejects(build(opts(outDir, fetchImpl, allGone)), /Gone: none of its titles are on Cinemeta/);
 
   const { fetchImpl: ok } = fakeFetch();
   const missing = [{ genres: ["Superhero"], name: "Marvel", order: "release", entries: [["daredevil", 9]] }];

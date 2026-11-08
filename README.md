@@ -45,9 +45,11 @@ On each Stremio client you care about (desktop, web, Android TV, mobile):
 
 `collections.config.mjs` has a `shows` table and a `movies` table (a short key, IMDb id and title each) and the `collections`, which list entries by key. The build looks every title up on [Cinemeta](https://v3-cinemeta.strem.io), Stremio's own metadata addon, for its poster, description, release date and seasons (episode count, premiere and finale dates).
 
+A title Cinemeta doesn't have, or has under a different name from the config's `name` (a typo'd id, or a regional show it renamed), is left out of that build. The build log and `report.json` list them under `skipped`. Cinemeta's servers don't always agree on these, so one show can't hold up the rest.
+
 The build fails, and the last good deployment stays up, when:
 
-- an IMDb id is missing from Cinemeta, or its title there doesn't match the `name` in the config;
+- none of a collection's titles are on Cinemeta;
 - a collection asks for a season Cinemeta doesn't have, a key in neither table, or a season of a movie;
 - an Other collection asks for a single season (Other collections take whole shows);
 - two collections end up with the same name, a collection has no genres, or a name or genre uses characters it can't.
