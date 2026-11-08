@@ -8,8 +8,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { shows as defaultShows, movies as defaultMovies, collections as defaultCollections } from "../collections.config.mjs";
 import {
-  CATALOGS, TYPE, arrange, buildManifest, catalogPaths, catalogsOf, collectionScore, configProblems, displayName, entryStreams,
-  expandEntries, genreNames, genresOf, idOf, sameTitle, titleScore, toCollectionMeta, toCollectionPreview, toMovie, toShow,
+  ALL_GENRES, CATALOGS, TYPE, arrange, buildManifest, catalogPaths, catalogsOf, collectionScore, configProblems, displayName, entryStreams,
+  expandEntries, genreNames, genresOf, idOf, orderOf, sameTitle, titleScore, toCollectionMeta, toCollectionPreview, toMovie, toShow,
   withFranchiseCopies,
 } from "../src/lib.mjs";
 import { installPage } from "../src/install-page.mjs";
@@ -82,7 +82,8 @@ export async function build({
     // show it renamed), is left out rather than holding up the whole build. Cinemeta's
     // servers don't always agree on these, so the build log and report.json list them.
     if (!cm?.name) skipped.push(`${key}: ${imdb} ("${name}") isn't on Cinemeta as a ${isMovie ? "movie" : "series"}`);
-    else if (!sameTitle(name, cm.name)) skipped.push(`${key}: ${imdb} is "${cm.name}" on Cinemeta, not "${name}"`);
+    // Cinemeta sometimes has the English name already, which is as good a match.
+    else if (!sameTitle(name, cm.name) && !sameTitle(title, cm.name)) skipped.push(`${key}: ${imdb} is "${cm.name}" on Cinemeta, not "${name}"`);
     else if (isMovie) movies.set(key, toMovie(imdb, { ...cm, name: title ?? cm.name }));
     else shows.set(key, toShow(imdb, { ...cm, name: title ?? cm.name }));
   };
@@ -98,7 +99,8 @@ export async function build({
   // ---- 2. Put each collection's entries in order, and the best-loved first ----
   const titles = [...shows.values(), ...movies.values()];
   const ratings = await loadRatings(new Set(titles.map((t) => t.imdb)));
-  const scores = new Map(titles.map((t) => [t.imdb, titleScore(ratings.get(t.imdb) ?? { rating: t.rating })]));
+  const popularity = new Map(titles.map((t) => [t.imdb, ratings.get(t.imdb) ?? { rating: t.rating }]));
+  const scores = new Map(titles.map((t) => [t.imdb, titleScore(popularity.get(t.imdb))]));
   const lists = [];
   const upcoming = {};
   for (const config of collections) {
@@ -109,7 +111,7 @@ export async function build({
     problems.push(...expanded.problems);
     // A Franchise copy (it has its own id) repeats its watch order's upcoming titles.
     if (expanded.upcoming.length && !config.id) upcoming[name] = expanded.upcoming;
-    const entries = arrange(expanded.entries, c.order);
+    const entries = arrange(expanded.entries, orderOf(c), popularity);
     lists.push({ c: config, name, entries, score: collectionScore(entries, scores) });
   }
   // Sorting keeps the config's order between equals, so a release order stays ahead of its timeline.
@@ -138,8 +140,9 @@ export async function build({
   }
   for (const catalog of CATALOGS) {
     const members = lists.filter(({ c }) => catalogsOf(c).includes(catalog.id));
-    // No genre ("None"): all of the catalog's collections. Also its home-screen row.
-    for (const { rel, metas } of catalogPaths(catalog.id, undefined, members.map(({ c }) => previews.get(c)))) {
+    // "All", and no genre at all: all of the catalog's collections.
+    const all = members.map(({ c }) => previews.get(c));
+    for (const { rel, metas } of [...catalogPaths(catalog.id, undefined, all), ...catalogPaths(catalog.id, ALL_GENRES, all)]) {
       await writeJson(rel, { metas });
     }
     for (const genre of genreNames(collections, catalog.id)) {
@@ -170,7 +173,7 @@ function sitePage(siteUrl, manifest, lists, totals) {
   const base = siteUrl.replace(/\/$/, "");
   const groups = manifest.catalogs.map((catalog) => {
     const members = lists.filter(({ c }) => catalogsOf(c).includes(catalog.id));
-    const genres = catalog.extra.find((e) => e.name === "genre").options;
+    const genres = genreNames(lists.map(({ c }) => c), catalog.id);
     return {
       title: catalog.name,
       detail: `${members.length} collections`,
@@ -190,7 +193,7 @@ function sitePage(siteUrl, manifest, lists, totals) {
       { value: totals.series, label: "series" },
     ],
     groups,
-    about: `<p>Find them under <b>Discover</b> → <b>Collections</b>. <b>Storyline</b> has watch orders for stories told across many titles, by release or by the story's timeline. <b>Franchise</b>, <b>Person</b> and <b>Studio</b> gather the titles of a franchise, a director or personality, or a studio, newest first, and <b>Other</b> has the rest. Each movie, season or show in a collection opens that title.</p>
+    about: `<p>Find them under <b>Discover</b> → <b>Collections</b>. <b>Storyline</b> has watch orders for stories told across many titles, by release or by the story's timeline. <b>Franchise</b>, <b>Person</b> and <b>Studio</b> gather the titles of a franchise, a director or personality, or a studio, the most watched first (a big watch order's copy in Franchise keeps its order), and <b>Other</b> has the rest. Each movie, season or show in a collection opens that title.</p>
 <p>This addon has no streams of its own. Titles play through whatever stream addons you already have installed.</p>`,
     links: [{ label: "Build report", href: "report.json" }],
   });

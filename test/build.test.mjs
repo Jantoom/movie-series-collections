@@ -75,7 +75,7 @@ test("builds the catalogs, each with a genre filter, best-loved collections firs
   assert.deepEqual((await read(outDir, "catalog/collections/storyline/genre=Sci-Fi.json")).metas.map((m) => m.id), ["mscol-trek"]);
   const franchise = await read(outDir, "catalog/collections/franchise.json");
   assert.deepEqual(franchise.metas.map((m) => [m.id, m.name]), [["mscol-franchise-marvel", "Marvel"]], "a release order over 3 titles gets a Franchise copy");
-  assert.deepEqual(urls(franchise.metas[0], "Titles"), ["series/tt3", "series/tt1", "series/tt2", "movie/tt5"], "its titles once each, newest first");
+  assert.deepEqual(urls(franchise.metas[0], "Titles"), ["movie/tt5", "series/tt2", "series/tt1", "series/tt3"], "its titles once each, in the watch order's order");
   assert.deepEqual((await read(outDir, "catalog/collections/person.json")).metas, []);
   assert.deepEqual((await read(outDir, "catalog/collections/other/genre=Crime.json")).metas.map((m) => m.id), ["mscol-every-daredevil-series"]);
   assert.ok(!existsSync(join(outDir, "catalog/collections/other/genre=Sci-Fi.json")), "a catalog only gets the genres it uses");
@@ -86,7 +86,7 @@ test("builds the catalogs, each with a genre filter, best-loved collections firs
   assert.equal(timeline.name, "Marvel (Timeline)");
   assert.deepEqual(release.links.filter((l) => l.category === "Contents").map((l) => l.name), ["1 Movie", "3 Series", "4 Seasons"]);
   assert.deepEqual(urls(trek), ["series/tt4?season=1", "movie/tt7"], "the config's date wins over Cinemeta's for The Animatrix");
-  assert.deepEqual(urls(other.metas[0], "Titles"), ["series/tt3", "series/tt2"], "a list goes newest first");
+  assert.deepEqual(urls(other.metas[0], "Titles"), ["series/tt2", "series/tt3"], "a list goes most watched first");
   assert.equal(trek.links.find((l) => l.category === "Watch order").name, "Star Trek: The Original Series S1", "the config's title replaces Cinemeta's name");
   assert.deepEqual(report.upcoming.Marvel, ["Avengers: Doomsday"]);
   assert.deepEqual(report.upcoming["Every Daredevil Series"], ["Daredevil: Born Again season 2"]);
@@ -100,12 +100,13 @@ test("builds the catalogs, each with a genre filter, best-loved collections firs
 
   const manifest = await read(outDir, "manifest.json");
   assert.deepEqual(manifest.catalogs.map((c) => [c.id, c.genres]), [
-    ["storyline", ["Action", "Sci-Fi", "Superhero"]],
-    ["franchise", ["Action", "Superhero"]],
-    ["person", []],
-    ["studio", []],
-    ["other", ["Crime", "Superhero"]],
+    ["storyline", ["All", "Action", "Sci-Fi", "Superhero"]],
+    ["franchise", ["All", "Action", "Superhero"]],
+    ["person", ["All"]],
+    ["studio", ["All"]],
+    ["other", ["All", "Crime", "Superhero"]],
   ]);
+  assert.deepEqual((await read(outDir, "catalog/collections/storyline/genre=All.json")).metas, connected.metas, "All lists every collection");
   assert.deepEqual(Object.keys(report.catalogs), ["Storyline", "Franchise", "Person", "Studio", "Other"]);
   assert.equal(report.movies, 3);
   assert.ok(existsSync(join(outDir, "index.html")));

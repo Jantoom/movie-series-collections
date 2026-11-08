@@ -6,11 +6,12 @@
 //     Wars") sorts by release date; a timeline ("Star Wars (Timeline)") keeps the story's
 //     order.
 //   - "Franchise", "Person", "Studio" and "Other": titles that share a franchise, a
-//     director or personality, a studio, or something else, each listed once, newest
-//     first. A collection can be in several of these. Big watch orders also get a copy
-//     in Franchise, listing their titles.
-// Each catalog's genre filter starts on "None", listing all of its collections, and each
-// genre (Action, Sci-Fi, Reality-TV, …) narrows it.
+//     director or personality, a studio, or something else, each listed once, most
+//     popular first. A collection can be in several of these. Big watch orders also get
+//     a copy in Franchise, listing their titles in the watch order's order.
+// Each catalog's genre filter starts on "All", listing all of its collections, and each
+// genre (Action, Sci-Fi, Reality-TV, …) narrows it. The genre is required, which keeps
+// the catalogs off the home screen: they're only in Discover.
 //
 // Each entry is a link: stremio:///detail/series/<imdb>?season=<n> for a season,
 // stremio:///detail/series/<imdb> for a whole show, or stremio:///detail/movie/<imdb>.
@@ -38,6 +39,9 @@ export const CATALOGS = [
 export const LIST_CATALOGS = ["franchise", "person", "studio", "other"];
 /** Watch orders go in Storyline; everything else where its `catalogs` say, or Other. */
 export const catalogsOf = (c) => (c.order ? ["storyline"] : c.catalogs ?? ["other"]);
+
+/** The genre filter's first option, listing all of a catalog's collections. */
+export const ALL_GENRES = "All";
 
 // Link chip headings on the side panel and detail page.
 export const GENRES_CATEGORY = "Genres";       // the collection's genres
@@ -74,6 +78,13 @@ export function collectionDescription(c) {
 
 export const genresOf = (c) => c.genres ?? [];
 
+/**
+ * An "Every …" collection gains titles for as long as its person, studio or franchise
+ * keeps making them, so its years stay open ("1995–") unless it's `ended` (the studio
+ * closed, the person died or retired).
+ */
+export const isOpenEnded = (c) => /^Every /.test(c.name) && !c.ended;
+
 /** The genres in one catalog's filter, alphabetically. */
 export const genreNames = (collections, catalogId) =>
   [...new Set(collections.filter((c) => catalogsOf(c).includes(catalogId)).flatMap(genresOf))].sort();
@@ -99,6 +110,7 @@ export function withFranchiseCopies(collections) {
       id: `${ID_PREFIX}franchise-${collectionId(name).slice(ID_PREFIX.length)}`,
       genres: c.genres,
       catalogs: ["franchise"],
+      copyOf: c.name,
       description: c.franchise?.description ?? c.description,
       entries: keys.map((k) => [k]),
     });
@@ -122,12 +134,14 @@ export function configProblems(shows, movies, collections) {
     if (ids.has(idOf(c))) problems.push(`collection "${displayName(c)}" is used twice`);
     ids.add(idOf(c));
     if (!genresOf(c).length) problems.push(`${label} has no genres`);
+    if (genresOf(c).includes(ALL_GENRES)) problems.push(`${label}: "${ALL_GENRES}" is the filter's own option, not a genre`);
     for (const g of genresOf(c)) if (!PLAIN.test(g)) problems.push(`${label}: genre "${g}" can only use letters, digits, spaces, ' & and -`);
     if (c.order !== undefined && !ORDERS.includes(c.order)) problems.push(`${label}: order must be "release", "timeline" or left out, not "${c.order}"`);
     if (c.order && c.catalogs) problems.push(`${label}: a watch order is always in Storyline, so it takes no "catalogs"`);
     if (!c.order && c.catalogs !== undefined && (!c.catalogs.length || c.catalogs.some((id) => !LIST_CATALOGS.includes(id)))) {
       problems.push(`${label}: catalogs must be some of ${LIST_CATALOGS.join(", ")}`);
     }
+    if (c.ended !== undefined && !/^Every /.test(c.name ?? "")) problems.push(`${label}: only an "Every …" collection's years stay open, so it takes no "ended"`);
     if (c.franchise !== undefined && c.order !== "release") problems.push(`${label}: only a release-order watch order has a Franchise copy, so it takes no "franchise"`);
     for (const [key] of c.franchise?.extra ?? []) known(`${label} (franchise)`, key);
     if (!c.entries?.length) { problems.push(`${label} has no entries`); continue; }
@@ -140,12 +154,6 @@ export function configProblems(shows, movies, collections) {
     }
   }
   return problems;
-}
-
-/** The first sentence of a description, for an entry's short blurb. */
-export function firstSentence(text) {
-  const s = (text ?? "").trim().split(/(?<=[.!?])\s+/)[0];
-  return s || undefined;
 }
 
 // Cinemeta stands in 1970-01-01 (a zero timestamp) for dates it doesn't have.
@@ -235,18 +243,21 @@ export function expandEntries(collection, shows, movies, now = new Date().toISOS
   return { entries, problems, upcoming };
 }
 
+/** How a collection's entries are arranged: a Franchise copy keeps its watch order's. */
+export const orderOf = (c) => c.order ?? (c.copyOf ? "release" : undefined);
+
 /**
  * "timeline" keeps the config's order and "release" sorts by date. A list (no order)
- * goes newest title first, by each title's first release, so its poster is its newest
- * title's and the latest additions are on top.
+ * puts its most popular titles first: the most IMDb votes, so the titles the most people
+ * have seen, then by rating for titles IMDb has no vote count for. Its poster is then its
+ * best-known title's. `popularity` maps IMDb ids to { votes, rating }.
  */
-export function arrange(entries, order) {
+export function arrange(entries, order, popularity = new Map()) {
   if (order === "timeline") return entries;
   const byDate = [...entries].sort((a, b) => a.date.localeCompare(b.date));
   if (order === "release") return byDate;
-  const firstOut = new Map();
-  for (const e of byDate) if (!firstOut.has(titleOf(e).imdb)) firstOut.set(titleOf(e).imdb, e.date);
-  return byDate.sort((a, b) => firstOut.get(titleOf(b).imdb).localeCompare(firstOut.get(titleOf(a).imdb)));
+  const pop = (e) => popularity.get(titleOf(e).imdb) ?? {};
+  return byDate.sort((a, b) => (pop(b).votes ?? -1) - (pop(a).votes ?? -1) || (pop(b).rating ?? 0) - (pop(a).rating ?? 0));
 }
 
 /**
@@ -274,34 +285,35 @@ const year = (date) => Number.parseInt(date, 10) || undefined;
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const span = (a, b) => (a === b || !b ? `${a}` : `${a}–${b}`);
 
+// An entry's blurb: the title's own description, then its details in brackets. The
+// entry's name is already beside it, so the blurb doesn't repeat it.
+const blurb = (description, details) => [description?.trim(), `(${details.filter(Boolean).join(", ")})`].filter(Boolean).join(" ");
+
 const movieItem = ({ movie }) => ({
   kind: "movie",
+  link: "Movie",
   title: movie.name,
   url: `stremio:///detail/movie/${movie.imdb}`,
   thumbnail: movie.background,
-  overview: [`${movie.name} (${year(movie.released)} movie).`, firstSentence(movie.description)].filter(Boolean).join(" "),
+  overview: blurb(movie.description, [[year(movie.released), "movie"].filter(Boolean).join(" ")]),
 });
 
 const showItem = ({ show }) => ({
   kind: "series",
+  link: "Series",
   title: show.name,
   url: `stremio:///detail/series/${show.imdb}`,
   thumbnail: show.background,
-  overview: [
-    `${show.name} (${[show.releaseInfo, show.seasons.size && plural(show.seasons.size, "season")].filter(Boolean).join(", ")}).`,
-    firstSentence(show.description),
-  ].filter(Boolean).join(" "),
+  overview: blurb(show.description, [show.releaseInfo ?? "series", show.seasons.size && plural(show.seasons.size, "season")]),
 });
 
 const seasonItem = ({ show, season, date }) => ({
   kind: "series",
+  link: "Season",
   title: `${show.name} S${season.number}`,
   url: `stremio:///detail/series/${show.imdb}?season=${season.number}`,
   thumbnail: show.background,
-  overview: [
-    `Season ${season.number} of ${show.name} (${span(year(date), year(season.finale))}, ${plural(season.episodes, "episode")}).`,
-    firstSentence(show.description),
-  ].filter(Boolean).join(" "),
+  overview: blurb(show.description, [`Season ${season.number}`, span(year(date), year(season.finale)), plural(season.episodes, "episode")]),
 });
 
 /**
@@ -343,13 +355,16 @@ function disambiguate(items, entries) {
   });
 }
 
-/** "2008–2026", first release to last, or "2008–" while a show in it is still running. */
-export function yearSpan(entries) {
+/**
+ * "2008–2026", first release to last, or "2008–" while a show in it is still running or
+ * more may come (`open`).
+ */
+export function yearSpan(entries, open = false) {
   const starts = entries.map((e) => year(e.date)).filter(Boolean);
   const ends = entries.map((e) => year(e.kind === "season" ? e.season.finale : e.date)).filter(Boolean);
   if (!starts.length) return undefined;
   const first = Math.min(...starts), last = Math.max(...ends, ...starts);
-  if (entries.some((e) => e.kind !== "movie" && e.show.ongoing)) return `${first}–`;
+  if (open || entries.some((e) => e.kind !== "movie" && e.show.ongoing)) return `${first}–`;
   return span(first, last);
 }
 
@@ -394,7 +409,7 @@ export function toCollectionPreview(collection, entries, manifestUrl) {
     name: displayName(collection),
     poster: collection.poster ?? art?.poster,
     background: collection.background ?? art?.background,
-    releaseInfo: yearSpan(entries),
+    releaseInfo: yearSpan(entries, isOpenEnded(collection)),
     description: collectionDescription(collection),
     links: [
       ...headerLinks(collection, entries, manifestUrl),
@@ -413,8 +428,8 @@ export function collectionVideos(collection, entries) {
   const seasons = [{ season: 1, tag: "", items }];
   const movies = items.filter((it) => it.kind === "movie"), series = items.filter((it) => it.kind === "series");
   if (movies.length && series.length) seasons.push({ season: 2, tag: "m", items: movies }, { season: 3, tag: "s", items: series });
-  return seasons.flatMap(({ season, tag, items: list }) => list.map(({ title, url, thumbnail, overview }, i) => ({
-    id: `${idOf(collection)}-${tag}${i + 1}`, season, episode: i + 1, title, url, thumbnail, overview,
+  return seasons.flatMap(({ season, tag, items: list }) => list.map(({ link, title, url, thumbnail, overview }, i) => ({
+    id: `${idOf(collection)}-${tag}${i + 1}`, season, episode: i + 1, link, title, url, thumbnail, overview,
   })));
 }
 
@@ -432,13 +447,16 @@ export function toCollectionMeta(collection, entries, manifestUrl) {
 }
 
 /**
- * Each episode's one stream: its link, as "Open …". Web follows it inside the app;
- * Stremio 5 desktop opens it in the system browser behind Stremio's warning page.
+ * Each episode's one stream: its link, named for what it opens ("Link to Movie", "Link to
+ * Series", "Link to Season"). Web follows it inside the app; Stremio 5 desktop opens it in
+ * the system browser behind Stremio's warning page. Stremio 5 shows `description`;
+ * older clients show `title`.
  */
+export const STREAM_NOTE = "Tap to watch";
 export function entryStreams(collection, entries) {
-  return collectionVideos(collection, entries).map(({ id, title, url }) => ({
+  return collectionVideos(collection, entries).map(({ id, link, url }) => ({
     id,
-    streams: [{ name: ADDON_NAME, title: `Open ${title}`, externalUrl: url }],
+    streams: [{ name: `Link to ${link}`, title: STREAM_NOTE, description: STREAM_NOTE, externalUrl: url }],
   }));
 }
 
@@ -462,7 +480,7 @@ export function valueSpellings(value) {
 
 /**
  * Every file for one catalog's genre, or for no genre at all (genre undefined: all of
- * the catalog's collections, which is also its home-screen row): each genre spelling,
+ * the catalog's collections, for clients that ask without one): each genre spelling,
  * each page of 100. Stremio sends extras in manifest order, so the next page of a genre
  * is "genre=X&skip=100".
  */
@@ -484,12 +502,12 @@ export function catalogPaths(catalogId, genre, metas) {
 }
 
 // Bump when the manifest changes so installed copies refresh.
-export function buildManifest(collections, version = "0.11.0") {
+export function buildManifest(collections, version = "0.12.0") {
   return {
     id: "community.movie-series-collections",
     version,
     name: ADDON_NAME,
-    description: "Collections of movies and TV series. Storyline has watch orders for stories told across many titles, by release or by the story's timeline; Franchise, Person and Studio gather the titles of a franchise, a director or personality, or a studio, newest first. Find them under Discover → Collections.",
+    description: "Collections of movies and TV series. Storyline has watch orders for stories told across many titles, by release or by the story's timeline; Franchise, Person and Studio gather the titles of a franchise, a director or personality, or a studio, most popular first. Find them under Discover → Collections.",
     resources: [
       "catalog",
       { name: "meta", types: [TYPE], idPrefixes: [ID_PREFIX] },
@@ -503,12 +521,13 @@ export function buildManifest(collections, version = "0.11.0") {
         type: TYPE,
         id,
         name,
-        // Not required, so the genre filter starts on "None", which lists all of the
-        // catalog's collections, and the catalog also gets a home-screen row.
-        extra: [{ name: "genre", options: genres }, { name: "skip" }],
+        // Required, so the catalog stays off the home screen. Discover opens it on the
+        // first option, "All", which lists all of the catalog's collections.
+        extra: [{ name: "genre", isRequired: true, options: [ALL_GENRES, ...genres] }, { name: "skip" }],
         // Older clients (Stremio desktop v4) read these instead of `extra`.
-        genres,
+        genres: [ALL_GENRES, ...genres],
         extraSupported: ["genre", "skip"],
+        extraRequired: ["genre"],
       };
     }),
     behaviorHints: { configurable: false, configurationRequired: false },

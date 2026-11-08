@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  CATALOGS, TIMELINE_NOTE, arrange, buildManifest, catalogPaths, catalogsOf, collectionDescription, collectionId, collectionScore,
-  collectionVideos, configProblems, displayName, entryStreams, expandEntries, firstSentence, genreLink, genreNames, idOf, listItems,
-  sameTitle, titleScore, toCollectionMeta, toCollectionPreview, toMovie, toShow, valueSpellings, withFranchiseCopies, yearSpan,
+  ALL_GENRES, CATALOGS, TIMELINE_NOTE, arrange, buildManifest, catalogPaths, catalogsOf, collectionDescription, collectionId, collectionScore,
+  collectionVideos, configProblems, displayName, entryStreams, expandEntries, genreLink, genreNames, idOf, listItems, orderOf,
+  isOpenEnded, sameTitle, titleScore, toCollectionMeta, toCollectionPreview, toMovie, toShow, valueSpellings, withFranchiseCopies, yearSpan,
 } from "../src/lib.mjs";
 
 const ep = (imdb, season, episode, released) => ({ id: `${imdb}:${season}:${episode}`, season, episode, released });
@@ -33,7 +33,9 @@ const movies = new Map([["iron-man", ironMan], ["doomsday", doomsday]]);
 const NOW = "2026-11-08T00:00:00.000Z";
 const MANIFEST = "https://example.test/addon/manifest.json";
 const label = (e) => (e.kind === "movie" ? e.movie.name : e.kind === "show" ? e.show.name : `${e.show.name} ${e.season.number}`);
-const arranged = (c) => arrange(expandEntries(c, shows, movies, NOW).entries, c.order);
+// IMDb votes and ratings: Iron Man the most watched, No Episodes without a vote count.
+const POPULARITY = new Map([["tt0371746", { votes: 1100000, rating: 7.9 }], ["tt9140554", { votes: 400000, rating: 8.2 }], ["tt9140560", { votes: 380000, rating: 7.9 }], ["tt0070000", { rating: 9 }]]);
+const arranged = (c) => arrange(expandEntries(c, shows, movies, NOW).entries, orderOf(c), POPULARITY);
 
 test("sameTitle tolerates punctuation but not a different title", () => {
   assert.ok(sameTitle("She-Hulk: Attorney at Law", "She Hulk: Attorney at Law"));
@@ -93,10 +95,11 @@ test("big release orders get a Franchise copy of their titles, with any extras",
     { name: "Reboots", genres: ["G"], order: "release", franchise: { name: "Every Reboot", extra: [["z"]], description: "All." }, entries: [["a"], ["b"], ["c"]] },
     { name: "Out", genres: ["G"], order: "release", franchise: false, entries: four },
   ]);
-  assert.deepEqual(out.slice(5).map((c) => [c.name, c.id, c.catalogs, c.description, c.entries]), [
-    ["Saga", "mscol-franchise-saga", ["franchise"], "D.", [["a"], ["b"], ["c"], ["d"]]],
-    ["Every Reboot", "mscol-franchise-every-reboot", ["franchise"], "All.", [["a"], ["b"], ["c"], ["z"]]],
-  ], "only release orders over 3 titles (extras count), each title once; timelines and opt-outs get none");
+  assert.deepEqual(out.slice(5).map((c) => [c.name, c.id, c.catalogs, c.description, c.entries, orderOf(c)]), [
+    ["Saga", "mscol-franchise-saga", ["franchise"], "D.", [["a"], ["b"], ["c"], ["d"]], "release"],
+    ["Every Reboot", "mscol-franchise-every-reboot", ["franchise"], "All.", [["a"], ["b"], ["c"], ["z"]], "release"],
+  ], "only release orders over 3 titles (extras count), each title once, in release order; timelines and opt-outs get none");
+  assert.equal(orderOf({ name: "L", entries: four }), undefined, "other lists have no order");
 });
 
 test("configProblems catches unknown titles, bad seasons, names, genres, catalogs and order", () => {
@@ -163,11 +166,13 @@ test("shows without episode dates or episodes still count once they've aired", (
   ]);
 });
 
-test("release order sorts by date, a timeline keeps the config's order, a list goes newest title first", () => {
+test("release order sorts by date, a timeline keeps the config's order, a list goes most watched first", () => {
   const { entries } = expandEntries({ name: "C", entries: [["loki", 2], ["wandavision", 1], ["iron-man"], ["loki", 1]] }, shows, movies, NOW);
   assert.deepEqual(arrange(entries, "release").map(label), ["Iron Man", "WandaVision 1", "Loki 1", "Loki 2"]);
   assert.deepEqual(arrange(entries, "timeline").map(label), ["Loki 2", "WandaVision 1", "Iron Man", "Loki 1"]);
-  assert.deepEqual(arrange(entries).map(label), ["Loki 1", "Loki 2", "WandaVision 1", "Iron Man"], "by each title's first release");
+  assert.deepEqual(arrange(entries, undefined, POPULARITY).map(label), ["Iron Man", "Loki 1", "Loki 2", "WandaVision 1"], "by IMDb votes");
+  const { entries: rated } = expandEntries({ name: "C", entries: [["wandavision"], ["no-episodes"], ["old-show"]] }, shows, movies, NOW);
+  assert.deepEqual(arrange(rated, undefined, POPULARITY).map(label), ["WandaVision 1", "No Episodes", "Old Show 1"], "then by rating where IMDb has no vote count");
 });
 
 test("a title scores its rating weighted by votes; a collection averages its five best", () => {
@@ -183,12 +188,6 @@ test("a title scores its rating weighted by votes; a collection averages its fiv
   assert.equal(collectionScore([..."abcdefg"].map((imdb) => ({ kind: "movie", movie: { imdb } })), many), 9, "a long tail doesn't drag down its five best");
 });
 
-test("firstSentence keeps an entry's blurb short", () => {
-  assert.equal(firstSentence("One thing. Another thing."), "One thing.");
-  assert.equal(firstSentence("No full stop"), "No full stop");
-  assert.equal(firstSentence(undefined), undefined);
-});
-
 test("a watch order lists each season and movie, each with a link and a blurb", () => {
   const c = { name: "C", order: "release", entries: [["loki"], ["iron-man"]] };
   const items = listItems(c, arranged(c));
@@ -197,32 +196,32 @@ test("a watch order lists each season and movie, each with a link and a blurb", 
     ["series", "Loki S1", "stremio:///detail/series/tt9140554?season=1"],
     ["series", "Loki S2", "stremio:///detail/series/tt9140554?season=2"],
   ]);
-  assert.equal(items[0].overview, "Iron Man (2008 movie). A billionaire builds a suit.");
-  assert.equal(items[1].overview, "Season 1 of Loki (2021, 2 episodes). The god of mischief steps out of his brother's shadow.");
+  assert.equal(items[0].overview, "A billionaire builds a suit. Then more. (2008 movie)");
+  assert.equal(items[1].overview, "The god of mischief steps out of his brother's shadow. More follows. (Season 1, 2021, 2 episodes)");
 });
 
-test("a list has each show and movie once, newest first, opening the title", () => {
+test("a list has each show and movie once, most watched first, opening the title", () => {
   const c = { name: "C", entries: [["loki"], ["wandavision"], ["iron-man"], ["no-episodes"]] };
   const items = listItems(c, arranged(c));
   assert.deepEqual(items.map(({ title, url }) => [title, url]), [
+    ["Iron Man", "stremio:///detail/movie/tt0371746"],
     ["Loki", "stremio:///detail/series/tt9140554"],
     ["WandaVision", "stremio:///detail/series/tt9140560"],
-    ["Iron Man", "stremio:///detail/movie/tt0371746"],
     ["No Episodes", "stremio:///detail/series/tt0070000"],
   ]);
-  assert.equal(items[0].overview, "Loki (2021–2023, 3 seasons). The god of mischief steps out of his brother's shadow.");
-  assert.equal(items[3].overview, "No Episodes (1999–2004).");
+  assert.equal(items[1].overview, "The god of mischief steps out of his brother's shadow. More follows. (2021–2023, 3 seasons)");
+  assert.equal(items[3].overview, "(1999–2004)", "no description: just the details");
 });
 
 test("titles that clash get their country, or just their year when they come from one or two countries", () => {
   const island = (imdb, country, year) => toShow(imdb, { name: "Love Island", country, releaseInfo: year, videos: [ep(imdb, 1, 1, `${year}-06-01T00:00:00.000Z`)] });
   const s = new Map([["uk", island("tt1", "United Kingdom", "2015")], ["fr", island("tt2", "France", "2020")], ["uk2", island("tt3", "United Kingdom", "2005")], ["loki", loki]]);
   const titles = (entries, from = s) => { const c = { name: "C", entries }; return listItems(c, arrange(expandEntries(c, from, movies, NOW).entries)).map((i) => i.title); };
-  assert.deepEqual(titles([["uk"], ["fr"], ["uk2"], ["loki"]]), ["Loki", "Love Island (2020)", "Love Island (2015)", "Love Island (2005)"]);
-  assert.deepEqual(titles([["uk"], ["fr"]]), ["Love Island (France)", "Love Island (UK)"]);
+  assert.deepEqual(titles([["uk"], ["fr"], ["uk2"], ["loki"]]), ["Love Island (2005)", "Love Island (2015)", "Love Island (2020)", "Loki"]);
+  assert.deepEqual(titles([["uk"], ["fr"]]), ["Love Island (UK)", "Love Island (France)"]);
   const s3 = new Map([...s, ["de", island("tt4", "Germany", "2017")], ["fr2", island("tt5", "France", "2021")]]);
   assert.deepEqual(titles([["uk"], ["fr"], ["de"], ["fr2"]], s3),
-    ["Love Island (France 2021)", "Love Island (France 2020)", "Love Island (Germany)", "Love Island (UK)"], "three or more countries: countries, with years where one repeats");
+    ["Love Island (UK)", "Love Island (Germany)", "Love Island (France 2020)", "Love Island (France 2021)"], "three or more countries: countries, with years where one repeats");
 });
 
 test("yearSpan runs from the first release to the last finale, open while a show runs", () => {
@@ -232,7 +231,11 @@ test("yearSpan runs from the first release to the last finale, open while a show
   assert.equal(yearSpan([m("2008-05-02"), s("2021-01-15", "2021-03-05")]), "2008–2021");
   assert.equal(yearSpan([m("2021-07-09")]), "2021");
   assert.equal(yearSpan([m("2008-05-02"), s("2025-03-04", "2025-04-15", true)]), "2008–");
+  assert.equal(yearSpan([m("2008-05-02"), m("2021-07-09")], true), "2008–", "open: more may come");
   assert.equal(yearSpan([]), undefined);
+  assert.ok(isOpenEnded({ name: "Every Pixar Movie" }));
+  assert.ok(!isOpenEnded({ name: "Every Blue Sky Movie", ended: true }), "the studio closed");
+  assert.ok(!isOpenEnded({ name: "James Bond" }), "only Every collections");
 });
 
 test("a collection's poster carries its genres, contents (movies first) and list", () => {
@@ -260,7 +263,7 @@ test("a collection's poster carries its genres, contents (movies first) and list
   assert.ok(!toCollectionPreview(c, arranged(c)).links.some((l) => l.category === "Genres"), "no genre chips without the addon's URL");
 });
 
-test("a list's poster is its newest title's, and its genres open its first catalog", () => {
+test("a list's poster is its most watched title's, and its genres open its first catalog", () => {
   const c = { genres: ["Superhero"], name: "Every Marvel Series", catalogs: ["franchise", "studio"], entries: [["wandavision"], ["loki"]] };
   const p = toCollectionPreview(c, arranged(c), MANIFEST);
   assert.equal(p.name, "Every Marvel Series");
@@ -283,14 +286,17 @@ test("the detail page has everything in season 1, then movies and series apart; 
     ["mscol-c-timeline-m1", "Iron Man", 2, 1],
     ["mscol-c-timeline-s1", "Loki S1", 3, 1],
   ]);
-  assert.match(meta.videos[0].overview, /^Season 1 of Loki/);
-  assert.deepEqual(entryStreams(c, arranged(c)).map(({ id, streams }) => [id, streams[0].title, streams[0].externalUrl]), [
-    ["mscol-c-timeline-1", "Open Loki S1", "stremio:///detail/series/tt9140554?season=1"],
-    ["mscol-c-timeline-2", "Open Iron Man", "stremio:///detail/movie/tt0371746"],
-    ["mscol-c-timeline-m1", "Open Iron Man", "stremio:///detail/movie/tt0371746"],
-    ["mscol-c-timeline-s1", "Open Loki S1", "stremio:///detail/series/tt9140554?season=1"],
+  assert.match(meta.videos[0].overview, /^The god of mischief/);
+  assert.deepEqual(entryStreams(c, arranged(c)).map(({ id, streams }) => [id, streams[0].name, streams[0].externalUrl]), [
+    ["mscol-c-timeline-1", "Link to Season", "stremio:///detail/series/tt9140554?season=1"],
+    ["mscol-c-timeline-2", "Link to Movie", "stremio:///detail/movie/tt0371746"],
+    ["mscol-c-timeline-m1", "Link to Movie", "stremio:///detail/movie/tt0371746"],
+    ["mscol-c-timeline-s1", "Link to Season", "stremio:///detail/series/tt9140554?season=1"],
   ]);
-  assert.equal(entryStreams(c, arranged(c))[0].streams[0].name, "Movie & Series Collections");
+  const [stream] = entryStreams(c, arranged(c))[0].streams;
+  assert.deepEqual([stream.title, stream.description], ["Tap to watch", "Tap to watch"]);
+  const list = { genres: ["G"], name: "L", entries: [["loki"]] };
+  assert.equal(entryStreams(list, arranged(list))[0].streams[0].name, "Link to Series", "a whole show");
   const seriesOnly = { genres: ["G"], name: "S", entries: [["loki"], ["wandavision"]] };
   assert.deepEqual(collectionVideos(seriesOnly, arranged(seriesOnly)).map((v) => v.season), [1, 1], "one kind of title: just season 1");
 });
@@ -300,6 +306,7 @@ test("genreLink opens one of this addon's catalogs, filtered to the genre", () =
 });
 
 test("catalogPaths writes every genre spelling, pages of 100, and the no-genre list", () => {
+  assert.deepEqual(catalogPaths("other", ALL_GENRES, []).map((f) => f.rel), ["catalog/collections/other/genre=All.json"]);
   assert.deepEqual(valueSpellings("Sci-Fi"), ["Sci-Fi"]);
   assert.deepEqual(valueSpellings("Crime & Drama"), ["Crime & Drama", "Crime+&+Drama", "Crime%20%26%20Drama", "Crime+%26+Drama"]);
   assert.ok(valueSpellings("Kids' Shows").includes("Kids%27%20Shows"), "strict encoding for ' ( ) too");
@@ -326,11 +333,12 @@ test("manifest has the five catalogs, each with its own genres", () => {
     { name: "stream", types: ["collections"], idPrefixes: ["mscol-"] },
   ]);
   assert.deepEqual(m.catalogs.map((c) => [c.type, c.id, c.name, c.genres]), [
-    ["collections", "storyline", "Storyline", ["Sci-Fi"]],
-    ["collections", "franchise", "Franchise", []],
-    ["collections", "person", "Person", ["Drama"]],
-    ["collections", "studio", "Studio", []],
-    ["collections", "other", "Other", ["Reality-TV", "Romance"]],
+    ["collections", "storyline", "Storyline", ["All", "Sci-Fi"]],
+    ["collections", "franchise", "Franchise", ["All"]],
+    ["collections", "person", "Person", ["All", "Drama"]],
+    ["collections", "studio", "Studio", ["All"]],
+    ["collections", "other", "Other", ["All", "Reality-TV", "Romance"]],
   ]);
-  assert.deepEqual(m.catalogs[0].extra, [{ name: "genre", options: ["Sci-Fi"] }, { name: "skip" }], "not required, so it starts on None");
+  assert.deepEqual(m.catalogs[0].extra, [{ name: "genre", isRequired: true, options: ["All", "Sci-Fi"] }, { name: "skip" }], "required, so it stays off the home screen and opens on All");
+  assert.deepEqual(m.catalogs[0].extraRequired, ["genre"]);
 });

@@ -8,16 +8,16 @@ The collections in `collections.config.mjs` are a starting set: replace or add t
 
 1. The addon has its own Discover tab, **Collections**, next to Movies and Series, with five catalogs:
    - **Storyline:** watch orders, whose entries tell one story. Any run of three or more connected titles gets one, and so do big pairs (The Batman and The Penguin). Titles count as connected only if they share continuity: sequels, prequels and spin-offs, or a reboot that reuses earlier titles 1:1, through the same performances or the same events retold closely (the Evangelion Rebuild films, Halloween's 2018 trilogy with Jamie Lee Curtis). Remakes that reinterpret the story, like Rob Zombie's Halloween, are left out. Most are in release order under their plain name ("Star Wars"); a few follow the story's timeline, named "… (Timeline)".
-   - **Franchise:** everything in a franchise, game, character, brand or show with many regional versions ("Every Marvel Movie", "Marvel Cinematic Universe (Multiverse)", "James Bond", "Love Island"). Every Storyline watch order with more than three titles also appears here as a list, along with the remakes it leaves out.
+   - **Franchise:** everything in a franchise, game, character, brand or show with many regional versions ("Every Marvel Movie", "Marvel Cinematic Universe (Multiverse)", "James Bond", "Love Island"). Every Storyline watch order with more than three titles also appears here as a list, in the same order, along with the remakes it leaves out (in release order among them). That includes the Marvel Cinematic Universe and its Unofficial version.
    - **Person:** everything by a director or personality ("Every Christopher Nolan Movie", "Every Gordon Ramsay Series").
    - **Studio:** everything from a studio ("Every Pixar Movie", "Every Studio Ghibli Movie").
-   - **Other:** lists that fit none of these.
-   Lists have each title once, newest first, so a collection's poster is its newest title's. A collection can be in more than one catalog. Regional versions that share a title are labelled by country, or by year when that doesn't tell them apart, and local-language titles show their English names ("Big Brother Spain").
+   - **Other:** lists that fit none of these ("Every Christmas Movie", "Every Halloween Movie", "Every Thanksgiving Movie", "Every Best Picture Winner").
+   Lists have each title once, the most watched first: by the number of IMDb votes, so by how many people have seen it rather than how well it rated (titles IMDb has no vote count for go after, by rating). A collection's poster is its most watched title's. A Franchise copy of a watch order keeps the watch order's order instead. A collection can be in more than one catalog. An "Every …" collection's years stay open ("1995–"), since more titles may come, unless its studio has closed or its person has died or retired. Regional versions that share a title are labelled by country, or by year when that doesn't tell them apart, and local-language titles show their English names ("Big Brother Spain").
    Each catalog lists its best-loved collections first: the average score of each collection's five best titles, where a title's score is its IMDb rating weighted by the log of its vote count, so a well-loved hit beats both a little-seen favourite and a widely seen flop. The ratings come from [IMDb's public dataset](https://developer.imdb.com/non-commercial-datasets/), downloaded at each build.
-2. Each catalog's genre filter starts on **None**, which lists all of its collections, and each genre (Action, Sci-Fi, Reality-TV, Anime, …) narrows it. Each catalog only offers the genres its collections use. Every catalog also gets a home-screen row.
+2. Each catalog's genre filter starts on **All**, which lists all of its collections, and each genre (Action, Sci-Fi, Reality-TV, Anime, …) narrows it. Each catalog only offers the genres its collections use. The genre is required, which keeps the catalogs off the home screen: they're only in Discover.
 3. Each poster is a **collection**, with its years ("2008–" while a show in it is still running). Selecting one shows its **Genres** (each opening that genre in the same catalog), its size under **Contents** ("41 Movies", "24 Series", "36 Seasons"), then its entries under **Watch order** or **Titles**.
 4. Clicking an entry opens it inside the app: a season opens its show on that season's tab, a show opens the show, and a movie opens the movie. Streams come from your other addons such as Torrentio, and watch progress stays on the real title.
-5. The detail page also lists the entries in its episode column. Season 1 has everything; a collection with both movies and series adds season 2 with just its movies and season 3 with just its series. (Stremio has no per-season descriptions, so the seasons only have numbers.) Selecting one shows a short blurb about it, and its one stream, **Open …**, links to the title. That stream opens inside the app on web, but Stremio 5 desktop sends it to the system browser.
+5. The detail page also lists the entries in its episode column. Season 1 has everything; a collection with both movies and series adds season 2 with just its movies and season 3 with just its series. (Stremio has no per-season descriptions, so the seasons only have numbers.) Selecting one shows its description from Cinemeta, ending with its year, or its seasons or episodes, in brackets ("(1988 movie)", "(Season 1, 2008–2009, 22 episodes)"). Its one stream, **Link to Movie**, **Link to Series** or **Link to Season** with "Tap to watch", links to the title. That stream opens inside the app on web, but Stremio 5 desktop sends it to the system browser.
 
 ### Timelines
 
@@ -37,13 +37,13 @@ Only stories that jump around a lot get one: Star Wars, Middle-earth and The Con
 
 On each Stremio client you care about (desktop, web, Android TV, mobile):
 
-- [ ] Discover has a **Collections** tab with **Storyline**, **Franchise**, **Person**, **Studio** and **Other**, each starting on **None** with all of its collections.
+- [ ] Discover has a **Collections** tab with **Storyline**, **Franchise**, **Person**, **Studio** and **Other**, each starting on **All** with all of its collections, and none of them on the home screen.
 - [ ] Each catalog's genres narrow it, and it only lists the genres it uses.
 - [ ] Selecting **Marvel Cinematic Universe** shows its genres, then "41 Movies", "24 Series", "36 Seasons", then Iron Man first under **Watch order**.
 - [ ] Clicking a movie opens it, and clicking a season opens its show on that season's tab, inside the app.
 - [ ] **Star Wars (Timeline)** starts with The Acolyte S1, then The Phantom Menace.
 - [ ] Clicking a genre chip opens that genre in the collection's own catalog.
-- [ ] On the detail page, selecting an entry shows its blurb, and its **Open …** stream opens the title (on TV especially).
+- [ ] On the detail page, selecting an entry shows its description and details, and its **Link to …** stream opens the title (on TV especially).
 
 ## Where the data comes from
 
@@ -75,10 +75,11 @@ Edit `collections.config.mjs` and push; the workflow rebuilds automatically. The
 - **Add a timeline:** `order: "timeline"`, with entries in story order. Only worth it when the story jumps around a lot.
 - **Add a list:** leave `order` out and give it `catalogs` (`"franchise"`, `"person"`, `"studio"` or `"other"`). Name it after the franchise, person or studio; use "Every …" only when its titles mostly belong to other collections too ("Every Marvel Series", "Every Pixar Movie").
 - **Franchise copies:** a release-order watch order with more than three titles gets one automatically. `franchise: false` turns it off; `franchise: { extra: [[key]], description }` adds remakes the story leaves out.
+- **Close an "Every …" collection:** `ended: true` once its studio closes or its person dies or retires, so its years stop at the last title.
 - **Show an English name:** give the title a `title` in `shows` or `movies`.
 - **Fix a release date:** give the title a `released` date in `shows` or `movies`; it wins over Cinemeta's.
 - **Genres:** a list per collection. A new genre adds a filter option to the collection's catalog.
-- **Descriptions:** up to three sentences on what the collection is and where its titles come from. Each entry gets its own blurb from Cinemeta automatically.
+- **Descriptions:** up to three sentences on what the collection is and where its titles come from. Each entry gets its own description from Cinemeta automatically.
 
 ## Local testing
 
