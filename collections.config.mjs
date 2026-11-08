@@ -1,8 +1,9 @@
 // Everything you'd normally change lives here. Push a change and the workflow rebuilds.
 //
 // The addon has one catalog, "Collections" (Discover → Series → Collections). Its genre
-// filter picks the collection, and each collection is a list of season posters in watch
-// order. Clicking a poster opens that season of the real show, on its first episode.
+// filter picks a group, and each poster in a group is a collection. A collection lists
+// its seasons in watch order as "Watch order" links; each opens the real show on that
+// season's tab.
 
 // Every show the collections use, by a short key. `name` is only a check: the build
 // looks each IMDb id up on Cinemeta and fails if the title there doesn't match, so a
@@ -42,6 +43,18 @@ export const shows = {
   "runaways": { imdb: "tt1236246", name: "Runaways" },
   "cloak-and-dagger": { imdb: "tt5614844", name: "Cloak & Dagger" },
   "helstrom": { imdb: "tt10266874", name: "Helstrom" },
+  // Arrowverse
+  "arrow": { imdb: "tt2193021", name: "Arrow" },
+  "the-flash": { imdb: "tt3107288", name: "The Flash" },
+  "supergirl": { imdb: "tt4016454", name: "Supergirl" },
+  "legends-of-tomorrow": { imdb: "tt4532368", name: "Legends of Tomorrow" },
+  "black-lightning": { imdb: "tt6045840", name: "Black Lightning" },
+  "batwoman": { imdb: "tt8712204", name: "Batwoman" },
+  "superman-and-lois": { imdb: "tt11192306", name: "Superman & Lois" },
+  // Stargate
+  "stargate-sg1": { imdb: "tt0118480", name: "Stargate SG-1" },
+  "stargate-atlantis": { imdb: "tt0374455", name: "Stargate: Atlantis" },
+  "stargate-universe": { imdb: "tt1286039", name: "Stargate Universe" },
   // Star Trek
   "star-trek": { imdb: "tt0060028", name: "Star Trek" },
   "star-trek-tas": { imdb: "tt0069637", name: "Star Trek: The Animated Series" },
@@ -100,23 +113,28 @@ const mcuTimeline = [
 ];
 
 // Each collection:
-//   name         the genre filter value. Letters, digits, spaces, ' & and - only.
+//   group        the genre filter value it appears under, such as "Superheroes". Groups
+//                appear in the order collections first use them, and the first group
+//                is the home-screen row. Letters, digits, spaces, ' & and - only.
+//   name         the poster's name. Same characters as group.
 //   order        "release" (default): sorted by each season's premiere date.
 //                "chronological": seasons stay in the order listed, which should follow
 //                the story's timeline. The name gets " (Chronological)" added and the
 //                description a standard sentence explaining the difference.
-//   description  optional. Shown on each poster in Discover's side panel and on the
-//                install page.
+//   description  optional. Shown on the collection's side panel and detail page, and
+//                on the install page.
+//   poster       optional image URL; defaults to the first season's show poster.
 //   seasons      [showKey, season] for one season, or [showKey] for every season.
 // Seasons that haven't aired yet are skipped until a build after their premiere.
-// The first collection is the home-screen row, so keep a release-order one first.
 export const collections = [
   {
+    group: "Superheroes",
     name: "MCU",
     description: "Marvel Studios' Disney+ series and the Netflix Defenders shows.",
     seasons: mcuTimeline,
   },
   {
+    group: "Superheroes",
     name: "MCU",
     order: "chronological",
     description: "Marvel Studios' Disney+ series and the Netflix Defenders shows, in Disney+'s official MCU timeline order.",
@@ -124,6 +142,7 @@ export const collections = [
   },
   {
     // Not on Marvel's official timeline, so release order only.
+    group: "Superheroes",
     name: "Marvel Television",
     description: "Marvel Television's series for ABC, Hulu and Freeform.",
     seasons: [
@@ -136,8 +155,24 @@ export const collections = [
     ],
   },
   {
+    // The yearly crossovers only make sense in airing order.
+    group: "Superheroes",
+    name: "Arrowverse",
+    description: "The CW's DC shows, from Arrow to Superman & Lois.",
+    seasons: [
+      ["arrow"],
+      ["the-flash"],
+      ["supergirl"],
+      ["legends-of-tomorrow"],
+      ["black-lightning"],
+      ["batwoman"],
+      ["superman-and-lois"],
+    ],
+  },
+  {
     // The Next Generation, Deep Space Nine and Voyager overlap and cross over, so
     // airing order is how they were meant to be watched.
+    group: "Sci-Fi",
     name: "Star Trek",
     description: "Every Star Trek series, from the original to Starfleet Academy.",
     seasons: [
@@ -153,6 +188,17 @@ export const collections = [
       ["star-trek-prodigy"],
       ["star-trek-snw"],
       ["star-trek-academy"],
+    ],
+  },
+  {
+    // Atlantis spun off mid-SG-1, so the two overlap for three years.
+    group: "Sci-Fi",
+    name: "Stargate",
+    description: "SG-1, Atlantis and Universe.",
+    seasons: [
+      ["stargate-sg1"],
+      ["stargate-atlantis"],
+      ["stargate-universe"],
     ],
   },
 ];

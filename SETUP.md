@@ -26,7 +26,7 @@ The first push to `main` may already have started a run on its own. That's fine;
 
 1. Open `https://<your-username>.github.io/<repo-name>/`. The **deploy** job also shows this link once it finishes.
 2. Click **Install in Stremio**, or copy the `manifest.json` link on that page and paste it into Stremio's addon search box.
-3. In Stremio, find the **Collections** row on the **Home** screen, or go to **Discover → Series → Collections** and pick a collection from the genre filter. Then work through the checklist in [README.md](README.md#what-to-check-on-each-device).
+3. In Stremio, find the **Collections** row on the **Home** screen, or go to **Discover → Series → Collections** and pick a group from the genre filter. Then work through the checklist in [README.md](README.md#what-to-check-on-each-device).
 
 ## Afterwards
 
