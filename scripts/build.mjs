@@ -6,10 +6,10 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { shows as defaultShows, movies as defaultMovies, collections as defaultCollections } from "../collections.config.mjs";
+import { shows as defaultShows, movies as defaultMovies, collections as defaultCollections, sequels as defaultSequels } from "../collections.config.mjs";
 import {
   ALL_GENRES, CATALOGS, TYPE, arrange, buildManifest, catalogPaths, catalogsOf, collectionScore, configProblems, displayName, entryStreams,
-  expandEntries, genreNames, genresOf, idOf, orderOf, sameTitle, titleScore, toCollectionMeta, toCollectionPreview, toMovie, toShow,
+  expandEntries, genreNames, genresOf, idOf, orderOf, sagasOf, sameTitle, titleScore, toCollectionMeta, toCollectionPreview, toMovie, toShow,
   withFranchiseCopies,
 } from "../src/lib.mjs";
 import { installPage } from "../src/install-page.mjs";
@@ -41,6 +41,7 @@ export async function build({
   shows: showsConfig = defaultShows,
   movies: moviesConfig = defaultMovies,
   collections: configCollections = defaultCollections,
+  sequels = defaultSequels,
   loadRatings = (ids) => loadImdbRatings(ids, { log }),
   now = new Date().toISOString(),
   cinemeta = process.env.CINEMETA_URL || "https://v3-cinemeta.strem.io",
@@ -66,7 +67,7 @@ export async function build({
   // ---- 1. Look up every show and movie the collections use, once ----------
   const fix = (problems) => new Error(`Fix collections.config.mjs:\n  ${problems.join("\n  ")}`);
   const collections = withFranchiseCopies(configCollections);
-  const configErrors = configProblems(showsConfig, moviesConfig, collections);
+  const configErrors = configProblems(showsConfig, moviesConfig, collections, sequels);
   if (configErrors.length) throw fix(configErrors);
   const shows = new Map(), movies = new Map();
   const problems = [], skipped = [];
@@ -101,6 +102,7 @@ export async function build({
   const ratings = await loadRatings(new Set(titles.map((t) => t.imdb)));
   const popularity = new Map(titles.map((t) => [t.imdb, ratings.get(t.imdb) ?? { rating: t.rating }]));
   const scores = new Map(titles.map((t) => [t.imdb, titleScore(popularity.get(t.imdb))]));
+  const sagas = sagasOf(configCollections, sequels);
   const lists = [];
   const upcoming = {};
   for (const config of collections) {
@@ -111,7 +113,7 @@ export async function build({
     problems.push(...expanded.problems);
     // A Franchise copy (it has its own id) repeats its watch order's upcoming titles.
     if (expanded.upcoming.length && !config.id) upcoming[name] = expanded.upcoming;
-    const entries = arrange(expanded.entries, orderOf(c), popularity);
+    const entries = arrange(expanded.entries, orderOf(c), popularity, sagas);
     lists.push({ c: config, name, entries, score: collectionScore(entries, scores) });
   }
   // Sorting keeps the config's order between equals, so a release order stays ahead of its timeline.
@@ -193,7 +195,7 @@ function sitePage(siteUrl, manifest, lists, totals) {
       { value: totals.series, label: "series" },
     ],
     groups,
-    about: `<p>Find them under <b>Discover</b> → <b>Collections</b>. <b>Storyline</b> has watch orders for stories told across many titles, by release or by the story's timeline. <b>Franchise</b>, <b>Person</b> and <b>Studio</b> gather the titles of a franchise, a director or personality, or a studio, the most watched first (a big watch order's copy in Franchise keeps its order), and <b>Other</b> has the rest. Each movie, season or show in a collection opens that title.</p>
+    about: `<p>Find them under <b>Discover</b> → <b>Collections</b>. <b>Storyline</b> has watch orders for stories told across many titles, by release or by the story's timeline. <b>Franchise</b>, <b>Person</b> and <b>Studio</b> gather the titles of a franchise, a director or personality, or a studio, with sequels together and the most watched first (a big watch order's copy in Franchise keeps its order), and <b>Other</b> has the rest. Each movie, season or show in a collection opens that title.</p>
 <p>This addon has no streams of its own. Titles play through whatever stream addons you already have installed.</p>`,
     links: [{ label: "Build report", href: "report.json" }],
   });

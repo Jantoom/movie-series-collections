@@ -57,7 +57,7 @@ const ratings = new Map([["tt1", [8.2, 400000]], ["tt2", [8.6, 500000]], ["tt3",
 
 const read = async (dir, rel) => JSON.parse(await readFile(join(dir, rel), "utf8"));
 const opts = (outDir, fetchImpl, c = collections) => ({
-  fetchImpl, shows, movies, collections: c, loadRatings: async () => ratings, now: "2026-11-08T00:00:00.000Z", cinemeta: "https://fake.test", siteUrl: "https://example.test/addon/", outDir, log: () => {},
+  fetchImpl, shows, movies, collections: c, sequels: [], loadRatings: async () => ratings, now: "2026-11-08T00:00:00.000Z", cinemeta: "https://fake.test", siteUrl: "https://example.test/addon/", outDir, log: () => {},
 });
 const urls = (meta, category = "Watch order") => meta.links.filter((l) => l.category === category).map((l) => l.url.replace(/^stremio:\/\/\/detail\//, ""));
 

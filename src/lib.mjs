@@ -6,8 +6,8 @@
 //     Wars") sorts by release date; a timeline ("Star Wars (Timeline)") keeps the story's
 //     order.
 //   - "Franchise", "Person", "Studio" and "Other": titles that share a franchise, a
-//     director or personality, a studio, or something else, each listed once, most
-//     popular first. A collection can be in several of these. Big watch orders also get
+//     director or personality, a studio, or something else, each listed once, sequels
+//     together and the most popular first. A collection can be in several of these. Big watch orders also get
 //     a copy in Franchise, listing their titles in the watch order's order.
 // Each catalog's genre filter starts on "All", listing all of its collections, and each
 // genre (Action, Sci-Fi, Reality-TV, …) narrows it. The genre is required, which keeps
@@ -123,7 +123,7 @@ const PLAIN = /^[A-Za-z0-9][A-Za-z0-9 '&-]*$/;
 const NAME = /^[\p{L}\p{N}][\p{L}\p{N} '&:;().,!?-]*$/u;
 
 /** Config mistakes the build should stop on, before fetching anything. */
-export function configProblems(shows, movies, collections) {
+export function configProblems(shows, movies, collections, sequels = []) {
   const problems = [];
   for (const key of Object.keys(shows)) if (movies[key]) problems.push(`"${key}" is both a show and a movie; keys must be unique`);
   const ids = new Set();
@@ -141,6 +141,7 @@ export function configProblems(shows, movies, collections) {
     if (!c.order && c.catalogs !== undefined && (!c.catalogs.length || c.catalogs.some((id) => !LIST_CATALOGS.includes(id)))) {
       problems.push(`${label}: catalogs must be some of ${LIST_CATALOGS.join(", ")}`);
     }
+    if (c.universe !== undefined && c.order !== "release") problems.push(`${label}: only a release-order watch order can be a universe`);
     if (c.ended !== undefined && !/^Every /.test(c.name ?? "")) problems.push(`${label}: only an "Every …" collection's years stay open, so it takes no "ended"`);
     if (c.franchise !== undefined && c.order !== "release") problems.push(`${label}: only a release-order watch order has a Franchise copy, so it takes no "franchise"`);
     for (const [key] of c.franchise?.extra ?? []) known(`${label} (franchise)`, key);
@@ -151,6 +152,14 @@ export function configProblems(shows, movies, collections) {
       if (movies[key]) problems.push(`${label}: "${key}" is a movie, so it takes no season`);
       else if (!c.order) problems.push(`${label}: a collection without an order takes whole shows, so ["${key}"], not ["${key}", ${JSON.stringify(season)}]`);
       else if (!(Number.isInteger(season) && season > 0)) problems.push(`${label}: "${key}" season must be a whole number from 1, not ${JSON.stringify(season)}`);
+    }
+  }
+  const grouped = new Set();
+  for (const group of sequels) {
+    for (const key of group) {
+      known("sequels", key);
+      if (grouped.has(key)) problems.push(`sequels: "${key}" is in two groups`);
+      grouped.add(key);
     }
   }
   return problems;
@@ -247,17 +256,50 @@ export function expandEntries(collection, shows, movies, now = new Date().toISOS
 export const orderOf = (c) => c.order ?? (c.copyOf ? "release" : undefined);
 
 /**
- * "timeline" keeps the config's order and "release" sorts by date. A list (no order)
- * puts its most popular titles first: the most IMDb votes, so the titles the most people
- * have seen, then by rating for titles IMDb has no vote count for. Its poster is then its
- * best-known title's. `popularity` maps IMDb ids to { votes, rating }.
+ * Which titles are directly connected, as a map of key → group id. A title goes with the
+ * smallest release-order watch order it's in, so a trilogy beats the franchise around it.
+ * A watch order marked `universe` is too loose to count: Iron Man and Thor share a
+ * universe, but aren't sequels. `sequels` lists the connections watch orders don't
+ * capture, and wins over them.
  */
-export function arrange(entries, order, popularity = new Map()) {
+export function sagasOf(collections, sequels = []) {
+  const sagas = new Map();
+  const keysOf = (c) => [...new Set(c.entries.map(([k]) => k))];
+  const stories = collections.filter((c) => c.order === "release" && !c.universe).sort((a, b) => keysOf(a).length - keysOf(b).length);
+  for (const c of stories) for (const k of keysOf(c)) if (!sagas.has(k)) sagas.set(k, `story:${c.name}`);
+  sequels.forEach((group, i) => group.forEach((k) => sagas.set(k, `sequels:${i}`)));
+  return sagas;
+}
+
+const mean = (values) => {
+  const known = values.filter((v) => v !== undefined);
+  return known.length ? known.reduce((sum, v) => sum + v, 0) / known.length : undefined;
+};
+
+/**
+ * "timeline" keeps the config's order and "release" sorts by date. A list (no order) keeps
+ * directly connected titles together, in release order, and puts the most popular groups
+ * first: the most IMDb votes on average, so the titles the most people have seen, then by
+ * rating for titles IMDb has no vote count for. A title with no sequels is a group of one.
+ * `popularity` maps IMDb ids to { votes, rating }, and `sagas` comes from sagasOf.
+ */
+export function arrange(entries, order, popularity = new Map(), sagas = new Map()) {
   if (order === "timeline") return entries;
   const byDate = [...entries].sort((a, b) => a.date.localeCompare(b.date));
   if (order === "release") return byDate;
-  const pop = (e) => popularity.get(titleOf(e).imdb) ?? {};
-  return byDate.sort((a, b) => (pop(b).votes ?? -1) - (pop(a).votes ?? -1) || (pop(b).rating ?? 0) - (pop(a).rating ?? 0));
+  const groupOf = (e) => sagas.get(e.key) ?? e.key;
+  const groups = new Map();
+  for (const e of byDate) {
+    if (!groups.has(groupOf(e))) groups.set(groupOf(e), new Map());
+    groups.get(groupOf(e)).set(titleOf(e).imdb, popularity.get(titleOf(e).imdb) ?? {});
+  }
+  const ranks = new Map([...groups].map(([id, titles], place) => {
+    const members = [...titles.values()];
+    return [id, { place, votes: mean(members.map((t) => t.votes)), rating: mean(members.map((t) => t.rating)) }];
+  }));
+  const rank = (e) => ranks.get(groupOf(e));
+  // Ties go by first release, so a group can't be split by another with the same score.
+  return byDate.sort((a, b) => (rank(b).votes ?? -1) - (rank(a).votes ?? -1) || (rank(b).rating ?? 0) - (rank(a).rating ?? 0) || rank(a).place - rank(b).place);
 }
 
 /**
@@ -502,7 +544,7 @@ export function catalogPaths(catalogId, genre, metas) {
 }
 
 // Bump when the manifest changes so installed copies refresh.
-export function buildManifest(collections, version = "0.12.1") {
+export function buildManifest(collections, version = "0.12.2") {
   return {
     id: "community.movie-series-collections",
     version,

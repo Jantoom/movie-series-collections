@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   ALL_GENRES, CATALOGS, TIMELINE_NOTE, arrange, buildManifest, catalogPaths, catalogsOf, collectionDescription, collectionId, collectionScore,
-  collectionVideos, configProblems, displayName, entryStreams, expandEntries, genreLink, genreNames, idOf, listItems, orderOf,
+  collectionVideos, configProblems, displayName, entryStreams, expandEntries, genreLink, genreNames, idOf, listItems, orderOf, sagasOf,
   isOpenEnded, sameTitle, titleScore, toCollectionMeta, toCollectionPreview, toMovie, toShow, valueSpellings, withFranchiseCopies, yearSpan,
 } from "../src/lib.mjs";
 
@@ -173,6 +173,29 @@ test("release order sorts by date, a timeline keeps the config's order, a list g
   assert.deepEqual(arrange(entries, undefined, POPULARITY).map(label), ["Iron Man", "Loki 1", "Loki 2", "WandaVision 1"], "by IMDb votes");
   const { entries: rated } = expandEntries({ name: "C", entries: [["wandavision"], ["no-episodes"], ["old-show"]] }, shows, movies, NOW);
   assert.deepEqual(arrange(rated, undefined, POPULARITY).map(label), ["WandaVision 1", "No Episodes", "Old Show 1"], "then by rating where IMDb has no vote count");
+});
+
+test("a list keeps directly connected titles together and ranks groups by their average votes", () => {
+  const { entries } = expandEntries({ name: "C", entries: [["loki"], ["wandavision"], ["iron-man"], ["no-episodes"]] }, shows, movies, NOW);
+  const together = (groups) => arrange(entries, undefined, POPULARITY, sagasOf([], groups)).map(label);
+  assert.deepEqual(together([["iron-man", "wandavision"]]), ["Iron Man", "WandaVision 1", "Loki 1", "Loki 2", "No Episodes"], "released in order, ahead of Loki on 740k votes");
+  assert.deepEqual(together([["loki", "no-episodes"]]), ["Iron Man", "No Episodes", "Loki 1", "Loki 2", "WandaVision 1"], "a title with no vote count doesn't drag its group down");
+  assert.deepEqual(together([]), ["Iron Man", "Loki 1", "Loki 2", "WandaVision 1", "No Episodes"], "no sequels: most watched first");
+});
+
+test("sagasOf groups a title with its smallest watch order, skipping universes", () => {
+  const story = (name, keys, extra = {}) => ({ name, order: "release", entries: keys.map((k) => [k]), ...extra });
+  const sagas = sagasOf([
+    story("Big", ["a", "b", "c"]),
+    story("Trilogy", ["a", "b"]),
+    story("World", ["c", "d"], { universe: true }),
+    { name: "Timeline", order: "timeline", entries: [["e"], ["f"]] },
+    { name: "List", entries: [["g"], ["h"]] },
+  ], [["d", "g"]]);
+  assert.equal(sagas.get("a"), sagas.get("b"));
+  assert.notEqual(sagas.get("a"), sagas.get("c"), "the trilogy, not the franchise around it");
+  assert.equal(sagas.get("d"), sagas.get("g"), "the sequels table");
+  assert.ok(!sagas.has("e") && !sagas.has("h"), "only release orders and the table count");
 });
 
 test("a title scores its rating weighted by votes; a collection averages its five best", () => {

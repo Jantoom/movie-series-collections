@@ -1,6 +1,6 @@
 {
   "name": "movie-series-collections",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "private": true,
   "description": "Static Stremio addon of movie and TV collections, built from Cinemeta.",
   "type": "module",

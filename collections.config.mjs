@@ -4065,6 +4065,97 @@ const toyStory = [["toy-story"], ["toy-story-2"], ["toy-story-3"], ["toy-story-4
 const titlesOf = (entries) => [...new Set(entries.map(([key]) => key))].map((key) => [key]);
 const showsOnly = (entries) => entries.filter(([key]) => !(key in movies)).map(([key]) => [key]);
 
+// Directly connected titles (sequels, prequels and the spin-offs that carry a story on),
+// which lists keep together. Watch orders already count, so this is for what they don't
+// capture: connected titles with no watch order of their own, and the parts of a `universe`.
+export const sequels = [
+  // Marvel Cinematic Universe
+  ["iron-man", "iron-man-2", "iron-man-3"],
+  ["thor", "thor-dark-world", "thor-ragnarok", "love-and-thunder"],
+  ["captain-america", "winter-soldier", "civil-war", "falcon-winter-soldier", "brave-new-world"],
+  ["avengers", "age-of-ultron", "infinity-war", "endgame", "doomsday"],
+  ["guardians", "guardians-2", "guardians-holiday", "guardians-3"],
+  ["ant-man", "ant-man-wasp", "quantumania"],
+  ["black-panther", "wakanda-forever", "ironheart"],
+  ["doctor-strange", "multiverse-of-madness"],
+  ["captain-marvel", "ms-marvel", "the-marvels"],
+  ["wandavision", "agatha", "visionquest"],
+  ["hawkeye", "echo"],
+  ["spider-man-homecoming", "far-from-home", "no-way-home", "brand-new-day"],
+  ["daredevil", "daredevil-born-again"],
+  ["punisher", "punisher-one-last-kill"],
+  // Other Marvel
+  ["x-men", "x2", "x-men-last-stand"],
+  ["x-men-first-class", "days-of-future-past", "x-men-apocalypse", "dark-phoenix"],
+  ["x-men-origins-wolverine", "the-wolverine", "logan"],
+  ["deadpool", "deadpool-2", "deadpool-wolverine"],
+  ["venom", "venom-2", "venom-3"],
+  ["daredevil-2003", "elektra"],
+  ["fantastic-four-2005", "rise-of-the-silver-surfer"],
+  ["ghost-rider", "ghost-rider-2"],
+  ["x-men-tas", "x-men-97"],
+  // DC
+  ["man-of-steel", "batman-v-superman", "justice-league-film", "snyder-cut"],
+  ["wonder-woman", "wonder-woman-1984"],
+  ["aquaman", "aquaman-2"],
+  ["shazam", "shazam-2"],
+  ["suicide-squad", "the-suicide-squad", "peacemaker"],
+  ["joker", "joker-2"],
+  ["batman-tas", "mask-of-the-phantasm", "new-batman-adventures", "subzero", "batman-beyond", "return-of-the-joker", "mystery-of-the-batwoman"],
+  ["justice-league", "justice-league-unlimited"],
+  ["harley-quinn", "kite-man"],
+  // James Bond, by the actor playing him (Lazenby's film sits inside Connery's Blofeld story)
+  ["dr-no", "from-russia", "goldfinger", "thunderball", "you-only-live-twice", "ohmss", "diamonds-are-forever"],
+  ["live-and-let-die", "golden-gun", "spy-who-loved-me", "moonraker", "for-your-eyes-only", "octopussy", "view-to-a-kill"],
+  ["living-daylights", "licence-to-kill"],
+  ["goldeneye", "tomorrow-never-dies", "world-is-not-enough", "die-another-day"],
+  ["casino-royale", "quantum-of-solace", "skyfall", "spectre", "no-time-to-die"],
+  // Animation
+  ["the-rescuers", "rescuers-down-under"],
+  ["fantasia", "fantasia-2000"],
+  ["saludos-amigos", "three-caballeros"],
+  ["the-croods", "croods-new-age"],
+  ["bad-guys", "bad-guys-2"],
+  ["boss-baby", "boss-baby-2"],
+  ["secret-life-of-pets", "secret-life-of-pets-2"],
+  ["sing", "sing-2"],
+  ["cloudy", "cloudy-2"],
+  ["rio", "rio-2"],
+  ["chicken-run", "dawn-of-the-nugget"],
+  ["shaun-the-sheep-movie", "farmageddon"],
+  ["whisper-of-the-heart", "cat-returns"],
+  // Live action
+  ["knives-out", "glass-onion", "wake-up-dead-man"],
+  ["hellboy-2004", "hellboy-2"],
+  ["beetlejuice", "beetlejuice-2"],
+  ["gladiator", "gladiator-2"],
+  ["bumblebee", "rise-of-the-beasts"],
+  ["the-santa-clause", "the-santa-clause-2", "the-santa-clause-3"],
+  ["the-christmas-chronicles", "the-christmas-chronicles-2"],
+  ["muppet-movie", "great-muppet-caper", "muppets-take-manhattan"],
+  ["the-muppets-2011", "muppets-most-wanted"],
+  // Turtles, Scooby-Doo, Pokémon and Gundam
+  ["tmnt-1990", "tmnt-2-1991", "tmnt-3"],
+  ["tmnt-2014", "tmnt-out-of-shadows"],
+  ["rise-of-tmnt", "rise-of-tmnt-movie"],
+  ["tmnt-mutant-mayhem", "tales-of-tmnt"],
+  ["scooby-where-are-you", "new-scooby-doo-movies", "scooby-doo-show", "scooby-and-scrappy"],
+  ["scooby-doo-2002", "scooby-doo-2"],
+  ["pokemon", "pokemon-horizons"],
+  ["gundam-0079", "zeta-gundam", "gundam-zz", "gundam-unicorn-re0096"],
+  ["gundam-seed", "gundam-seed-destiny"],
+  // Series and documentaries
+  ["ahs", "american-horror-stories"],
+  ["planet-earth", "planet-earth-2", "planet-earth-3"],
+  ["blue-planet", "blue-planet-2"],
+  ["frozen-planet", "frozen-planet-2"],
+  ["cosmos-1980", "cosmos-2014", "cosmos-2020"],
+  // The few reality shows that carry straight on
+  ["jersey-shore", "jersey-shore-family-vacation"],
+  ["keeping-up-with-the-kardashians", "the-kardashians"],
+  ["terrace-house-boys-girls-next-door", "terrace-house-boys-girls-in-the-city", "terrace-house-aloha-state", "terrace-house-opening-new-doors", "terrace-house-tokyo-2019"],
+];
+
 // Each collection:
 //   name         spelled out ("Marvel Cinematic Universe", not "MCU"). Use "Every …" only
 //                for collections whose titles mostly also belong to other collections
@@ -4082,7 +4173,8 @@ const showsOnly = (entries) => entries.filter(([key]) => !(key in movies)).map((
 //                sentence. Only worth it when the story jumps around a lot, as Star Wars
 //                does; most franchises' timelines are too close to release order.
 //                Left out: a list of titles that share a franchise, person or studio but
-//                not one story, each listed once, the most watched first (by IMDb votes).
+//                not one story, each listed once. Directly connected titles stay together
+//                in release order, and the most watched groups come first (by IMDb votes).
 //   catalogs     a list's catalogs: any of "franchise" (a game, character, brand, or a
 //                show with many regional versions), "person" (a director or
 //                personality), "studio", and "other" for anything else. Defaults to other.
@@ -4090,6 +4182,9 @@ const showsOnly = (entries) => entries.filter(([key]) => !(key in movies)).map((
 //                Franchise listing its titles, in release order. false opts out (when a
 //                list already covers it); { name, extra: [[key], …], description } renames
 //                it, adds the titles the story leaves out, and describes the whole franchise.
+//   universe     true on a release-order watch order whose titles share a world but aren't
+//                all sequels of each other, like the Marvel Cinematic Universe. Lists don't
+//                keep its titles together; `sequels` above names the real connections.
 //   ended        true on an "Every …" collection whose studio has closed or whose person
 //                has died or retired. Other "Every …" collections' years stay open
 //                ("1995–"), since more titles may come.
@@ -4106,6 +4201,7 @@ export const collections = [
   // ---- Storyline -----------------------------------------------------------
   {
     name: "Marvel Cinematic Universe",
+    universe: true,
     genres: ["Superhero", "Action", "Adventure", "Sci-Fi"],
     order: "release",
     description: "Marvel Studios' shared universe, which began with Iron Man in 2008, built for a decade to Avengers: Endgame, and carried on into the Multiverse Saga. It brings together every film, the Disney+ series, and the Netflix Defenders shows Marvel added to its official timeline in 2024. In release order, each story lands the way audiences first saw it, with every entry setting up the next.",
@@ -4113,6 +4209,7 @@ export const collections = [
   },
   {
     name: "Marvel Cinematic Universe (Unofficial)",
+    universe: true,
     genres: ["Superhero", "Action", "Adventure", "Sci-Fi"],
     order: "release",
     description: "The Marvel Cinematic Universe as it was first sold to viewers, with the shows Marvel Television made for ABC, Hulu and Freeform under the same banner. Agents of S.H.I.E.L.D. picked up threads from The Avengers and kept answering the films for seven seasons, but Marvel Studios has never counted these shows on its timeline. In release order, you can see the two halves of Marvel running side by side.",
@@ -4120,6 +4217,7 @@ export const collections = [
   },
   {
     name: "X-Men",
+    universe: true,
     genres: ["Superhero", "Action", "Sci-Fi"],
     order: "release",
     description: "20th Century Fox's mutant saga, which launched the modern superhero boom in 2000 and ran for two decades. The original trilogy, the First Class prequels that rewrote it through time travel, Logan's farewell and Deadpool's fourth-wall-breaking spin-offs all share one tangled continuity. Release order keeps its twists, retcons and returns in the order they landed.",
@@ -4130,6 +4228,7 @@ export const collections = [
   },
   {
     name: "Sony's Spider-Man Universe",
+    universe: true,
     genres: ["Superhero", "Action", "Horror"],
     order: "release",
     franchise: false,
@@ -4145,6 +4244,7 @@ export const collections = [
   },
   {
     name: "DC Extended Universe",
+    universe: true,
     genres: ["Superhero", "Action", "Fantasy"],
     order: "release",
     description: "Warner Bros.' first shared DC universe, launched by Zack Snyder's Man of Steel in 2013 and carried through Justice League, Wonder Woman, Aquaman and Shazam!. It includes the first season of Peacemaker and Zack Snyder's own cut of Justice League, and ended with Aquaman and the Lost Kingdom in 2023 before James Gunn's reboot.",
@@ -4156,6 +4256,7 @@ export const collections = [
   },
   {
     name: "DC Universe",
+    universe: true,
     genres: ["Superhero", "Action", "Comedy"],
     order: "release",
     description: "James Gunn and Peter Safran's rebooted DC universe, opening the Gods and Monsters chapter with the animated Creature Commandos and David Corenswet's Superman. Films and series share one story from the start, with Peacemaker carried over into its second season.",
@@ -4163,6 +4264,7 @@ export const collections = [
   },
   {
     name: "DC Animated Universe",
+    universe: true,
     genres: ["Superhero", "Animation", "Action"],
     order: "release",
     description: "The animated DC continuity that Bruce Timm and Paul Dini began with Batman: The Animated Series in 1992. It grew through Superman, Batman Beyond and Static Shock into Justice League Unlimited, with its theatrical and direct-to-video films set between the episodes.",
@@ -4177,6 +4279,7 @@ export const collections = [
   },
   {
     name: "Arrowverse",
+    universe: true,
     genres: ["Superhero", "Action", "Drama"],
     order: "release",
     description: "The CW's shared DC universe, which grew from Arrow in 2012 into seven interlocking shows. Characters move between series all the time, and the yearly crossover events, building to Crisis on Infinite Earths, run across several shows in one week. Release order keeps those crossovers in step.",
