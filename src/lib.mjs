@@ -51,6 +51,11 @@ export const LIST_CATEGORY = "Titles";         // a list's entries
 
 export const TIMELINE_NOTE = "This collection follows the story's timeline instead of release order.";
 export const ORDERS = ["release", "timeline"];
+// How a list (no `order`) is sorted, instead of most watched first: "listed" keeps the order
+// it's given (the config's, or its source list's).
+export const SORTS = ["listed"];
+/** A list's source: an MDBList list page, whose titles the build fetches as JSON. */
+export const sourceUrl = (source) => (/\/json\/?$/.test(source) ? source : `${source.replace(/\/$/, "")}/json`);
 
 // Letters and digits in any script, without accents ("Pokémon" = "pokemon", "МастерШеф" kept).
 const fold = (s) => (s ?? "").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/[^\p{L}\p{N}]/gu, "");
@@ -141,10 +146,17 @@ export function configProblems(shows, movies, collections, sequels = []) {
     if (!c.order && c.catalogs !== undefined && (!c.catalogs.length || c.catalogs.some((id) => !LIST_CATALOGS.includes(id)))) {
       problems.push(`${label}: catalogs must be some of ${LIST_CATALOGS.join(", ")}`);
     }
+    if (c.sort !== undefined && (c.order || !SORTS.includes(c.sort))) problems.push(`${label}: sort can only be "listed", on a collection without an order`);
     if (c.universe !== undefined && c.order !== "release") problems.push(`${label}: only a release-order watch order can be a universe`);
     if (c.ended !== undefined && !/^Every /.test(c.name ?? "")) problems.push(`${label}: only an "Every …" collection's years stay open, so it takes no "ended"`);
     if (c.franchise !== undefined && c.order !== "release") problems.push(`${label}: only a release-order watch order has a Franchise copy, so it takes no "franchise"`);
     for (const [key] of c.franchise?.extra ?? []) known(`${label} (franchise)`, key);
+    if (c.source !== undefined) {
+      if (c.order) problems.push(`${label}: a watch order lists its own entries, so it takes no "source"`);
+      if (!/^https:\/\/\S+$/.test(c.source ?? "")) problems.push(`${label}: source must be an https URL`);
+      if (c.entries) problems.push(`${label}: a collection with a source gets its entries from it, so it takes no "entries"`);
+      continue;
+    }
     if (!c.entries?.length) { problems.push(`${label} has no entries`); continue; }
     for (const [key, season] of c.entries) {
       known(label, key);
@@ -252,8 +264,8 @@ export function expandEntries(collection, shows, movies, now = new Date().toISOS
   return { entries, problems, upcoming };
 }
 
-/** How a collection's entries are arranged: a Franchise copy keeps its watch order's. */
-export const orderOf = (c) => c.order ?? (c.copyOf ? "release" : undefined);
+/** How a collection's entries are arranged: a Franchise copy keeps its watch order's, a list its sort. */
+export const orderOf = (c) => c.order ?? (c.copyOf ? "release" : c.sort);
 
 /**
  * Which titles are directly connected, as a map of key → group id. A title goes with the
@@ -277,14 +289,14 @@ const mean = (values) => {
 };
 
 /**
- * "timeline" keeps the config's order and "release" sorts by date. A list (no order) keeps
+ * "timeline" and "listed" keep the order given, and "release" sorts by date. A list keeps
  * directly connected titles together, in release order, and puts the most popular groups
  * first: the most IMDb votes on average, so the titles the most people have seen, then by
  * rating for titles IMDb has no vote count for. A title with no sequels is a group of one.
  * `popularity` maps IMDb ids to { votes, rating }, and `sagas` comes from sagasOf.
  */
 export function arrange(entries, order, popularity = new Map(), sagas = new Map()) {
-  if (order === "timeline") return entries;
+  if (order === "timeline" || order === "listed") return entries;
   const byDate = [...entries].sort((a, b) => a.date.localeCompare(b.date));
   if (order === "release") return byDate;
   const groupOf = (e) => sagas.get(e.key) ?? e.key;

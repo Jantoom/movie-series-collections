@@ -128,6 +128,35 @@ test("leaves out titles Cinemeta lacks or has under another name, and refuses a 
   await assert.rejects(build(opts(outDir, ok, missing)), /Marvel: Daredevil has no season 9 on Cinemeta/);
 });
 
+test("a list with a source takes its titles from the list, in its order, at every build", async () => {
+  const outDir = await mkdtemp(join(tmpdir(), "movie-series-collections-"));
+  const { fetchImpl: cinemeta, seen } = fakeFetch({
+    ...cinemetaData,
+    movie: { ...cinemetaData.movie, tt8: { name: "Seven", released: "1995-09-22" } },
+  });
+  const list = [
+    { imdb_id: "tt8", title: "Se7en", mediatype: "movie" },
+    { imdb_id: "tt2", title: "Daredevil", mediatype: "show" },
+    { imdb_id: "tt5", title: "Iron Man", mediatype: "movie" },
+    { title: "No id", mediatype: "movie" },
+  ];
+  const fetchImpl = async (url) => (url === "https://mdblist.test/lists/me/top/json" ? { ok: true, json: async () => list } : cinemeta(url));
+  const top = [{ genres: ["Drama"], name: "Top", sort: "listed", source: "https://mdblist.test/lists/me/top" }];
+  await build(opts(outDir, fetchImpl, top));
+  const meta = (await read(outDir, "catalog/collections/other.json")).metas[0];
+  assert.deepEqual(urls(meta, "Titles"), ["movie/tt8", "series/tt2", "movie/tt5"], "the list's order, not the most watched first");
+  assert.deepEqual(meta.links.filter((l) => l.category === "Titles").map((l) => l.name)[0], "Seven", "Cinemeta's name, unchecked against the list's");
+  assert.ok(seen.includes("https://fake.test/meta/movie/tt8.json"), "a title outside the config is looked up by its IMDb id");
+
+  const award = [{ genres: ["Drama"], name: "Award", sort: "listed", entries: [["trek"], ["iron-man"], ["daredevil"]] }];
+  await build(opts(outDir, cinemeta, award));
+  const titles = urls((await read(outDir, "catalog/collections/other.json")).metas[0], "Titles");
+  assert.deepEqual(titles, ["series/tt4", "movie/tt5", "series/tt2"], "a listed config keeps its order too");
+
+  const empty = async (url) => (url.includes("mdblist") ? { ok: true, json: async () => [] } : cinemeta(url));
+  await assert.rejects(build(opts(outDir, empty, top)), /Top: https:\/\/mdblist.test\/lists\/me\/top has no titles/);
+});
+
 test("refuses a broken config before fetching anything", async () => {
   const outDir = await mkdtemp(join(tmpdir(), "movie-series-collections-"));
   const { fetchImpl, seen } = fakeFetch();

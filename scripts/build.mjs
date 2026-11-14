@@ -9,8 +9,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { shows as defaultShows, movies as defaultMovies, collections as defaultCollections, sequels as defaultSequels } from "../collections.config.mjs";
 import {
   ALL_GENRES, CATALOGS, TYPE, arrange, buildManifest, catalogPaths, catalogsOf, collectionScore, configProblems, displayName, entryStreams,
-  expandEntries, genreNames, genresOf, idOf, orderOf, sagasOf, sameTitle, titleScore, toCollectionMeta, toCollectionPreview, toMovie, toShow,
-  withFranchiseCopies,
+  expandEntries, genreNames, genresOf, idOf, orderOf, sagasOf, sameTitle, sourceUrl, titleScore, toCollectionMeta, toCollectionPreview, toMovie,
+  toShow, withFranchiseCopies,
 } from "../src/lib.mjs";
 import { installPage } from "../src/install-page.mjs";
 
@@ -66,14 +66,35 @@ export async function build({
 
   // ---- 1. Look up every show and movie the collections use, once ----------
   const fix = (problems) => new Error(`Fix collections.config.mjs:\n  ${problems.join("\n  ")}`);
-  const collections = withFranchiseCopies(configCollections);
-  const configErrors = configProblems(showsConfig, moviesConfig, collections, sequels);
+  const configErrors = configProblems(showsConfig, moviesConfig, withFranchiseCopies(configCollections), sequels);
   if (configErrors.length) throw fix(configErrors);
+  // A list with a `source` takes its titles, in order, from that MDBList list at every
+  // build, so it keeps up with the list. A title already in `shows` or `movies` uses its
+  // key there; the rest are looked up by IMDb id, under Cinemeta's own name.
+  const showTable = { ...showsConfig }, movieTable = { ...moviesConfig };
+  const keyOf = new Map(Object.entries({ ...showTable, ...movieTable }).map(([key, t]) => [t.imdb, key]));
+  const fromSource = async (c) => {
+    if (!c.source) return c;
+    const items = await getJson(sourceUrl(c.source));
+    const titles = Array.isArray(items) ? items.filter((i) => /^tt\d+$/.test(i.imdb_id ?? "")) : [];
+    if (!titles.length) throw fix([`${c.name}: ${c.source} has no titles with IMDb ids`]);
+    const entries = titles.map((i) => {
+      if (!keyOf.has(i.imdb_id)) {
+        keyOf.set(i.imdb_id, i.imdb_id);
+        (i.mediatype === "show" ? showTable : movieTable)[i.imdb_id] = { imdb: i.imdb_id, name: i.title, listed: true };
+      }
+      return [keyOf.get(i.imdb_id)];
+    });
+    return { ...c, entries };
+  };
+  const listed = [];
+  for (const c of configCollections) listed.push(await fromSource(c));
+  const collections = withFranchiseCopies(listed);
   const shows = new Map(), movies = new Map();
   const problems = [], skipped = [];
   const lookup = async (key) => {
-    const isMovie = Boolean(moviesConfig[key]);
-    const { imdb, name, title, released } = isMovie ? moviesConfig[key] : showsConfig[key];
+    const isMovie = Boolean(movieTable[key]);
+    const { imdb, name, title, released, listed: fromList } = isMovie ? movieTable[key] : showTable[key];
     const found = (await getJson(`${cinemeta}/meta/${isMovie ? "movie" : "series"}/${imdb}.json`)).meta;
     // The config's `released` wins: Cinemeta has no date for some titles, and dates others
     // by a later release (a US or anniversary release of a Japanese film).
@@ -84,7 +105,8 @@ export async function build({
     // servers don't always agree on these, so the build log and report.json list them.
     if (!cm?.name) skipped.push(`${key}: ${imdb} ("${name}") isn't on Cinemeta as a ${isMovie ? "movie" : "series"}`);
     // Cinemeta sometimes has the English name already, which is as good a match.
-    else if (!sameTitle(name, cm.name) && !sameTitle(title, cm.name)) skipped.push(`${key}: ${imdb} is "${cm.name}" on Cinemeta, not "${name}"`);
+    // A source list's own title isn't checked: its names often differ from Cinemeta's.
+    else if (!fromList && !sameTitle(name, cm.name) && !sameTitle(title, cm.name)) skipped.push(`${key}: ${imdb} is "${cm.name}" on Cinemeta, not "${name}"`);
     else if (isMovie) movies.set(key, toMovie(imdb, { ...cm, name: title ?? cm.name }));
     else shows.set(key, toShow(imdb, { ...cm, name: title ?? cm.name }));
   };

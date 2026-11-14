@@ -135,6 +135,18 @@ test("configProblems catches unknown titles, bad seasons, names, genres, catalog
     "Bad/Name has no entries",
     "Lost has no genres",
   ]);
+  assert.deepEqual(configProblems(s, m, [
+    { genres: ["G"], name: "Top", sort: "listed", source: "https://mdblist.com/lists/me/top" },
+    { genres: ["G"], name: "Award", sort: "listed", entries: [["loki"]] },
+    { genres: ["G"], name: "S", order: "release", sort: "listed", source: "http://x", entries: [["loki"]] },
+    { genres: ["G"], name: "Odd", sort: "random", entries: [["loki"]] },
+  ]), [
+    'S: sort can only be "listed", on a collection without an order',
+    'S: a watch order lists its own entries, so it takes no "source"',
+    "S: source must be an https URL",
+    'S: a collection with a source gets its entries from it, so it takes no "entries"',
+    'Odd: sort can only be "listed", on a collection without an order',
+  ]);
 });
 
 test("each catalog's genres are the ones its collections use, alphabetically", () => {
