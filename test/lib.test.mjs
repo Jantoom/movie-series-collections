@@ -374,28 +374,35 @@ test("manifest has the five catalogs, each with its own genres", () => {
     ["collections", "person", "Person", ["All", "Drama"]],
     ["collections", "studio", "Studio", ["All"]],
     ["collections", "other", "Other", ["All", "Reality-TV", "Romance"]],
+    ["collections", "search", "Search", undefined],
   ]);
   assert.deepEqual(m.catalogs[0].extra, [{ name: "genre", isRequired: true, options: ["All", "Sci-Fi"] }, { name: "skip" }], "required, so it stays off the home screen and opens on All");
   assert.deepEqual(m.catalogs[0].extraRequired, ["genre"]);
+  assert.deepEqual(m.catalogs.at(-1).extra, [{ name: "search", isRequired: true }], "Search is only in search results, not Discover");
 });
 
-test("settings in a configured install's URL pick the catalogs and the title links", () => {
+test("settings in a configured install's URL pick the catalogs, title links, search and genres", () => {
   const all = CATALOGS.map((c) => c.id);
   assert.equal(parseSettings("manifest.json"), undefined, "not settings");
   assert.equal(parseSettings("colour=red"), undefined, "an unknown setting isn't settings");
-  const { catalogs, links } = parseSettings("catalogs=storyline,other,nonsense;links=");
+  const { catalogs, links, search, hide } = parseSettings("catalogs=storyline,other,nonsense;links=;hide=other.Reality-TV,nowhere.Drama");
   assert.deepEqual([...catalogs], ["storyline", "other"], "unknown catalogs are dropped");
   assert.deepEqual([...links], [], "an empty setting means none");
-  assert.deepEqual([...parseSettings("catalogs=person").links], all, "a setting left out means everything");
+  assert.deepEqual([...search], all, "a setting left out means everything");
+  assert.deepEqual([...hide], ["other.Reality-TV"]);
+  assert.deepEqual([...parseSettings("catalogs=person").hide], [], "no genres hidden by default");
 });
 
-test("a configured manifest has only the chosen catalogs, and no title streams without links", () => {
-  const m = buildManifest([{ order: "release", genres: ["Sci-Fi"] }, { genres: ["Drama"] }]);
+test("a configured manifest has only the chosen catalogs and genres, Search when it finds anything, and no title streams without links", () => {
+  const m = buildManifest([{ order: "release", genres: ["Sci-Fi"] }, { genres: ["Reality-TV", "Romance"] }]);
   assert.equal(m.behaviorHints.configurable, true, "Stremio shows a Configure button");
-  const some = configureManifest(m, parseSettings("catalogs=storyline,other;links=storyline"));
-  assert.deepEqual(some.catalogs.map((c) => c.id), ["storyline", "other"]);
+  const some = configureManifest(m, parseSettings("catalogs=storyline,other;links=storyline;hide=other.Reality-TV"));
+  assert.deepEqual(some.catalogs.map((c) => c.id), ["storyline", "other", "search"]);
+  assert.deepEqual(some.catalogs[1].genres, ["All", "Romance"], "a left-out genre leaves the dropdown");
+  assert.deepEqual(some.catalogs[1].extra[0].options, ["All", "Romance"]);
   assert.deepEqual(some.resources, m.resources, "still links titles");
-  const bare = configureManifest(m, parseSettings("catalogs=;links="));
+  assert.deepEqual(configureManifest(m, parseSettings("search=")).catalogs.map((c) => c.id), CATALOGS.map((c) => c.id), "no Search when it finds nothing");
+  const bare = configureManifest(m, parseSettings("catalogs=;links=;search="));
   assert.deepEqual(bare.catalogs, []);
   assert.deepEqual(bare.resources, [
     { name: "meta", types: ["collections"], idPrefixes: ["mscol-"] },

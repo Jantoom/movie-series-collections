@@ -608,44 +608,64 @@ export function catalogPaths(catalogId, genre, metas) {
 
 /**
  * Settings from a configured install's URL (https://host/<settings>/manifest.json), in
- * the install page's format: "catalogs=storyline,other;links=storyline". `catalogs` are
- * the Discover catalogs and `links` the kinds of collection a movie or show links to,
- * each a set of catalog ids; a setting that isn't given is everything. Undefined when
- * the segment isn't settings.
+ * the install page's format: "catalogs=storyline,other;links=storyline;hide=other.Anime".
+ * `catalogs` are the Discover catalogs, `links` the kinds of collection a movie or show
+ * links to, and `search` the kinds Search finds, each a set of catalog ids; a setting
+ * that isn't given is everything. `hide` is the genres left out of a catalog
+ * ("<catalog>.<genre>"), none when it isn't given. Undefined when the segment isn't
+ * settings.
  */
-export const SETTINGS = ["catalogs", "links"];
+export const SETTINGS = ["catalogs", "links", "search", "hide"];
 export function parseSettings(segment) {
   if (!segment.includes("=")) return undefined;
   const ids = new Set(CATALOGS.map(({ id }) => id));
-  const settings = Object.fromEntries(SETTINGS.map((key) => [key, ids]));
+  const settings = { catalogs: ids, links: ids, search: ids, hide: new Set() };
   for (const part of segment.split(";")) {
     const [key, values = ""] = part.split("=");
     if (!SETTINGS.includes(key)) return undefined;
-    settings[key] = new Set(values.split(",").filter((v) => ids.has(v)));
+    const list = values.split(",").filter(Boolean);
+    settings[key] = new Set(key === "hide" ? list.filter((v) => ids.has(v.split(".")[0])) : list.filter((v) => ids.has(v)));
   }
   return settings;
 }
 
+/** The genres a configured install leaves out of one catalog. */
+export const hiddenGenres = ({ hide }, catalogId) =>
+  new Set([...hide].filter((v) => v.startsWith(`${catalogId}.`)).map((v) => v.slice(catalogId.length + 1)));
+
 /**
- * The manifest for a configured install: only the chosen catalogs, and no streams for
- * real movies and shows when they link to no collections.
+ * The manifest for a configured install: only the chosen catalogs, each offering only
+ * the genres it keeps; Search only when it finds something; and no streams for real
+ * movies and shows when they link to no collections.
  */
-export function configureManifest(manifest, { catalogs, links }) {
+export function configureManifest(manifest, settings) {
+  const { catalogs, links, search } = settings;
   const linked = links.size > 0;
+  const kept = manifest.catalogs
+    .filter((c) => (c.id === SEARCH_ID ? search.size > 0 : catalogs.has(c.id)))
+    .map((c) => {
+      const hidden = hiddenGenres(settings, c.id);
+      if (!hidden.size || !c.genres) return c;
+      const options = c.genres.filter((g) => !hidden.has(g));
+      return { ...c, genres: options, extra: c.extra.map((e) => (e.name === "genre" ? { ...e, options } : e)) };
+    });
   return {
     ...manifest,
     resources: [
-      ...(catalogs.size ? ["catalog"] : []),
+      ...(kept.length ? ["catalog"] : []),
       ...manifest.resources.filter((r) => r !== "catalog").map((r) => (r.name === "stream" && !linked ? { ...r, types: [TYPE], idPrefixes: [ID_PREFIX] } : r)),
     ],
     types: linked ? manifest.types : [TYPE],
     idPrefixes: linked ? manifest.idPrefixes : [ID_PREFIX],
-    catalogs: manifest.catalogs.filter((c) => catalogs.has(c.id)),
+    catalogs: kept,
   };
 }
 
+/** Search, which Stremio only uses for search results, not in Discover. */
+export const SEARCH_ID = "search";
+
 // Bump when the manifest changes so installed copies refresh.
-export function buildManifest(collections, version = "0.15.0") {
+export function buildManifest(collections, version = "0.16.0") {
   return {
     id: "community.movie-series-collections",
     version,
@@ -673,6 +693,14 @@ export function buildManifest(collections, version = "0.15.0") {
         extraSupported: ["genre", "skip"],
         extraRequired: ["genre"],
       };
+    }).concat({
+      // Search is required, so it's only in Stremio's search results. The Worker answers it.
+      type: TYPE,
+      id: SEARCH_ID,
+      name: "Search",
+      extra: [{ name: "search", isRequired: true }],
+      extraSupported: ["search"],
+      extraRequired: ["search"],
     }),
     // The Worker serves a trimmed manifest for settings in the URL; Configure opens the
     // install page to choose them.

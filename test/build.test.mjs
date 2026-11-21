@@ -102,8 +102,8 @@ test("builds the catalogs, each with a genre filter, best-loved collections firs
   // Each real title links to the collections it's in: watch orders first, then lists.
   const ironMan = (await read(outDir, "stream/movie/tt5.json")).streams;
   assert.deepEqual(ironMan.map((s) => [s.name, s.title, s.externalUrl]), [
-    ["Collection\nStoryline", "Marvel\n#1 of 5 · 2008–2025", "stremio:///detail/collections/mscol-marvel"],
-    ["Collection\nStoryline", "Marvel (Timeline)\n#1 of 5 · 2008–2025", "stremio:///detail/collections/mscol-marvel-timeline"],
+    ["Marvel", "Storyline\n#1 of 5 · 2008–2025", "stremio:///detail/collections/mscol-marvel"],
+    ["Marvel (Timeline)", "Storyline\n#1 of 5 · 2008–2025", "stremio:///detail/collections/mscol-marvel-timeline"],
   ], "a watch order's Franchise copy isn't repeated");
   const daredevil = await read(outDir, "index/series/tt2.json");
   assert.deepEqual(daredevil.collections.map((r) => [r.name, r.at]), [
@@ -112,6 +112,13 @@ test("builds the catalogs, each with a genre filter, best-loved collections firs
   assert.ok(!existsSync(join(outDir, "stream/series/tt2.json")), "a show's streams come from the Worker, per episode");
   assert.ok(!existsSync(join(outDir, "stream/movie/tt6.json")), "not out yet, so in no collection");
   assert.match(await readFile(join(outDir, "_headers"), "utf8"), /Access-Control-Allow-Origin: \*/);
+  assert.deepEqual((await read(outDir, "index/genres.json"))["mscol-every-daredevil-series"], ["Superhero", "Crime"], "each collection's genres, for installs that leave some out");
+  const searchIndex = await read(outDir, "index/search.json");
+  assert.deepEqual(searchIndex.collections.map((c) => c.id), ["mscol-marvel", "mscol-marvel-timeline", "mscol-franchise-marvel", "mscol-every-daredevil-series", "mscol-trek"], "best-loved first");
+  assert.ok(searchIndex.words.includes("loki"), "titles' words are searchable");
+  const page = await readFile(join(outDir, "index.html"), "utf8");
+  assert.match(page, /data-key="hide" value="other\.Crime" data-invert/, "each genre can be left out");
+  assert.match(page, /data-key="search" value="storyline"/, "a search toggle per catalog");
 
   const manifest = await read(outDir, "manifest.json");
   assert.deepEqual(manifest.catalogs.map((c) => [c.id, c.genres]), [
@@ -120,6 +127,7 @@ test("builds the catalogs, each with a genre filter, best-loved collections firs
     ["person", ["All"]],
     ["studio", ["All"]],
     ["other", ["All", "Crime", "Superhero"]],
+    ["search", undefined],
   ]);
   assert.deepEqual((await read(outDir, "catalog/collections/storyline/genre=All.json")).metas, connected.metas, "All lists every collection");
   assert.deepEqual(Object.keys(report.catalogs), ["Storyline", "Franchise", "Person", "Studio", "Other"]);

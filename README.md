@@ -18,7 +18,7 @@ The collections in `collections.config.mjs` are a starting set: replace or add t
 3. Each poster is a **collection**, with its years ("2008–" while a show in it is still running). Selecting one shows its **Genres** (each opening that genre in the same catalog), its size under **Contents** ("41 Movies", "24 Series", "36 Seasons"), then its entries under **Watch order** or **Titles**.
 4. Clicking an entry opens it inside the app: a season opens its show on that season's tab, a show opens the show, and a movie opens the movie. Streams come from your other addons such as Torrentio, and watch progress stays on the real title.
 5. The detail page also lists the entries in its episode column. Season 1 has everything; a collection with both movies and series adds season 2 with just its movies and season 3 with just its series. (Stremio has no per-season descriptions, so the seasons only have numbers.) Selecting one shows its description from Cinemeta, ending with its year, or its seasons or episodes, in brackets ("(1988 movie)", "(Season 1, 2008–2009, 22 episodes)"). Its one stream, **Link to Movie**, **Link to Series** or **Link to Season** with "Tap to watch", links to the title. That stream opens inside the app on web, but Stremio 5 desktop sends it to the system browser.
-6. Every movie and show that's in a collection also lists those collections in its own stream list, under **Collection**: each opens the collection, with the title's place in it where the collection keeps an order ("Marvel Cinematic Universe" / "#14 of 65 · 2008–", where a show's place is its season's) or the collection's size otherwise ("Every Marvel Series" / "48 titles · 1966–"). Watch orders come first, then lists, best-loved first; a watch order's Franchise copy is left out for the titles the watch order already has. Stremio lists each addon's streams in the order the addons were installed, so install this addon after your stream addons (AIOStreams, Torrentio, …) to have the collections last.
+6. Every movie and show that's in a collection also lists those collections in its own stream list: each is named for the collection and opens it, and its description starts with the collection's catalog, then the title's place in it where the collection keeps an order ("Storyline" / "#14 of 65 · 2008–", where a show's place is its season's) or the collection's size otherwise ("Franchise" / "48 titles · 1966–"). Watch orders come first, then lists, best-loved first; a watch order's Franchise copy is left out for the titles the watch order already has. Stremio lists each addon's streams in the order the addons were installed, so install this addon after your stream addons (AIOStreams, Torrentio, …) to have the collections last.
 
 ### Timelines
 
@@ -40,9 +40,20 @@ Everything the build writes is a static file, and Cloudflare serves those withou
 
 ### Choosing what to install
 
-The install page doubles as the addon's **Configure** page. Its switches pick the Discover catalogs, and its ticks pick which kinds of collection a movie or show links to (none turns the links off). The manifest URL and install buttons change to match, carrying the choices in the URL: `https://<site>/catalogs=storyline,other;links=storyline/manifest.json`. With everything on, it's the plain URL. Stremio's **Configure** button reopens the page with the installed choices ticked; changing them means installing again.
+The install page doubles as the addon's **Configure** page. For each catalog:
 
-A configured install runs every request through the Worker, since its URLs match no file. The Worker serves the manifest trimmed to the choices, drops title links to the kinds left out, and serves everything else from the same files, pointing the genre chips at the configured install. Genres can't be chosen: leaving one out would mean filtering each catalog's All pages in the Worker. A collection's genre chips open its first catalog, so a chip may lead to a catalog the install left out.
+- its switch puts it in Discover or leaves it out;
+- its genres can each be left out, which takes them out of the catalog's genre filter and takes the collections tagged with them out of the catalog (out of **All** and the other genres too);
+- the link icon beside its name sets whether movies and shows link to its collections (none turns the links off);
+- the search icon sets whether **Search** finds its collections. With none, Search isn't installed.
+
+The manifest URL and install buttons change to match, carrying the choices in the URL: `https://<site>/catalogs=storyline,other;links=storyline;hide=other.Reality-TV/manifest.json`. With everything on, it's the plain URL. Stremio's **Configure** button reopens the page with the installed choices ticked; changing them means installing again.
+
+A configured install runs every request through the Worker, since its URLs match no file. The Worker serves the manifest trimmed to the choices, drops title links to the kinds left out, and serves everything else from the same files, pointing the genre chips at the configured install. A catalog that leaves genres out is rebuilt page by page: the Worker reads its built pages in order, drops the collections with a left-out genre, and stops once it has the page asked for. A collection's genre chips open its first catalog, so a chip may lead to a catalog or genre the install left out.
+
+### Search
+
+**Search** is a catalog of the collections type that Stremio only uses for search results, not in Discover. It finds collections by their own names and by the titles in them, so "iron man" finds the Marvel Cinematic Universe. Every word of the search must match one name: exactly, as the start of a word, or with a typo or two (one in words of 4 to 7 letters, two from 8, with two swapped letters counting as one). Collections named for the search come first, then those holding a matching title, best-loved first. The build writes a small index (`index/search.json`) with each word once, so the Worker compares a search against a few thousand words rather than every title.
 
 ## What to check on each device
 
@@ -55,6 +66,7 @@ On each Stremio client you care about (desktop, web, Android TV, mobile):
 - [ ] **Star Wars (Timeline)** starts with The Acolyte S1, then The Phantom Menace.
 - [ ] Clicking a genre chip opens that genre in the collection's own catalog.
 - [ ] Installed with only **Storyline** and Storyline links (from the install page), Discover has just Storyline, Iron Man's stream list links only its watch orders, and the addon's **Configure** button opens the page with those ticked.
+- [ ] Searching "iron man" shows the Marvel collections under **Search**, and leaving out a genre (Reality-TV in Other) takes it out of Other's genre filter and takes Love Island out of Other's **All**.
 - [ ] On the detail page, selecting an entry shows its description and details, and its **Link to …** stream opens the title (on TV especially).
 - [ ] **Iron Man**'s stream list ends with **Collection** links to Marvel Cinematic Universe (#1) and its other collections, and a **Daredevil** season 2 episode shows its place in the Marvel watch order; each opens its collection.
 

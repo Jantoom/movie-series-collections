@@ -14,6 +14,7 @@ import {
   toMovie, toShow, withFranchiseCopies,
 } from "../src/lib.mjs";
 import { titleStream } from "../src/title-streams.mjs";
+import { buildSearchIndex } from "../src/search.mjs";
 import { installPage } from "../src/install-page.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -174,6 +175,14 @@ export async function build({
     if (type === "movie") await writeJson(`stream/movie/${imdb}.json`, { streams: refs.map((r) => titleStream(r)) });
     else await writeJson(`index/series/${imdb}.json`, { collections: refs });
   }
+  // For the Worker: each collection's genres, for installs that leave genres out, and
+  // the search index, over the collections' names and their titles'.
+  await writeJson("index/genres.json", Object.fromEntries(lists.map(({ c }) => [idOf(c), genresOf(c)])));
+  await writeJson("index/search.json", buildSearchIndex(lists.map(({ c, entries }) => {
+    const { id, name, poster, releaseInfo } = previews.get(c);
+    const titles = entries.map((e) => (e.kind === "movie" ? e.movie : e.show)).map(({ imdb, name: title }) => ({ imdb, name: title }));
+    return { id, name, poster, releaseInfo, catalogs: catalogsOf(c), titles };
+  })));
   for (const catalog of CATALOGS) {
     const members = lists.filter(({ c }) => catalogsOf(c).includes(catalog.id));
     // "All", and no genre at all: all of the catalog's collections.
@@ -208,25 +217,25 @@ export async function build({
 
 function sitePage(siteUrl, manifest, lists, totals, inCollections) {
   const base = siteUrl.replace(/\/$/, "");
-  const groups = manifest.catalogs.map((catalog) => {
+  // Each Discover catalog: its switch, its genres (each can be left out), and icons for
+  // whether movies and shows link to its collections and whether Search finds them.
+  const linked = (catalog) => [...inCollections.values()].filter(({ refs }) => refs.some((r) => r.catalog === catalog.name)).length;
+  const groups = CATALOGS.map((catalog) => {
     const members = lists.filter(({ c }) => catalogsOf(c).includes(catalog.id));
     const genres = genreNames(lists.map(({ c }) => c), catalog.id);
     return {
       title: catalog.name,
       detail: `${members.length} collections`,
       switch: { key: "catalogs", value: catalog.id },
+      toggles: [
+        { key: "links", value: catalog.id, icon: "link", label: `Link movies and shows to these collections, in their stream lists (${linked(catalog)} titles)` },
+        { key: "search", value: catalog.id, icon: "search", label: "Include these collections in Search" },
+      ],
       choicesLabel: "Genres",
-      choices: genres.map((genre) => ({ label: genre, detail: String(members.filter(({ c }) => genresOf(c).includes(genre)).length) })),
+      key: "hide",
+      invert: true,
+      choices: genres.map((genre) => ({ label: genre, value: `${catalog.id}.${genre}`, detail: String(members.filter(({ c }) => genresOf(c).includes(genre)).length) })),
     };
-  });
-  // Which kinds of collection a movie or show links to from its own stream list.
-  const linked = (catalog) => [...inCollections.values()].filter(({ refs }) => refs.some((r) => r.catalog === catalog.name)).length;
-  groups.push({
-    title: "Collection links on movies and shows",
-    detail: "in their stream lists",
-    key: "links",
-    choicesLabel: "Link to collections in",
-    choices: CATALOGS.map((catalog) => ({ label: catalog.name, value: catalog.id, detail: `${linked(catalog)} titles` })),
   });
   return installPage({
     name: manifest.name,
@@ -241,7 +250,7 @@ function sitePage(siteUrl, manifest, lists, totals, inCollections) {
     ],
     groups,
     configurable: true,
-    about: `<p>Find them under <b>Discover</b> → <b>Collections</b>. <b>Storyline</b> has watch orders for stories told across many titles, by release or by the story's timeline. <b>Franchise</b>, <b>Person</b> and <b>Studio</b> gather the titles of a franchise, a director or personality, or a studio, with sequels together and the most watched first (a big watch order's copy in Franchise keeps its order), and <b>Other</b> has the rest. Each movie, season or show in a collection opens that title.</p>
+    about: `<p>Find them under <b>Discover</b> → <b>Collections</b>. <b>Storyline</b> has watch orders for stories told across many titles, by release or by the story's timeline. <b>Franchise</b>, <b>Person</b> and <b>Studio</b> gather the titles of a franchise, a director or personality, or a studio, with sequels together and the most watched first (a big watch order's copy in Franchise keeps its order), and <b>Other</b> has the rest. Each movie, season or show in a collection opens that title. Stremio's search also finds collections, by their names and the titles in them.</p>
 <p>This addon has no streams of its own. Titles play through whatever stream addons you already have installed. Each movie and show also lists the collections it's in among its streams, each opening that collection. Install this addon after your stream addons to have those links last.</p>`,
     links: [{ label: "Build report", href: "report.json" }],
   });

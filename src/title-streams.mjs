@@ -9,19 +9,20 @@
 // watch order's seasons. A list sorted by popularity has no `at`.
 
 /**
- * The stream for one collection. `season` is the season of the episode Stremio asked about
- * (undefined for a movie or a show without episodes), so a watch order shows that season's
- * place ("#14 of 65") and otherwise its size ("65 entries").
+ * The stream for one collection: its name as the stream's name, and its catalog
+ * ("Storyline") above its details in the description. `season` is the season of the
+ * episode Stremio asked about (undefined for a movie or a show without episodes), so a
+ * watch order shows that season's place ("#14 of 65") and otherwise its size ("65 entries").
  */
-/** The catalog name ("Storyline") a title stream is labelled with. */
-export const streamCatalog = (stream) => stream.name.split("\n")[1];
-
 export function titleStream(ref, season) {
   const place = typeof ref.at === "number" ? ref.at : season === undefined ? undefined : ref.at?.[season];
   const where = place ? `#${place} of ${ref.of}` : `${ref.of} ${ref.noun}`;
   return {
-    name: `Collection\n${ref.catalog}`,
-    title: `${ref.name}\n${[where, ref.years].filter(Boolean).join(" · ")}`,
+    name: ref.name,
+    title: `${ref.catalog}\n${[where, ref.years].filter(Boolean).join(" · ")}`,
     externalUrl: ref.url,
   };
 }
+
+/** The catalog name ("Storyline") a title stream is labelled with. */
+export const streamCatalog = (stream) => stream.title.split("\n")[0];

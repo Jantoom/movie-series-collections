@@ -15,7 +15,8 @@
 //     for Stremio's Configure button, and the same files as everyone else, with the
 //     genre chips pointed at the configured install;
 //   - anything else: 404.
-import { CATALOGS, ID_PREFIX, TYPE, configureManifest, parseSettings } from "./lib.mjs";
+import { ALL_GENRES, CATALOGS, ID_PREFIX, PAGE_SIZE, SEARCH_ID, TYPE, configureManifest, hiddenGenres, parseSettings } from "./lib.mjs";
+import { search } from "./search.mjs";
 import { streamCatalog, titleStream } from "./title-streams.mjs";
 
 const STREAM = /^\/stream\/([^/]+)\/(.+)\.json$/;
@@ -62,6 +63,54 @@ async function streams(path, env, base) {
   return index?.collections.map((ref) => titleStream(ref, season === undefined ? undefined : Number(season))) ?? [];
 }
 
+const CATALOG = /^\/catalog\/([^/]+)\/([^/]+?)(?:\/(.+))?\.json$/;
+const CATALOG_ORDER = CATALOGS.map(({ id }) => id);
+const ALL_CATALOGS = new Set(CATALOG_ORDER);
+let searchIndex;   // the parsed search index, a promise
+/** A catalog request's extras ("genre=Action&skip=100"), as an object. */
+const extrasOf = (text = "") => Object.fromEntries(text.split("&").filter(Boolean).map((p) => {
+  const i = p.indexOf("=");
+  return i < 0 ? [p, ""] : [p.slice(0, i), p.slice(i + 1)];
+}));
+
+/**
+ * A catalog the Worker answers itself, or undefined to serve the built file: Search, from
+ * the search index, and for a configured install that leaves genres out of a catalog,
+ * that catalog's pages without the collections tagged with them. It reads the built
+ * pages of the asked genre in order, keeping what's left, until it has the asked page,
+ * so every page it serves is full and Stremio's skip=100, 200, … still line up.
+ */
+async function catalog(path, env, base, settings) {
+  const request = path.match(CATALOG);
+  if (!request || request[1] !== TYPE) return undefined;
+  const [, , id, extraText] = request;
+  const extras = extrasOf(extraText);
+  if (id === SEARCH_ID) {
+    const allowed = settings?.search ?? ALL_CATALOGS;
+    if (!allowed.size) return { metas: [] };
+    // Read once per Worker instance: a deploy brings a new instance with its own files.
+    searchIndex ??= asset(env, base, "/index/search.json").catch(() => undefined);
+    const index = await searchIndex;
+    if (!index) searchIndex = undefined;
+    return { metas: index ? search(index, extras.search ?? "", { allowed, catalogs: CATALOG_ORDER, type: TYPE }) : [] };
+  }
+  const hidden = settings ? hiddenGenres(settings, id) : new Set();
+  if (!hidden.size) return undefined;
+  const genre = extras.genre ?? ALL_GENRES;
+  if (hidden.has(genre)) return { metas: [] };
+  const skip = Number.parseInt(extras.skip, 10) || 0;
+  const genres = (await asset(env, base, "/index/genres.json")) ?? {};
+  const keep = (meta) => !(genres[meta.id] ?? []).some((g) => hidden.has(g));
+  const metas = [];
+  for (let page = 0; metas.length < skip + PAGE_SIZE; page += PAGE_SIZE) {
+    const built = await asset(env, base, `/catalog/${TYPE}/${id}/genre=${genre}${page ? `&skip=${page}` : ""}.json`);
+    if (!built) break;
+    metas.push(...built.metas.filter(keep));
+    if (built.metas.length < PAGE_SIZE) break;
+  }
+  return { metas: metas.slice(skip, skip + PAGE_SIZE) };
+}
+
 async function configured(path, settings, segment, url, env) {
   if (path === "/manifest.json") return json(configureManifest(await asset(env, url, "/manifest.json"), settings));
   // Stremio's Configure button: the install page, which ticks the settings in its address.
@@ -74,7 +123,8 @@ async function configured(path, settings, segment, url, env) {
     return json({ streams: titles ? found.filter((s) => kinds.has(streamCatalog(s))) : found });
   }
   if (!/^\/(catalog|meta)\//.test(path)) return notFound();
-  const text = await asset(env, url, path, "text");
+  const listed = await catalog(path, env, url, settings);
+  const text = listed ? JSON.stringify(listed) : await asset(env, url, path, "text");
   if (text === undefined) return notFound();
   // Genre chips open Discover for the install they came from, named by its encoded
   // manifest URL (stremio:///discover/https%3A%2F%2F<site>%2Fmanifest.json/…).
@@ -94,6 +144,8 @@ export async function handle(request, env) {
   if (settings) return configured(rest, settings, first, url, env);
   if (CONFIGURE.test(path)) return env.ASSETS.fetch(new URL("/", url));
 
+  const listed = await catalog(path, env, url);
+  if (listed) return json(listed);
   const found = await streams(path, env, url);
   return found ? json({ streams: found }) : notFound();
 }
