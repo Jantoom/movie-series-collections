@@ -9,6 +9,7 @@ const index = buildSearchIndex([
   { id: "ghibli", name: "Every Studio Ghibli Movie", catalogs: ["studio"], titles: [{ imdb: "tt4", name: "Spirited Away" }] },
   { id: "pokemon", name: "Pokémon", catalogs: ["franchise", "other"], titles: [] },
   { id: "spidey", name: "Spider-Man", catalogs: ["franchise"], titles: [{ imdb: "tt3", name: "Spider-Man" }] },
+  { id: "mcu-copy", name: "Marvel Cinematic Universe", catalogs: ["franchise"], titles: [{ imdb: "tt1", name: "Iron Man" }] },
 ]);
 const ids = (query, allowed = all) => search(index, query, { allowed, type: "collections" }).map((m) => m.id);
 
@@ -33,8 +34,13 @@ test("finds collections by the titles in them, below collections named for the s
   assert.deepEqual(ids("man iron"), ["mcu", "every-marvel"], "words in any order");
 });
 
+test("a watch order's Franchise copy, sharing its name, is listed only when the watch order isn't", () => {
+  assert.deepEqual(ids("cinematic"), ["mcu"]);
+  assert.deepEqual(ids("cinematic", new Set(["franchise"])), ["mcu-copy"]);
+});
+
 test("only collections in the allowed catalogs, as catalog items", () => {
-  assert.deepEqual(ids("marvel", new Set(["franchise"])), ["every-marvel"]);
+  assert.deepEqual(ids("marvel", new Set(["franchise"])), ["every-marvel", "mcu-copy"]);
   assert.deepEqual(ids("pokemon", new Set(["other"])), ["pokemon"], "any of its catalogs counts");
   assert.deepEqual(search(index, "ghibli", { allowed: all, type: "collections" })[0], { id: "ghibli", type: "collections", name: "Every Studio Ghibli Movie", poster: undefined, releaseInfo: undefined });
 });

@@ -148,9 +148,13 @@ export function search(index, query, { allowed, catalogs = [], type, limit = 100
     const at = index.collections[ci].catalogs.map((c) => catalogs.indexOf(c)).filter((i) => i >= 0);
     return at.length ? Math.min(...at) : catalogs.length;
   };
+  // A watch order's Franchise copy shares its name: only the first of a name is listed,
+  // so the copy shows only when its watch order doesn't (Storyline isn't searched).
+  const named = new Set();
   return [...scores]
     .filter(([ci]) => index.collections[ci].catalogs.some((c) => allowed.has(c)))
     .sort((a, b) => b[1] - a[1] || order(a[0]) - order(b[0]) || a[0] - b[0])
+    .filter(([ci]) => !named.has(index.collections[ci].name) && named.add(index.collections[ci].name))
     .slice(0, limit)
     .map(([ci]) => {
       const { id, name, poster, releaseInfo } = index.collections[ci];
