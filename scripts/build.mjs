@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Builds the static Stremio addon into ./dist from Cinemeta data.
+// Builds the Stremio addon into ./dist from Cinemeta data: static files that the Cloudflare
+// Worker serves as assets (see src/worker.mjs), plus each show's index for the Worker.
 //   node scripts/build.mjs
 // Optional env: SITE_URL (public base URL, used for genre links and the install page),
 // OUT_DIR, CINEMETA_URL, RATINGS_URL.
@@ -9,9 +10,10 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { shows as defaultShows, movies as defaultMovies, collections as defaultCollections, sequels as defaultSequels } from "../collections.config.mjs";
 import {
   ALL_GENRES, CATALOGS, TYPE, arrange, buildManifest, catalogPaths, catalogsOf, collectionScore, configProblems, displayName, entryStreams,
-  expandEntries, genreNames, genresOf, idOf, orderOf, sagasOf, sameTitle, sourceUrl, titleScore, toCollectionMeta, toCollectionPreview, toMovie,
-  toShow, withFranchiseCopies,
+  expandEntries, genreNames, genresOf, idOf, orderOf, sagasOf, sameTitle, sourceUrl, titleCollections, titleScore, toCollectionMeta, toCollectionPreview,
+  toMovie, toShow, withFranchiseCopies,
 } from "../src/lib.mjs";
+import { titleStream } from "../src/title-streams.mjs";
 import { installPage } from "../src/install-page.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -142,7 +144,7 @@ export async function build({
   lists.sort((a, b) => b.score - a.score);
   if (problems.length) throw fix(problems);
 
-  // ---- 3. Write the static addon --------------------------------------------
+  // ---- 3. Write the addon's files --------------------------------------------
   await rm(outDir, { recursive: true, force: true });
   await mkdir(outDir, { recursive: true });
   const writeJson = async (rel, data) => {
@@ -158,9 +160,19 @@ export async function build({
   for (const { c, entries } of lists) {
     previews.set(c, toCollectionPreview(c, entries, manifestUrl));
     await writeJson(`meta/${TYPE}/${idOf(c)}.json`, { meta: toCollectionMeta(c, entries, manifestUrl) });
-    for (const { id, streams } of entryStreams(c, entries)) {
-      await writeJson(`stream/${TYPE}/${id}.json`, { streams });
-    }
+    // Each entry's one stream. One index per collection, which the Worker answers each
+    // entry's request from, rather than a file per entry (thousands of them).
+    const streams = Object.fromEntries(entryStreams(c, entries).map(({ id, streams: [s] }) => [id, s]));
+    await writeJson(`index/${TYPE}/${idOf(c)}.json`, { streams });
+  }
+  // Each real movie and show gets a stream per collection it's in. A movie's are a static
+  // file, served without running the Worker. A show is asked about per episode
+  // (tt…:season:episode), which no static file can match, so the Worker answers those from
+  // the show's one index file.
+  const inCollections = titleCollections(lists);
+  for (const [imdb, { type, refs }] of inCollections) {
+    if (type === "movie") await writeJson(`stream/movie/${imdb}.json`, { streams: refs.map((r) => titleStream(r)) });
+    else await writeJson(`index/series/${imdb}.json`, { collections: refs });
   }
   for (const catalog of CATALOGS) {
     const members = lists.filter(({ c }) => catalogsOf(c).includes(catalog.id));
@@ -183,7 +195,8 @@ export async function build({
 
   const manifest = buildManifest(collections);
   await writeJson("manifest.json", manifest);
-  await writeFile(join(outDir, ".nojekyll"), "");
+  // Stremio's web and desktop apps fetch across origins.
+  await writeFile(join(outDir, "_headers"), "/*\n  Access-Control-Allow-Origin: *\n");
   await writeFile(join(outDir, "index.html"), sitePage(siteUrl, manifest, lists, { movies: movies.size, series: shows.size }));
   report.series = shows.size;
   report.movies = movies.size;
@@ -218,7 +231,7 @@ function sitePage(siteUrl, manifest, lists, totals) {
     ],
     groups,
     about: `<p>Find them under <b>Discover</b> → <b>Collections</b>. <b>Storyline</b> has watch orders for stories told across many titles, by release or by the story's timeline. <b>Franchise</b>, <b>Person</b> and <b>Studio</b> gather the titles of a franchise, a director or personality, or a studio, with sequels together and the most watched first (a big watch order's copy in Franchise keeps its order), and <b>Other</b> has the rest. Each movie, season or show in a collection opens that title.</p>
-<p>This addon has no streams of its own. Titles play through whatever stream addons you already have installed.</p>`,
+<p>This addon has no streams of its own. Titles play through whatever stream addons you already have installed. Below their streams, each movie and show also lists the collections it's in, each opening that collection.</p>`,
     links: [{ label: "Build report", href: "report.json" }],
   });
 }

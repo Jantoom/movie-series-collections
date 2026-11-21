@@ -1,13 +1,16 @@
 {
   "name": "movie-series-collections",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "private": true,
-  "description": "Static Stremio addon of movie and TV collections, built from Cinemeta.",
+  "description": "Stremio addon of movie and TV collections, built from Cinemeta and served by a Cloudflare Worker.",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test test/*.test.mjs",
-    "serve": "node scripts/serve.mjs"
+    "serve": "npx --yes wrangler@4 dev --port 7000",
+    "deploy": "npx --yes wrangler@4 deploy"
   }
 }

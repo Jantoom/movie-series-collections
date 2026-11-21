@@ -1,0 +1,15 @@
+// Cloudflare Worker config. `npm run build` first: the Worker serves ./dist as assets.
+{
+  "name": "movie-series-collections",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  // The addon's address. Replace with a subdomain of your own domain; Cloudflare creates
+  // its DNS record and certificate on the first deploy. The workflow builds with this as
+  // SITE_URL, so the genre chips link to the right install.
+  "routes": [{ "pattern": "stremio-collections-addon.jantoom.com", "custom_domain": true }],
+  "workers_dev": false
+}

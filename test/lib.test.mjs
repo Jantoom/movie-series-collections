@@ -362,12 +362,12 @@ test("catalogPaths writes every genre spelling, pages of 100, and the no-genre l
 
 test("manifest has the five catalogs, each with its own genres", () => {
   const m = buildManifest([{ order: "release", genres: ["Sci-Fi"] }, { genres: ["Reality-TV", "Romance"] }, { catalogs: ["person"], genres: ["Drama"] }]);
-  assert.deepEqual(m.types, ["collections"]);
+  assert.deepEqual(m.types, ["collections", "movie", "series"]);
   assert.deepEqual(m.resources, [
     "catalog",
     { name: "meta", types: ["collections"], idPrefixes: ["mscol-"] },
-    { name: "stream", types: ["collections"], idPrefixes: ["mscol-"] },
-  ]);
+    { name: "stream", types: ["collections", "movie", "series"], idPrefixes: ["mscol-", "tt"] },
+  ], "real movies and shows get streams too: a link to each collection they're in");
   assert.deepEqual(m.catalogs.map((c) => [c.type, c.id, c.name, c.genres]), [
     ["collections", "storyline", "Storyline", ["All", "Sci-Fi"]],
     ["collections", "franchise", "Franchise", ["All"]],

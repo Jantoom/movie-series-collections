@@ -94,9 +94,24 @@ test("builds the catalogs, each with a genre filter, best-loved collections firs
   const meta = (await read(outDir, "meta/collections/mscol-marvel-timeline.json")).meta;
   assert.deepEqual(urls(meta), urls(timeline), "the detail page has the same links");
   assert.deepEqual([...new Set(meta.videos.map((v) => v.season))], [1, 2, 3], "everything, then movies, then series");
-  const stream = await read(outDir, "stream/collections/mscol-marvel-timeline-3.json");
-  assert.equal(stream.streams[0].externalUrl, "stremio:///detail/series/tt1?season=1");
-  assert.equal((await read(outDir, "stream/collections/mscol-marvel-timeline-m1.json")).streams[0].externalUrl, "stremio:///detail/movie/tt5");
+  const { streams } = await read(outDir, "index/collections/mscol-marvel-timeline.json");
+  assert.equal(streams["mscol-marvel-timeline-3"].externalUrl, "stremio:///detail/series/tt1?season=1", "each entry's stream, in one index for the Worker");
+  assert.equal(streams["mscol-marvel-timeline-m1"].externalUrl, "stremio:///detail/movie/tt5");
+  assert.ok(!existsSync(join(outDir, "stream/collections")), "no file per entry");
+
+  // Each real title links to the collections it's in: watch orders first, then lists.
+  const ironMan = (await read(outDir, "stream/movie/tt5.json")).streams;
+  assert.deepEqual(ironMan.map((s) => [s.name, s.title, s.externalUrl]), [
+    ["Collection\nStoryline", "Marvel\n#1 of 5 · 2008–2025", "stremio:///detail/collections/mscol-marvel"],
+    ["Collection\nStoryline", "Marvel (Timeline)\n#1 of 5 · 2008–2025", "stremio:///detail/collections/mscol-marvel-timeline"],
+  ], "a watch order's Franchise copy isn't repeated");
+  const daredevil = await read(outDir, "index/series/tt2.json");
+  assert.deepEqual(daredevil.collections.map((r) => [r.name, r.at]), [
+    ["Marvel", { 1: 2, 2: 3 }], ["Marvel (Timeline)", { 1: 2, 2: 4 }], ["Every Daredevil Series", undefined],
+  ], "a show's index for the Worker, with its seasons' places in each watch order");
+  assert.ok(!existsSync(join(outDir, "stream/series/tt2.json")), "a show's streams come from the Worker, per episode");
+  assert.ok(!existsSync(join(outDir, "stream/movie/tt6.json")), "not out yet, so in no collection");
+  assert.match(await readFile(join(outDir, "_headers"), "utf8"), /Access-Control-Allow-Origin: \*/);
 
   const manifest = await read(outDir, "manifest.json");
   assert.deepEqual(manifest.catalogs.map((c) => [c.id, c.genres]), [

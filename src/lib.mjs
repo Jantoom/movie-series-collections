@@ -20,6 +20,9 @@
 // entries in its episode column, and each entry's one stream is the same link (desktop
 // opens that one in the browser).
 //
+// Real movies and shows also get a stream per collection they're in, linking to it (see
+// titleCollections and title-streams.mjs).
+//
 // Why not one poster per season: Stremio de-duplicates catalog items by id, and every
 // season of a show has the show's id, so only the first season would survive.
 
@@ -370,6 +373,12 @@ const seasonItem = ({ show, season, date }) => ({
   overview: blurb(show.description, [`Season ${season.number}`, span(year(date), year(season.finale)), plural(season.episodes, "episode")]),
 });
 
+/** The entries a collection lists: a watch order's every season, a list's each title once. */
+export function listedEntries(collection, entries) {
+  const seen = new Set();
+  return collection.order ? entries : entries.filter((e) => !seen.has(titleOf(e).imdb) && seen.add(titleOf(e).imdb));
+}
+
 /**
  * What the collection lists, in order. A watch order lists each season ("Daredevil S2",
  * opening that season's tab) and movie; a list has each show and movie once. Each item
@@ -377,8 +386,7 @@ const seasonItem = ({ show, season, date }) => ({
  * collection's own description. `entries` must already be arranged.
  */
 export function listItems(collection, entries) {
-  const seen = new Set();
-  const listed = collection.order ? entries : entries.filter((e) => !seen.has(titleOf(e).imdb) && seen.add(titleOf(e).imdb));
+  const listed = listedEntries(collection, entries);
   const item = (e) => (e.kind === "movie" ? movieItem(e) : e.kind === "season" && collection.order ? seasonItem(e) : showItem(e));
   return disambiguate(listed.map(item), listed);
 }
@@ -515,6 +523,49 @@ export function entryStreams(collection, entries) {
 }
 
 /**
+ * Which collections each real movie and show is in, for their own stream lists: imdb →
+ * { type: "movie" | "series", refs } (see title-streams.mjs for a ref). Watch orders come
+ * first, then lists, each best-loved first (`lists` must already be sorted). A Franchise
+ * copy is left out for the titles its watch order already has, so a title isn't listed
+ * twice for one story; the remakes only the copy has keep it.
+ */
+export function titleCollections(lists) {
+  const byTitle = new Map();
+  const inWatchOrder = new Map();   // a release-order watch order's name → its titles
+  const ordered = [...lists.filter(({ c }) => c.order), ...lists.filter(({ c }) => !c.order)];
+  for (const { c, entries } of ordered) {
+    const listed = listedEntries(c, entries);
+    const ids = new Set(listed.map((e) => titleOf(e).imdb));
+    if (c.order === "release") inWatchOrder.set(c.name, ids);
+    const skip = c.copyOf ? inWatchOrder.get(c.copyOf) ?? new Set() : new Set();
+    const ranked = Boolean(orderOf(c));
+    const base = {
+      catalog: CATALOGS.find(({ id }) => id === catalogsOf(c)[0])?.name,
+      name: displayName(c),
+      years: yearSpan(entries, isOpenEnded(c)),
+      of: listed.length,
+      noun: c.order ? "entries" : "titles",
+      url: `stremio:///detail/${TYPE}/${idOf(c)}`,
+    };
+    const refs = new Map();   // imdb → this collection's ref for it
+    listed.forEach((e, i) => {
+      const { imdb } = titleOf(e);
+      if (skip.has(imdb)) return;
+      if (!refs.has(imdb)) {
+        refs.set(imdb, { ...base });
+        if (!byTitle.has(imdb)) byTitle.set(imdb, { type: e.kind === "movie" ? "movie" : "series", refs: [] });
+        byTitle.get(imdb).refs.push(refs.get(imdb));
+      }
+      if (!ranked) return;
+      const ref = refs.get(imdb);
+      if (c.order && e.kind === "season") ref.at = { [e.season.number]: i + 1, ...ref.at };
+      else ref.at ??= i + 1;
+    });
+  }
+  return byTitle;
+}
+
+/**
  * Static files can't parse query strings, so each request path must exist as a file.
  * Clients encode extra values differently and hosts may or may not decode the path,
  * so write every spelling ("Sci-Fi & Fantasy" as Sci-Fi%20%26%20Fantasy and so on).
@@ -556,7 +607,7 @@ export function catalogPaths(catalogId, genre, metas) {
 }
 
 // Bump when the manifest changes so installed copies refresh.
-export function buildManifest(collections, version = "0.13.0") {
+export function buildManifest(collections, version = "0.14.0") {
   return {
     id: "community.movie-series-collections",
     version,
@@ -565,10 +616,11 @@ export function buildManifest(collections, version = "0.13.0") {
     resources: [
       "catalog",
       { name: "meta", types: [TYPE], idPrefixes: [ID_PREFIX] },
-      { name: "stream", types: [TYPE], idPrefixes: [ID_PREFIX] },
+      // Real movies and shows ("tt…") get a stream for each collection they're in.
+      { name: "stream", types: [TYPE, "movie", "series"], idPrefixes: [ID_PREFIX, "tt"] },
     ],
-    types: [TYPE],
-    idPrefixes: [ID_PREFIX],
+    types: [TYPE, "movie", "series"],
+    idPrefixes: [ID_PREFIX, "tt"],
     catalogs: CATALOGS.map(({ id, name }) => {
       const genres = genreNames(collections, id);
       return {

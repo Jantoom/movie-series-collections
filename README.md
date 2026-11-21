@@ -1,6 +1,6 @@
 # Movie & Series Collections
 
-A Stremio addon of movie and TV collections: watch orders for stories told across many films and shows (the Marvel Cinematic Universe, Star Wars, Middle-earth, Back to the Future, Evangelion), and collections of titles that share a franchise, character, studio, creator or format (Every Marvel Movie, Every DreamWorks Animation Movie, Every Christopher Nolan Movie, Love Island). It's hosted as static files on GitHub Pages and rebuilt weekly by GitHub Actions, so there's no server to run.
+A Stremio addon of movie and TV collections: watch orders for stories told across many films and shows (the Marvel Cinematic Universe, Star Wars, Middle-earth, Back to the Future, Evangelion), and collections of titles that share a franchise, character, studio, creator or format (Every Marvel Movie, Every DreamWorks Animation Movie, Every Christopher Nolan Movie, Love Island). It's built weekly by GitHub Actions and served from Cloudflare: the built files as Workers static assets, and a small Worker for the one kind of request a static file can't answer.
 
 The collections in `collections.config.mjs` are a starting set: replace or add to them.
 
@@ -18,6 +18,7 @@ The collections in `collections.config.mjs` are a starting set: replace or add t
 3. Each poster is a **collection**, with its years ("2008–" while a show in it is still running). Selecting one shows its **Genres** (each opening that genre in the same catalog), its size under **Contents** ("41 Movies", "24 Series", "36 Seasons"), then its entries under **Watch order** or **Titles**.
 4. Clicking an entry opens it inside the app: a season opens its show on that season's tab, a show opens the show, and a movie opens the movie. Streams come from your other addons such as Torrentio, and watch progress stays on the real title.
 5. The detail page also lists the entries in its episode column. Season 1 has everything; a collection with both movies and series adds season 2 with just its movies and season 3 with just its series. (Stremio has no per-season descriptions, so the seasons only have numbers.) Selecting one shows its description from Cinemeta, ending with its year, or its seasons or episodes, in brackets ("(1988 movie)", "(Season 1, 2008–2009, 22 episodes)"). Its one stream, **Link to Movie**, **Link to Series** or **Link to Season** with "Tap to watch", links to the title. That stream opens inside the app on web, but Stremio 5 desktop sends it to the system browser.
+6. Every movie and show that's in a collection also lists those collections in its own stream list, under **Collection**: each opens the collection, with the title's place in it where the collection keeps an order ("Marvel Cinematic Universe" / "#14 of 65 · 2008–", where a show's place is its season's) or the collection's size otherwise ("Every Marvel Series" / "48 titles · 1966–"). Watch orders come first, then lists, best-loved first; a watch order's Franchise copy is left out for the titles the watch order already has. Stremio lists each addon's streams in the order the addons were installed, so install this addon after your stream addons (AIOStreams, Torrentio, …) to have the collections last.
 
 ### Timelines
 
@@ -33,6 +34,10 @@ Only stories that jump around a lot get one: Star Wars, Middle-earth and The Con
 - **Stream links:** Stremio 5 desktop opens them in the system browser, behind Stremio's warning page. Clicking an entry always opens its stream list, so the stream is the only way an entry can link anywhere.
 - **Link chips** (a meta's `links`, like cast and genres) are turned into in-app routes on web and desktop. `?season=N` opens a show on that season's tab, and a Discover link opens a genre.
 
+### How it's served
+
+Everything the build writes is a static file, and Cloudflare serves those without running the Worker (and doesn't count them as Worker requests). A movie's collections are one such file, `stream/movie/<imdb>.json`. Stremio asks for a show's streams per episode (`tt0903747:1:1`), and a file per episode would be well over 100,000 files, so the build writes one index per show (`index/series/<imdb>.json`) and the Worker turns it into that episode's streams. Likewise, each collection's entry streams are one index (`index/collections/<id>.json`) rather than a file per entry, which keeps the build at about 5,000 files, well under the free plan's 20,000. The Worker only runs when no file matches: those episode and entry requests, and movies and shows in no collection (no streams).
+
 ## What to check on each device
 
 On each Stremio client you care about (desktop, web, Android TV, mobile):
@@ -44,6 +49,7 @@ On each Stremio client you care about (desktop, web, Android TV, mobile):
 - [ ] **Star Wars (Timeline)** starts with The Acolyte S1, then The Phantom Menace.
 - [ ] Clicking a genre chip opens that genre in the collection's own catalog.
 - [ ] On the detail page, selecting an entry shows its description and details, and its **Link to …** stream opens the title (on TV especially).
+- [ ] **Iron Man**'s stream list ends with **Collection** links to Marvel Cinematic Universe (#1) and its other collections, and a **Daredevil** season 2 episode shows its place in the Marvel watch order; each opens its collection.
 
 ## Where the data comes from
 
@@ -66,7 +72,7 @@ Titles that aren't out yet are left out until a build after their release. `repo
 
 **Star Wars (Timeline)** follows the Disney+ Star Wars timeline's grouping, which keeps each show's seasons together. Maul: Shadow Lord, the Tales anthologies and The Mandalorian and Grogu are placed by their settings.
 
-The genre chips need the URL the addon is installed from, which the workflow passes in as `SITE_URL`. A local build without it leaves them out.
+The genre chips need the URL the addon is installed from, which the workflow passes in as `SITE_URL`, from the custom domain in `wrangler.jsonc`. A local build without it leaves them out.
 
 ## Customising
 
@@ -91,7 +97,7 @@ Edit `collections.config.mjs` and push; the workflow rebuilds automatically. The
 ```
 npm test             # unit tests and a full build against a fake Cinemeta
 npm run build        # real build into ./dist (needs internet)
-npm run serve        # serves ./dist on http://127.0.0.1:7000
+npm run serve        # runs the Worker and ./dist locally on http://127.0.0.1:7000 (wrangler dev)
 ```
 
-With the server running, install `http://127.0.0.1:7000/manifest.json` in the Stremio desktop app on the same machine. For working genre chips, build with `SITE_URL=http://127.0.0.1:7000 npm run build`. Stremio Web (web.stremio.com) can't load addons from your own machine, because browsers block HTTPS pages from fetching local addresses. Use the desktop app, or deploy to GitHub Pages first.
+With the server running, install `http://127.0.0.1:7000/manifest.json` in the Stremio desktop app on the same machine. For working genre chips, build with `SITE_URL=http://127.0.0.1:7000 npm run build`. Stremio Web (web.stremio.com) can't load addons from your own machine, because browsers block HTTPS pages from fetching local addresses. Use the desktop app, or deploy first.
