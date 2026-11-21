@@ -38,6 +38,12 @@ Only stories that jump around a lot get one: Star Wars, Middle-earth and The Con
 
 Everything the build writes is a static file, and Cloudflare serves those without running the Worker (and doesn't count them as Worker requests). A movie's collections are one such file, `stream/movie/<imdb>.json`. Stremio asks for a show's streams per episode (`tt0903747:1:1`), and a file per episode would be well over 100,000 files, so the build writes one index per show (`index/series/<imdb>.json`) and the Worker turns it into that episode's streams. Likewise, each collection's entry streams are one index (`index/collections/<id>.json`) rather than a file per entry, which keeps the build at about 5,000 files, well under the free plan's 20,000. The Worker only runs when no file matches: those episode and entry requests, and movies and shows in no collection (no streams).
 
+### Choosing what to install
+
+The install page doubles as the addon's **Configure** page. Its switches pick the Discover catalogs, and its ticks pick which kinds of collection a movie or show links to (none turns the links off). The manifest URL and install buttons change to match, carrying the choices in the URL: `https://<site>/catalogs=storyline,other;links=storyline/manifest.json`. With everything on, it's the plain URL. Stremio's **Configure** button reopens the page with the installed choices ticked; changing them means installing again.
+
+A configured install runs every request through the Worker, since its URLs match no file. The Worker serves the manifest trimmed to the choices, drops title links to the kinds left out, and serves everything else from the same files, pointing the genre chips at the configured install. Genres can't be chosen: leaving one out would mean filtering each catalog's All pages in the Worker. A collection's genre chips open its first catalog, so a chip may lead to a catalog the install left out.
+
 ## What to check on each device
 
 On each Stremio client you care about (desktop, web, Android TV, mobile):
@@ -48,6 +54,7 @@ On each Stremio client you care about (desktop, web, Android TV, mobile):
 - [ ] Clicking a movie opens it, and clicking a season opens its show on that season's tab, inside the app.
 - [ ] **Star Wars (Timeline)** starts with The Acolyte S1, then The Phantom Menace.
 - [ ] Clicking a genre chip opens that genre in the collection's own catalog.
+- [ ] Installed with only **Storyline** and Storyline links (from the install page), Discover has just Storyline, Iron Man's stream list links only its watch orders, and the addon's **Configure** button opens the page with those ticked.
 - [ ] On the detail page, selecting an entry shows its description and details, and its **Link to …** stream opens the title (on TV especially).
 - [ ] **Iron Man**'s stream list ends with **Collection** links to Marvel Cinematic Universe (#1) and its other collections, and a **Daredevil** season 2 episode shows its place in the Marvel watch order; each opens its collection.
 

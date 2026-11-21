@@ -197,7 +197,7 @@ export async function build({
   await writeJson("manifest.json", manifest);
   // Stremio's web and desktop apps fetch across origins.
   await writeFile(join(outDir, "_headers"), "/*\n  Access-Control-Allow-Origin: *\n");
-  await writeFile(join(outDir, "index.html"), sitePage(siteUrl, manifest, lists, { movies: movies.size, series: shows.size }));
+  await writeFile(join(outDir, "index.html"), sitePage(siteUrl, manifest, lists, { movies: movies.size, series: shows.size }, inCollections));
   report.series = shows.size;
   report.movies = movies.size;
   await writeJson("report.json", report);
@@ -206,7 +206,7 @@ export async function build({
   return report;
 }
 
-function sitePage(siteUrl, manifest, lists, totals) {
+function sitePage(siteUrl, manifest, lists, totals, inCollections) {
   const base = siteUrl.replace(/\/$/, "");
   const groups = manifest.catalogs.map((catalog) => {
     const members = lists.filter(({ c }) => catalogsOf(c).includes(catalog.id));
@@ -214,9 +214,19 @@ function sitePage(siteUrl, manifest, lists, totals) {
     return {
       title: catalog.name,
       detail: `${members.length} collections`,
+      switch: { key: "catalogs", value: catalog.id },
       choicesLabel: "Genres",
       choices: genres.map((genre) => ({ label: genre, detail: String(members.filter(({ c }) => genresOf(c).includes(genre)).length) })),
     };
+  });
+  // Which kinds of collection a movie or show links to from its own stream list.
+  const linked = (catalog) => [...inCollections.values()].filter(({ refs }) => refs.some((r) => r.catalog === catalog.name)).length;
+  groups.push({
+    title: "Collection links on movies and shows",
+    detail: "in their stream lists",
+    key: "links",
+    choicesLabel: "Link to collections in",
+    choices: CATALOGS.map((catalog) => ({ label: catalog.name, value: catalog.id, detail: `${linked(catalog)} titles` })),
   });
   return installPage({
     name: manifest.name,
@@ -230,8 +240,9 @@ function sitePage(siteUrl, manifest, lists, totals) {
       { value: totals.series, label: "series" },
     ],
     groups,
+    configurable: true,
     about: `<p>Find them under <b>Discover</b> → <b>Collections</b>. <b>Storyline</b> has watch orders for stories told across many titles, by release or by the story's timeline. <b>Franchise</b>, <b>Person</b> and <b>Studio</b> gather the titles of a franchise, a director or personality, or a studio, with sequels together and the most watched first (a big watch order's copy in Franchise keeps its order), and <b>Other</b> has the rest. Each movie, season or show in a collection opens that title.</p>
-<p>This addon has no streams of its own. Titles play through whatever stream addons you already have installed. Below their streams, each movie and show also lists the collections it's in, each opening that collection.</p>`,
+<p>This addon has no streams of its own. Titles play through whatever stream addons you already have installed. Each movie and show also lists the collections it's in among its streams, each opening that collection. Install this addon after your stream addons to have those links last.</p>`,
     links: [{ label: "Build report", href: "report.json" }],
   });
 }

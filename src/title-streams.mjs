@@ -13,6 +13,9 @@
  * (undefined for a movie or a show without episodes), so a watch order shows that season's
  * place ("#14 of 65") and otherwise its size ("65 entries").
  */
+/** The catalog name ("Storyline") a title stream is labelled with. */
+export const streamCatalog = (stream) => stream.name.split("\n")[1];
+
 export function titleStream(ref, season) {
   const place = typeof ref.at === "number" ? ref.at : season === undefined ? undefined : ref.at?.[season];
   const where = place ? `#${place} of ${ref.of}` : `${ref.of} ${ref.noun}`;

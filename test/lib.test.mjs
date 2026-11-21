@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   ALL_GENRES, CATALOGS, TIMELINE_NOTE, arrange, buildManifest, catalogPaths, catalogsOf, collectionDescription, collectionId, collectionScore,
   collectionVideos, configProblems, displayName, entryStreams, expandEntries, genreLink, genreNames, idOf, listItems, orderOf, sagasOf,
-  isOpenEnded, sameTitle, titleScore, toCollectionMeta, toCollectionPreview, toMovie, toShow, valueSpellings, withFranchiseCopies, yearSpan,
+  configureManifest, isOpenEnded, parseSettings, sameTitle, titleScore, toCollectionMeta, toCollectionPreview, toMovie, toShow, valueSpellings, withFranchiseCopies, yearSpan,
 } from "../src/lib.mjs";
 
 const ep = (imdb, season, episode, released) => ({ id: `${imdb}:${season}:${episode}`, season, episode, released });
@@ -377,4 +377,29 @@ test("manifest has the five catalogs, each with its own genres", () => {
   ]);
   assert.deepEqual(m.catalogs[0].extra, [{ name: "genre", isRequired: true, options: ["All", "Sci-Fi"] }, { name: "skip" }], "required, so it stays off the home screen and opens on All");
   assert.deepEqual(m.catalogs[0].extraRequired, ["genre"]);
+});
+
+test("settings in a configured install's URL pick the catalogs and the title links", () => {
+  const all = CATALOGS.map((c) => c.id);
+  assert.equal(parseSettings("manifest.json"), undefined, "not settings");
+  assert.equal(parseSettings("colour=red"), undefined, "an unknown setting isn't settings");
+  const { catalogs, links } = parseSettings("catalogs=storyline,other,nonsense;links=");
+  assert.deepEqual([...catalogs], ["storyline", "other"], "unknown catalogs are dropped");
+  assert.deepEqual([...links], [], "an empty setting means none");
+  assert.deepEqual([...parseSettings("catalogs=person").links], all, "a setting left out means everything");
+});
+
+test("a configured manifest has only the chosen catalogs, and no title streams without links", () => {
+  const m = buildManifest([{ order: "release", genres: ["Sci-Fi"] }, { genres: ["Drama"] }]);
+  assert.equal(m.behaviorHints.configurable, true, "Stremio shows a Configure button");
+  const some = configureManifest(m, parseSettings("catalogs=storyline,other;links=storyline"));
+  assert.deepEqual(some.catalogs.map((c) => c.id), ["storyline", "other"]);
+  assert.deepEqual(some.resources, m.resources, "still links titles");
+  const bare = configureManifest(m, parseSettings("catalogs=;links="));
+  assert.deepEqual(bare.catalogs, []);
+  assert.deepEqual(bare.resources, [
+    { name: "meta", types: ["collections"], idPrefixes: ["mscol-"] },
+    { name: "stream", types: ["collections"], idPrefixes: ["mscol-"] },
+  ], "no catalogs, and Stremio stops asking about real movies and shows");
+  assert.deepEqual([bare.types, bare.idPrefixes], [["collections"], ["mscol-"]]);
 });

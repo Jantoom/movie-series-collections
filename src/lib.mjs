@@ -606,8 +606,46 @@ export function catalogPaths(catalogId, genre, metas) {
   return files;
 }
 
+/**
+ * Settings from a configured install's URL (https://host/<settings>/manifest.json), in
+ * the install page's format: "catalogs=storyline,other;links=storyline". `catalogs` are
+ * the Discover catalogs and `links` the kinds of collection a movie or show links to,
+ * each a set of catalog ids; a setting that isn't given is everything. Undefined when
+ * the segment isn't settings.
+ */
+export const SETTINGS = ["catalogs", "links"];
+export function parseSettings(segment) {
+  if (!segment.includes("=")) return undefined;
+  const ids = new Set(CATALOGS.map(({ id }) => id));
+  const settings = Object.fromEntries(SETTINGS.map((key) => [key, ids]));
+  for (const part of segment.split(";")) {
+    const [key, values = ""] = part.split("=");
+    if (!SETTINGS.includes(key)) return undefined;
+    settings[key] = new Set(values.split(",").filter((v) => ids.has(v)));
+  }
+  return settings;
+}
+
+/**
+ * The manifest for a configured install: only the chosen catalogs, and no streams for
+ * real movies and shows when they link to no collections.
+ */
+export function configureManifest(manifest, { catalogs, links }) {
+  const linked = links.size > 0;
+  return {
+    ...manifest,
+    resources: [
+      ...(catalogs.size ? ["catalog"] : []),
+      ...manifest.resources.filter((r) => r !== "catalog").map((r) => (r.name === "stream" && !linked ? { ...r, types: [TYPE], idPrefixes: [ID_PREFIX] } : r)),
+    ],
+    types: linked ? manifest.types : [TYPE],
+    idPrefixes: linked ? manifest.idPrefixes : [ID_PREFIX],
+    catalogs: manifest.catalogs.filter((c) => catalogs.has(c.id)),
+  };
+}
+
 // Bump when the manifest changes so installed copies refresh.
-export function buildManifest(collections, version = "0.14.0") {
+export function buildManifest(collections, version = "0.15.0") {
   return {
     id: "community.movie-series-collections",
     version,
@@ -636,6 +674,8 @@ export function buildManifest(collections, version = "0.14.0") {
         extraRequired: ["genre"],
       };
     }),
-    behaviorHints: { configurable: false, configurationRequired: false },
+    // The Worker serves a trimmed manifest for settings in the URL; Configure opens the
+    // install page to choose them.
+    behaviorHints: { configurable: true, configurationRequired: false },
   };
 }
