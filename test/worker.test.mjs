@@ -26,7 +26,7 @@ assets["/index/genres.json"] = Object.fromEntries(shows.map((m, i) => [m.id, i %
 const env = {
   ASSETS: {
     fetch: async (url) => {
-      const data = assets[new URL(url).pathname];
+      const data = assets[decodeURIComponent(new URL(url).pathname)];
       if (data === undefined) return new Response("Not found", { status: 404 });
       return new Response(typeof data === "string" ? data : JSON.stringify(data));
     },
@@ -110,4 +110,12 @@ test("a left-out genre takes its collections out of the catalog's pages, which s
   assert.deepEqual((await get(`/${hide}/catalog/collections/other/genre=All&skip=100.json`)).body.metas, []);
   assert.deepEqual((await get(`/${hide}/catalog/collections/other/genre=Reality-TV.json`)).body.metas, [], "the left-out genre itself is empty");
   assert.equal((await get(`/${SETTINGS}/catalog/collections/other/genre=All.json`)).body.metas.length, 100, "nothing left out: the built page as it is");
+});
+
+test("a plain catalog request is served from the built file at its canonical path, saving Cloudflare's redirect", async () => {
+  const asked = [];
+  const spy = { ASSETS: { fetch: async (req) => { asked.push(new URL(req.url ?? req).pathname); return new Response("{\"metas\":[]}"); } } };
+  const res = await handle(new Request("https://addon.test/catalog/collections/storyline/genre=Sci-Fi&skip=100.json"), spy);
+  assert.equal(res.status, 200);
+  assert.deepEqual(asked, ["/catalog/collections/storyline/genre%3DSci-Fi%26skip%3D100.json"]);
 });

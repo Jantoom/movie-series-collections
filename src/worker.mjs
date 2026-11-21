@@ -2,7 +2,12 @@
 //
 // Everything the build writes to ./dist is served as static assets, which Cloudflare
 // serves without running this Worker at all (and doesn't bill as Worker requests). The
-// Worker only runs when no file matches, which is:
+// Worker runs for every catalog request (run_worker_first in wrangler.jsonc), and
+// otherwise only when no file matches, which is:
+//   - a catalog request: Search, or else the built file at its canonical path.
+//     Cloudflare serves a file at its encoded path ("genre%3DAction.json") and redirects
+//     any other spelling there; Stremio always asks for "genre=Action.json", so fetching
+//     it here saves that redirect;
 //   - a show's stream request, which Stremio sends per episode (tt0903747:1:1). The build
 //     writes one index per show (index/series/<imdb>.json) and this turns it into that
 //     episode's streams, one per collection the show is in;
@@ -36,9 +41,17 @@ const HEADERS = {
 const json = (data, status = 200) => new Response(typeof data === "string" ? data : JSON.stringify(data), { status, headers: HEADERS });
 const notFound = () => json({ err: "Not found" }, 404);
 
+/** The path Cloudflare serves a file at: each segment decoded, then encoded. */
+export const canonicalPath = (path) => path.split("/").map((segment) => {
+  try { return encodeURIComponent(decodeURIComponent(segment)); } catch { return segment; }
+}).join("/");
+
+/** One of the build's files, as a response, fetched at its canonical path. */
+const file = (env, base, path) => env.ASSETS.fetch(new URL(canonicalPath(path), base));
+
 /** One of the build's files, or undefined if there's none. */
 async function asset(env, base, path, as = "json") {
-  const res = await env.ASSETS.fetch(new URL(path, base));
+  const res = await file(env, base, path);
   return res.ok ? res[as]() : undefined;
 }
 
@@ -146,6 +159,7 @@ export async function handle(request, env) {
 
   const listed = await catalog(path, env, url);
   if (listed) return json(listed);
+  if (path.startsWith("/catalog/")) return file(env, url, url.pathname);
   const found = await streams(path, env, url);
   return found ? json({ streams: found }) : notFound();
 }
